@@ -1,0 +1,19 @@
+# Environment variables & Supabase secrets
+.env
+.env.local
+.env.*.local
+
+# Vercel & Node
+.vercel
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# System & Office Temp
+.DS_Store
+Thumbs.db
+*.log
+~$*
+*.tmp
+scratch/

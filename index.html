@@ -1,0 +1,2331 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SiKesiswaan - Sistem Informasi Kesiswaan Sekolah</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Cinzel:wght@600;700;800&family=Inter:wght@400;500;600;700&family=Merriweather:ital,wght@0,400;0,700;1,400&family=Montserrat:wght@500;600;700;800&family=Outfit:wght@500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,400;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- PWA & Mobile WebAPK -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2563eb">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SiKesiswaan">
+    <link rel="apple-touch-icon" href="icon-192.png">
+
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/print.css">
+</head>
+<body class="theme-light">
+
+    <!-- LAPISAN WALLPAPER PENUH SAMPAI POJOK (EDGE-TO-EDGE) -->
+    <div id="appWallpaperBg" class="app-wallpaper-full"></div>
+    <div id="appWallpaperOverlay" class="app-wallpaper-overlay"></div>
+
+    <!-- =====================================================================
+         HEADER UTAMA
+         ===================================================================== -->
+    <header class="site-header">
+        <div class="header-inner">
+            <div class="logo-area" onclick="App.goToHome()">
+                <div class="logo-icon" id="headerLogoIcon">🏫</div>
+                <div class="logo-title">
+                    <h1 id="headerSchoolName">SiKesiswaan</h1>
+                    <p id="headerSchoolMotto">SMA Negeri 1 Kreasi Bangsa</p>
+                </div>
+            </div>
+
+            <!-- Status Pengguna di Header -->
+            <div class="header-user-status">
+                <div id="headerGuestPill" class="user-badge-pill" style="background: #f1f5f9; border-color: #e2e8f0; color: var(--text-muted);">
+                    <span id="headerGuestBadgeText">🛡️ Portal Kesiswaan & Kedisiplinan</span>
+                </div>
+
+                <div id="headerUserPill" style="display: none; align-items: center; gap: 0.6rem;">
+                    <div id="headerUserBadge" class="user-badge-pill">
+                        <span id="headerUserName">Nama Pengguna</span>
+                    </div>
+                    <button class="btn btn-outline btn-sm" onclick="AuthManager.logout()">
+                        🚪 Keluar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- =====================================================================
+         ISI UTAMA APLIKASI
+         ===================================================================== -->
+    <main class="main-content">
+
+        <!-- =================================================================
+             TAMPILAN 1: DASBOR UTAMA (SAAT BELUM LOG IN)
+             ================================================================= -->
+        <section id="viewDashboardPublic">
+
+            <!-- 1. KATA-KATA MUTIARA / MOTIVASI PRESTASI & KARAKTER -->
+            <div class="quote-card quote-theme-ocean quote-fx-all" id="quoteCard">
+                <div class="quote-watermark">“</div>
+                <div class="quote-shimmer-beam"></div>
+                <div class="quote-content">
+                    <div class="quote-badge" id="quoteBadge">💡 Kata Mutiara & Motivasi Hari Ini</div>
+                    <div id="quoteText" class="quote-text quote-font-playfair">
+                        "Disiplin adalah jembatan antara cita-cita mulia dan pencapaian yang nyata."
+                    </div>
+                    <div id="quoteAuthor" class="quote-author">— Ki Hajar Dewantara</div>
+                </div>
+                <button class="quote-refresh-btn" id="quoteRefreshBtn" onclick="App.nextQuote()" title="Ganti Kata Mutiara (Rotasi)">
+                    🔄
+                </button>
+            </div>
+
+            <!-- 2. MENU LOG IN SISWA & GURU (DUA KARTU SIMETRIS & BERSIH) -->
+            <div id="dashboardLoginSection" class="login-cards-grid">
+
+                <!-- MENU LOG IN SISWA -->
+                <div class="login-box student">
+                    <div class="login-box-header">
+                        <div class="login-box-icon">🎓</div>
+                        <div class="login-box-title">
+                            <h3>Masuk Sebagai Siswa</h3>
+                            <p>Cek riwayat prestasi, pelanggaran & poin Anda</p>
+                        </div>
+                    </div>
+
+                    <form id="studentLoginForm" class="auth-form-clean" onsubmit="App.handleStudentLogin(event)">
+                        <div>
+                            <input type="text" id="loginStudentQuery" class="form-control-clean" placeholder="Ketik NISN atau Nama Siswa Anda..." required>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width: 100%;">
+                            Masuk & Cek Riwayat Saya
+                        </button>
+                    </form>
+
+                    <div class="demo-hint-box">
+                        <strong>Contoh Akun Siswa:</strong>
+                        <div style="display: flex; gap: 0.35rem; flex-wrap: wrap; margin-top: 0.35rem;">
+                            <button class="btn btn-outline btn-sm" onclick="App.quickStudentLogin('0061234501')">Ahmad Fauzan (Prestasi)</button>
+                            <button class="btn btn-outline btn-sm" onclick="App.quickStudentLogin('0061234504')">Dimas Arya (SP 1)</button>
+                            <button class="btn btn-outline btn-sm" onclick="App.quickStudentLogin('0061234508')">Fajar (SP 2)</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MENU LOG IN GURU / KESISWAAN (FORM BERSIH TANPA DAFTAR NAMA) -->
+                <div class="login-box teacher">
+                    <div class="login-box-header">
+                        <div class="login-box-icon">👨‍🏫</div>
+                        <div class="login-box-title">
+                            <h3>Masuk Sebagai Guru / Kesiswaan</h3>
+                            <p>Masuk dengan Username & Password Anda</p>
+                        </div>
+                    </div>
+
+                    <form id="teacherLoginForm" class="auth-form-clean" onsubmit="App.handleTeacherLogin(event)">
+                        <div>
+                            <input type="text" id="loginTeacherUsername" class="form-control-clean" placeholder="Username (contoh: admin / kesiswaan)" required>
+                        </div>
+                        <div>
+                            <input type="password" id="loginTeacherPassword" class="form-control-clean" placeholder="Password (default: 123)" required>
+                        </div>
+                        <button type="submit" class="btn btn-success" style="width: 100%;">
+                            Masuk Portal Kesiswaan
+                        </button>
+                    </form>
+
+                    <div class="demo-hint-box">
+                        <strong>Kredensial Demo (1-Klik Masuk):</strong>
+                        <div style="display: flex; gap: 0.35rem; flex-wrap: wrap; margin-top: 0.35rem;">
+                            <button type="button" class="btn btn-outline btn-sm" onclick="App.quickTeacherLogin('admin', '123')">👑 Super Admin (admin / 123)</button>
+                            <button type="button" class="btn btn-outline btn-sm" onclick="App.quickTeacherLogin('kesiswaan', '123')">👨‍🏫 Kesiswaan (123)</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- BILAH PINTAS AKSES CEPAT DASBOR (6 MODUL UTAMA) -->
+            <div class="dashboard-jump-nav-bar">
+                <span class="jump-nav-label">🧭 Akses Langsung Konten:</span>
+                <div class="jump-nav-pills">
+                    <button type="button" class="jump-nav-pill" onclick="App.scrollToSection('dashboardPengumumanSection')">📢 Pengumuman</button>
+                    <button type="button" class="jump-nav-pill" onclick="App.scrollToSection('dashboardPrestasiSection')">🏆 Galeri Prestasi</button>
+                    <button type="button" class="jump-nav-pill" onclick="App.scrollToSection('dashboardKegiatanSection')">📋 Daftar Kegiatan</button>
+                    <button type="button" class="jump-nav-pill" onclick="App.scrollToSection('dashboardTataTertibSection')">📜 Tata Tertib</button>
+                    <button type="button" class="jump-nav-pill" onclick="App.scrollToSection('dashboardAgendaTerdekatSection')">⏰ Agenda Terdekat</button>
+                    <button type="button" class="jump-nav-pill" onclick="App.scrollToSection('dashboardSekbidSection')">🏢 Program Sekbid</button>
+                </div>
+            </div>
+
+            <!-- 1. PAPAN PENGUMUMAN KESISWAAN RESMI -->
+            <div id="dashboardPengumumanSection" class="pengumuman-section">
+                <div class="section-title-wrap">
+                    <div class="section-title-left">
+                        <div class="section-badge-icon" style="background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); color: #dc2626; border-color: #fca5a5;">📢</div>
+                        <div>
+                            <h3 class="section-main-heading">Papan Pengumuman & Informasi Kesiswaan</h3>
+                            <p class="section-sub-heading">Pengumuman resmi, edaran kedisiplinan, dan publikasi prestasi sekolah</p>
+                        </div>
+                    </div>
+                    <div class="pengumuman-filter-pills" id="pengumumanFilterPills">
+                        <button class="filter-pill-btn active" onclick="App.filterPengumuman('all')">Semua</button>
+                        <button class="filter-pill-btn" onclick="App.filterPengumuman('penting')">🔴 Penting</button>
+                        <button class="filter-pill-btn" onclick="App.filterPengumuman('prestasi')">🟢 Prestasi</button>
+                        <button class="filter-pill-btn" onclick="App.filterPengumuman('kegiatan')">🔵 Kegiatan</button>
+                        <button class="filter-pill-btn" onclick="App.filterPengumuman('informasi')">🟡 Informasi</button>
+                    </div>
+                </div>
+
+                <div id="dashboardPengumumanList" class="pengumuman-grid">
+                    <!-- Diisi via JavaScript -->
+                </div>
+            </div>
+
+            <!-- 2. SHOWCASE PRESTASI BERJALAN & ANIMASI POP-UP / FADE-IN FOTO -->
+            <div id="dashboardPrestasiSection" class="prestasi-showcase-container">
+                <div class="showcase-header-bar">
+                    <h3>🏆 Galeri Prestasi Siswa Terkini</h3>
+                    <span class="status-pill pill-green">Berprestasi & Menginspirasi</span>
+                </div>
+
+                <!-- SLIDER WRAPPER DENGAN ANIMASI FOTO -->
+                <div id="showcaseSliderWrapper" class="showcase-slider-wrapper">
+                    <!-- Slide otomatis di-generate via JavaScript -->
+                </div>
+
+                <!-- TOMBOL NAVIGASI SLIDER -->
+                <div class="slider-nav-arrows">
+                    <button class="slider-arrow-btn" onclick="App.prevPrestasiSlide()" title="Prestasi Sebelumnya">◀</button>
+                    <button class="slider-arrow-btn" onclick="App.nextPrestasiSlide()" title="Prestasi Berikutnya">▶</button>
+                </div>
+
+                <!-- INDIKATOR TITIK SLIDER -->
+                <div id="sliderDotsBox" class="slider-dots-box"></div>
+            </div>
+
+            <!-- 3. DAFTAR KEGIATAN KESISWAAN -->
+            <div id="dashboardKegiatanSection" class="kegiatan-section">
+                <div class="section-title-wrap">
+                    <div class="section-title-left">
+                        <div class="section-badge-icon" style="background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); color: #16a34a; border-color: #86efac;">📋</div>
+                        <div>
+                            <h3 class="section-main-heading">Daftar Kegiatan Kesiswaan</h3>
+                            <p class="section-sub-heading">Rincian aktivitas kesiswaan, kepemimpinan, kompetisi, dan program pengembangan diri siswa</p>
+                        </div>
+                    </div>
+                    <span class="status-pill pill-green">Tahun Ajaran 2025/2026</span>
+                </div>
+                <div id="dashboardKegiatanList" class="kegiatan-grid-row">
+                    <!-- Diisi via JavaScript -->
+                </div>
+            </div>
+
+            <!-- 4. PEDOMAN TATA TERTIB & PEMBINAAN KARAKTER SISWA -->
+            <div id="dashboardTataTertibSection" class="tata-tertib-section">
+                <div class="section-title-wrap">
+                    <div class="section-title-left">
+                        <div class="section-badge-icon" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); color: #d97706; border-color: #fcd34d;">📜</div>
+                        <div>
+                            <h3 class="section-main-heading">Pedoman Tata Tertib & Pembinaan Karakter Siswa</h3>
+                            <p class="section-sub-heading">Standar kedisiplinan, jam masuk, seragam, etika pergaulan, dan tahapan sanksi pembinaan sekolah</p>
+                        </div>
+                    </div>
+                    <!-- KOTAK PENCARIAN ATURAN -->
+                    <div class="tata-tertib-search-wrap">
+                        <input type="text" id="tataTertibSearchInput" class="form-control-clean" placeholder="🔍 Cari pasal / aturan (misal: terlambat, rambut)..." oninput="App.handleSearchTataTertib(this.value)">
+                    </div>
+                </div>
+
+                <!-- TABS KATEGORI TATA TERTIB -->
+                <div class="tata-tertib-nav-tabs" id="tataTertibTabs">
+                    <button class="tata-tertib-tab-btn active" onclick="App.filterTataTertib('all')">📋 Semua Aturan</button>
+                    <button class="tata-tertib-tab-btn" onclick="App.filterTataTertib('kehadiran')">🕒 Waktu & Kehadiran</button>
+                    <button class="tata-tertib-tab-btn" onclick="App.filterTataTertib('seragam')">👔 Seragam & Kerapian</button>
+                    <button class="tata-tertib-tab-btn" onclick="App.filterTataTertib('etika')">🤝 Etika & Karakter</button>
+                    <button class="tata-tertib-tab-btn" onclick="App.filterTataTertib('larangan')">⚠️ Larangan Keras</button>
+                    <button class="tata-tertib-tab-btn" onclick="App.filterTataTertib('sanksi')">⚖️ Sistem Poin & Sanksi</button>
+                </div>
+
+                <!-- KONTEN ATURAN TATA TERTIB -->
+                <div id="dashboardTataTertibContent" class="tata-tertib-cards-grid">
+                    <!-- Diisi via JavaScript -->
+                </div>
+            </div>
+
+            <!-- 5. AGENDA TERDEKAT KESISWAAN -->
+            <div id="dashboardAgendaTerdekatSection" class="agenda-terdekat-section">
+                <div class="section-title-wrap">
+                    <div class="section-title-left">
+                        <div class="section-badge-icon" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); color: #b45309; border-color: #fcd34d;">⏰</div>
+                        <div>
+                            <h3 class="section-main-heading">Agenda Terdekat Kesiswaan</h3>
+                            <p class="section-sub-heading">Jadwal pelaksanaan kegiatan terdekat yang wajib dicatat dan diikuti oleh siswa</p>
+                        </div>
+                    </div>
+                    <span class="status-pill pill-yellow">⚡ Segera Berlangsung</span>
+                </div>
+                <div id="dashboardAgendaTerdekatList" class="agenda-terdekat-grid">
+                    <!-- Diisi via JavaScript App.renderDashboardAgendaTerdekat() -->
+                </div>
+            </div>
+
+            <!-- 6. PROGRAM KERJA SEKSI BIDANG (SEKBID 1 - 10) OSIS & KESISWAAN -->
+            <div id="dashboardSekbidSection" class="sekbid-section">
+                <div class="section-title-wrap">
+                    <div class="section-title-left">
+                        <div class="section-badge-icon" style="background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%); color: #0284c7; border-color: #7dd3fc;">🏢</div>
+                        <div>
+                            <h3 class="section-main-heading">Program Kerja Tiap Seksi Bidang (Sekbid) Kesiswaan</h3>
+                            <p class="section-sub-heading">Rencana aksi, program kerja, dan target pencapaian Sekbid 1 s.d. 10 OSIS tahun ajaran aktif</p>
+                        </div>
+                    </div>
+                    <span class="status-pill pill-blue">Terbuka Untuk Umum</span>
+                </div>
+
+                <!-- SELECTOR SEKBID 1 - 10 -->
+                <div id="dashboardSekbidNav" class="sekbid-nav-scroll">
+                    <!-- Diisi via JavaScript -->
+                </div>
+
+                <!-- KARTU DETAIL SEKBID AKTIF -->
+                <div id="dashboardSekbidCard" class="sekbid-display-card">
+                    <!-- Diisi via JavaScript -->
+                </div>
+            </div>
+
+        </section>
+
+        <!-- =================================================================
+             TAMPILAN 2: SETELAH SISWA LOG IN (READ-ONLY)
+             ================================================================= -->
+        <section id="viewPortalSiswa" style="display: none;">
+            
+            <div class="welcome-banner student-portal-banner">
+                <div class="welcome-banner-left">
+                    <div class="welcome-emblem student-emblem">🎓</div>
+                    <div class="welcome-content">
+                        <div class="welcome-portal-badge student">
+                            <span class="portal-badge-dot student"></span>
+                            <span>Portal Mandiri Siswa</span>
+                        </div>
+                        <h2 class="welcome-title">Halo, <span id="studentWelcomeName">Nama Siswa</span>!</h2>
+                        <div id="studentWelcomeSub" class="welcome-subtitle">
+                            NISN: - • Kelas: - • Jurusan: -
+                        </div>
+                    </div>
+                </div>
+                <div class="welcome-banner-right">
+                    <button class="btn btn-outline" onclick="SiswaPortal.printRaporKarakter()">
+                        🖨️ Cetak Rapor Catatan Saya
+                    </button>
+                </div>
+            </div>
+
+            <!-- 3 KOTAK RINGKASAN POIN SISWA -->
+            <div class="summary-cards-row">
+                <div class="sum-card red">
+                    <div class="sum-title">Poin Pelanggaran</div>
+                    <div id="studentPoinPelanggaran" class="sum-number">0</div>
+                    <div id="studentActionTindakan" class="sum-desc">Kondisi Tertib / Aman</div>
+                </div>
+
+                <div class="sum-card green">
+                    <div class="sum-title">Poin Prestasi / Reward</div>
+                    <div id="studentPoinPrestasi" class="sum-number">+0</div>
+                    <div id="studentPrestasiCount" class="sum-desc">0 Penghargaan</div>
+                </div>
+
+                <div class="sum-card blue">
+                    <div class="sum-title">Nilai Karakter Disiplin</div>
+                    <div id="studentIndeksNilai" class="sum-number">100/100</div>
+                    <div class="sum-desc">Predikat Budi Pekerti Siswa</div>
+                </div>
+            </div>
+
+            <!-- TABS RIWAYAT PRESTASI & PELANGGARAN -->
+            <div class="simple-tabs-nav">
+                <button id="btnTabPrestasi" class="simple-tab-btn active" onclick="SiswaPortal.switchSubTab('prestasi')">
+                    🏆 Riwayat Prestasi Saya
+                </button>
+                <button id="btnTabPelanggaran" class="simple-tab-btn" onclick="SiswaPortal.switchSubTab('pelanggaran')">
+                    ⚠️ Riwayat Pelanggaran & Sanksi
+                </button>
+            </div>
+
+            <!-- LIST PRESTASI -->
+            <div id="studentSubPrestasi">
+                <div id="studentMyPrestasiList"></div>
+            </div>
+
+            <!-- LIST PELANGGARAN -->
+            <div id="studentSubPelanggaran" style="display: none;">
+                <div id="studentMyPelanggaranList"></div>
+            </div>
+
+        </section>
+
+        <!-- =================================================================
+             TAMPILAN 3: SETELAH GURU / ADMIN / SUPER ADMIN LOG IN
+             ================================================================= -->
+        <section id="viewPortalGuru" style="display: none;">
+
+            <div class="welcome-banner">
+                <div class="welcome-banner-left">
+                    <div class="welcome-emblem">🏛️</div>
+                    <div class="welcome-content">
+                        <div class="welcome-portal-badge">
+                            <span class="portal-badge-dot"></span>
+                            <span>Portal Pengelolaan Kesiswaan</span>
+                        </div>
+                        <h2 class="welcome-title">Pusat Administrasi & Kedisiplinan Siswa</h2>
+                        <div class="welcome-subtitle">
+                            <span>Masuk sebagai:</span>
+                            <span class="teacher-user-pill" id="teacherGreetingName">Dra. Hj. Siti Rahma, M.Pd (Wakasek Kesiswaan)</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="welcome-banner-right">
+                    <div class="welcome-status-chip">
+                        <span class="status-indicator-live"></span>
+                        <div class="status-chip-text">
+                            <span class="status-chip-title">Sistem Kesiswaan</span>
+                            <span class="status-chip-sub">Tahun Ajaran Aktif</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TOOLBAR KHUSUS SUPER ADMIN: PUSAT KENDALI EKSEKUTIF -->
+            <div id="superAdminToolbar" class="superadmin-command-hub" style="display: none;">
+                <div class="command-hub-header">
+                    <div class="command-hub-title">
+                        <span class="command-hub-crown">👑</span>
+                        <div>
+                            <h4>Pusat Kendali Super Administrator</h4>
+                            <p>Manajemen siswa, tenaga pendidik, aturan sekolah, dan publikasi dalam satu kendali</p>
+                        </div>
+                    </div>
+                    <span class="command-hub-badge">Akses Penuh Super Admin</span>
+                </div>
+                <div class="command-hub-grid">
+                    <!-- Kelompok 1: Siswa & Guru -->
+                    <div class="command-hub-card">
+                        <div class="command-hub-card-label">👥 Siswa & Guru</div>
+                        <div class="command-hub-actions">
+                            <button class="hub-btn hub-btn-primary" onclick="Forms.openStudentModal()" title="Tambah Siswa Baru">
+                                👤 + Siswa Baru
+                            </button>
+                            <button class="hub-btn hub-btn-emerald" onclick="Forms.openImportStudentsModal()" title="Impor Data Siswa dari File Excel/CSV">
+                                📥 Impor Excel
+                            </button>
+                            <button class="hub-btn hub-btn-slate" onclick="Forms.openManageTeachersModal()" title="Kelola Akun Guru & Tim Kesiswaan">
+                                👥 Kelola Guru
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Kelompok 2: Tampilan & Sistem -->
+                    <div class="command-hub-card">
+                        <div class="command-hub-card-label">⚙️ Tampilan & Aturan</div>
+                        <div class="command-hub-actions">
+                            <button class="hub-btn hub-btn-indigo" onclick="Forms.openSchoolSettingsModal()" title="Ubah Nama, Slogan, Font, Ukuran & Logo Proporsional">
+                                🎨 Tampilan, Font & Logo
+                            </button>
+                            <button class="hub-btn hub-btn-slate" onclick="Forms.openManageViolationsRulesModal()" title="Aturan Sanksi, Batas SP & Format Surat">
+                                ⚖️ Aturan & SP
+                            </button>
+                            <button class="hub-btn hub-btn-slate" onclick="Forms.openManageQuotesModal()" title="Kelola Kata Mutiara Motivasi">
+                                💡 Kata Mutiara
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Kelompok 3: Publikasi -->
+                    <div class="command-hub-card">
+                        <div class="command-hub-card-label">📢 Publikasi Dasbor</div>
+                        <div class="command-hub-actions">
+                            <button class="hub-btn hub-btn-amber" onclick="Forms.openModal('modalTambahPengumuman')" title="Buat & Publikasikan Pengumuman Baru">
+                                📢 + Pengumuman
+                            </button>
+                            <button class="hub-btn hub-btn-slate" onclick="Forms.openActivityModal()" title="Tambah Agenda Kegiatan Kesiswaan">
+                                📅 + Kegiatan
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SUB-NAVIGASI TAB MENU ADMIN & SUPER ADMIN -->
+            <div class="admin-tabs-nav">
+                <button id="adminTabBtnSiswa" class="admin-tab-btn active" onclick="AdminPortal.switchAdminTab('siswa')">
+                    👥 Cari & Rekap Siswa
+                </button>
+                <button id="adminTabBtnPrestasi" class="admin-tab-btn" onclick="AdminPortal.switchAdminTab('prestasi')">
+                    🏆 Kelola Prestasi Siswa <span id="adminPrestasiCountBadge" class="admin-tab-badge">0</span>
+                </button>
+                <button id="adminTabBtnKegiatan" class="admin-tab-btn" onclick="AdminPortal.switchAdminTab('kegiatan')">
+                    📅 Kelola Kegiatan Kesiswaan <span id="adminKegiatanCountBadge" class="admin-tab-badge">0</span>
+                </button>
+                <!-- FITUR SISWA BARU & IMPOR EXCEL DI SAMPING KELOLA KEGIATAN KESISWAAN (KHUSUS SUPER ADMIN) -->
+                <button id="btnTambahSiswaSuperAdmin" class="admin-tab-btn superadmin-tab-action" onclick="Forms.openStudentModal()" style="display: none;" title="Tambah Data Siswa Baru (Khusus Super Admin)">
+                    👤 + Siswa Baru
+                </button>
+                <button id="btnImporSiswaSuperAdmin" class="admin-tab-btn superadmin-tab-action" onclick="Forms.openImportStudentsModal()" style="display: none; background: #059669 !important;" title="Impor Data Siswa dari File Excel / CSV">
+                    📥 Impor Excel
+                </button>
+            </div>
+
+            <!-- PANE 1: CARI & REKAP SISWA -->
+            <div id="adminPaneSiswa" class="admin-pane">
+                <!-- FITUR UTAMA GURU: KOTAK SEARCH NAMA SISWA YANG INGIN DITUJU -->
+                <div class="teacher-search-box">
+                    <div style="margin-bottom: 0.75rem;">
+                        <h3 style="font-size: 1.15rem; color: var(--primary);">🔍 Cari Nama Siswa yang Ingin Dituju:</h3>
+                        <p style="font-size: 0.85rem; color: var(--text-muted);">
+                            Ketik nama atau NISN siswa untuk langsung mencatat pelanggaran, membukukan prestasi, atau memanggil orang tua.
+                        </p>
+                    </div>
+
+                    <div class="teacher-search-input-wrap">
+                        <input type="text" id="teacherSearchStudentInput" placeholder="Ketik nama siswa (contoh: Ahmad, Dimas, Fajar)..." autocomplete="off" oninput="AdminPortal.handleTeacherSearch(this.value)">
+                        <button class="btn btn-primary" onclick="AdminPortal.submitTeacherSearch()">
+                            Cari Siswa
+                        </button>
+                    </div>
+
+                    <!-- Dropdown / Hasil Cepat Pencarian -->
+                    <div id="teacherSearchDropdown" style="margin-top: 0.5rem; display: none; background: #ffffff; border: 1px solid var(--border); border-radius: 8px; max-height: 220px; overflow-y: auto;">
+                        <!-- Diisi via JavaScript -->
+                    </div>
+                </div>
+
+                <!-- KARTU SISWA YANG DITUJU (MUNCUL SETELAH DICARI) -->
+                <div id="targetStudentCard" class="student-action-card" style="display: none;">
+                    <div class="student-action-header">
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <img id="targetStudentFoto" src="" alt="Foto Siswa" style="width: 72px; height: 72px; border-radius: 12px; object-fit: cover; border: 2px solid var(--border); box-shadow: var(--shadow-soft);">
+                            <div>
+                                <h3 id="targetStudentNama" style="font-size: 1.35rem;">Nama Siswa</h3>
+                                <p id="targetStudentInfo" style="font-size: 0.88rem; color: var(--text-muted);">NISN: - • Kelas: - • Jurusan: -</p>
+                                <p style="font-size: 0.82rem; margin-top: 2px;">Wali Kelas: <strong id="targetStudentWali">-</strong></p>
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div id="targetStudentStatusPill" class="status-pill pill-green">Status: Aman</div>
+                            <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 4px;">
+                                Pelanggaran: <strong id="targetStudentPoinPelanggaran" style="color: var(--danger);">0 Poin</strong> | 
+                                Prestasi: <strong id="targetStudentPoinPrestasi" style="color: var(--success);">+0 Poin</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- RINCIAN PROFIL SISWA LENGKAP SESUAI FORMAT EXCEL IMPOR -->
+                    <div class="student-profile-details">
+                        <div class="profile-detail-item">
+                            <span class="detail-label">🆔 Nomor Induk</span>
+                            <span class="detail-val">NIS: <strong id="targetStudentNis">-</strong> • NISN: <strong id="targetStudentNisn">-</strong></span>
+                        </div>
+                        <div class="profile-detail-item">
+                            <span class="detail-label">📱 No. HP Siswa</span>
+                            <span class="detail-val" id="targetStudentHp">-</span>
+                        </div>
+                        <div class="profile-detail-item">
+                            <span class="detail-label">🎯 Jalur / No. SPMB</span>
+                            <span class="detail-val"><span id="targetStudentSpmb" class="badge-spmb-pill">-</span></span>
+                        </div>
+                        <div class="profile-detail-item">
+                            <span class="detail-label">👨 Orang Tua (Bapak)</span>
+                            <span class="detail-val"><span id="targetStudentAyah">-</span> <small id="targetStudentHpBapakWrap" style="color: var(--text-muted);">(HP: <span id="targetStudentHpBapak">-</span>)</small></span>
+                        </div>
+                        <div class="profile-detail-item">
+                            <span class="detail-label">👩 Orang Tua (Ibu)</span>
+                            <span class="detail-val"><span id="targetStudentIbu">-</span> <small id="targetStudentHpIbuWrap" style="color: var(--text-muted);">(HP: <span id="targetStudentHpIbu">-</span>)</small></span>
+                        </div>
+                        <div class="profile-detail-item full-width">
+                            <span class="detail-label">🏠 Alamat Lengkap & Titik Lokasi</span>
+                            <span class="detail-val">
+                                <span id="targetStudentAlamat">-</span>
+                                <a id="targetStudentMapsLink" href="#" target="_blank" class="maps-badge-link" style="display: none;" title="Buka Lokasi Rumah di Google Maps">
+                                    🗺️ Buka di Google Maps
+                                </a>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- TOMBOL AKSI CEPAT UNTUK SISWA TERSEBUT -->
+                    <div class="student-action-buttons">
+                        <button class="btn btn-danger" onclick="AdminPortal.actionAddViolation()">
+                            ⚠️ + Catat Pelanggaran Siswa Ini
+                        </button>
+                        <button class="btn btn-success" onclick="AdminPortal.actionAddAchievement()">
+                            🏆 + Catat Prestasi Siswa Ini
+                        </button>
+                        <button id="btnPanggilOrtuTarget" class="btn btn-warning" onclick="AdminPortal.actionPrintSummons()" style="display: none; font-weight: 700;">
+                            📄 Cetak Surat Panggilan Ortu
+                        </button>
+                        <span id="noticeBelumSpTarget" style="display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.8rem; color: var(--text-muted); background: #f8fafc; border: 1px dashed var(--border); padding: 0.45rem 0.75rem; border-radius: 6px;">
+                            🛡️ Panggilan Ortu tidak aktif (Poin belum batas SP / &lt;31)
+                        </span>
+                        <button class="btn btn-outline" onclick="AdminPortal.actionPrintReport()">
+                            🖨️ Cetak Rapor Karakter
+                        </button>
+                        <button class="btn btn-warning" onclick="Forms.openEditStudentModal()" style="font-weight: 700;" title="Edit Profil Siswa Lengkap">
+                            ✏️ Edit Profil Siswa
+                        </button>
+                    </div>
+                </div>
+
+                <!-- KARTU LEADERBOARD: 10 SISWA TERATAS POIN TERTINGGI -->
+                <div class="top-students-card">
+                    <div class="top-students-header">
+                        <div class="top-students-header-left">
+                            <div class="top-students-badge-icon">🏆</div>
+                            <div>
+                                <h4 class="top-students-title" id="topStudentsTitle">🏆 10 Siswa Teratas (Poin Prestasi Tertinggi)</h4>
+                                <p class="top-students-subtitle">
+                                    Peringkat 10 siswa dengan poin tertinggi • Klik <strong>"👉 Pilih"</strong> untuk mengelola data siswa
+                                </p>
+                            </div>
+                        </div>
+                        <div class="top-students-filter-group">
+                            <span class="filter-label">Urutkan:</span>
+                            <div class="filter-pills">
+                                <button type="button" class="filter-pill-btn active" id="btnSortPrestasi" onclick="AdminPortal.setTopStudentsSort('prestasi')">
+                                    🏆 Prestasi Tertinggi
+                                </button>
+                                <button type="button" class="filter-pill-btn" id="btnSortPelanggaran" onclick="AdminPortal.setTopStudentsSort('pelanggaran')">
+                                    ⚠️ Pelanggaran Tertinggi
+                                </button>
+                                <button type="button" class="filter-pill-btn" id="btnSortAll" onclick="AdminPortal.setTopStudentsSort('max')">
+                                    🌟 Poin Tertinggi
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="simple-table-container">
+                        <table class="simple-table">
+                            <thead>
+                                <tr>
+                                    <th width="8%" style="text-align: center;">Peringkat</th>
+                                    <th width="32%">Nama Siswa</th>
+                                    <th width="14%">Kelas</th>
+                                    <th width="15%">Poin Pelanggaran</th>
+                                    <th width="15%">Poin Prestasi</th>
+                                    <th width="16%">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="teacherAllStudentsTableBody">
+                                <!-- Diisi via JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="top-students-footer">
+                        <span>💡 Menampilkan <strong>10 siswa teratas</strong> dengan perolehan poin tertinggi. Cari siswa lainnya menggunakan kotak pencarian di bagian atas.</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PANE 2: KELOLA PRESTASI SISWA (TERPISAH & BANYAK PRESTASI DENGAN FOTO) -->
+            <div id="adminPanePrestasi" class="admin-pane" style="display: none;">
+                <div class="admin-section-header">
+                    <div>
+                        <h3 style="font-size: 1.2rem; color: var(--primary);">🏆 Seluruh Prestasi Siswa Terdaftar</h3>
+                        <p style="font-size: 0.85rem; color: var(--text-muted);">
+                            Daftar prestasi siswa yang tampil dalam animasi galeri berjalan di dasbor awal.
+                        </p>
+                    </div>
+                    <button class="btn btn-success" onclick="Forms.openAchievementModal()">
+                        🏆 + Catat Prestasi Baru
+                    </button>
+                </div>
+
+                <div id="adminPrestasiListContainer" class="prestasi-admin-grid">
+                    <!-- Diisi via JavaScript -->
+                </div>
+            </div>
+
+            <!-- PANE 3: KELOLA KEGIATAN KESISWAAN (TERPISAH & TAMPIL DI DASBOR AWAL) -->
+            <div id="adminPaneKegiatan" class="admin-pane" style="display: none;">
+                <div class="admin-section-header">
+                    <div>
+                        <h3 style="font-size: 1.2rem; color: var(--primary);">📅 Seluruh Agenda Kegiatan Kesiswaan</h3>
+                        <p style="font-size: 0.85rem; color: var(--text-muted);">
+                            Agenda kegiatan sekolah yang dikelola di sini langsung tampil pada dasbor awal.
+                        </p>
+                    </div>
+                    <button class="btn btn-primary" onclick="Forms.openActivityModal()">
+                        📅 + Tambah Agenda Kegiatan
+                    </button>
+                </div>
+
+                <div id="adminKegiatanListContainer" class="kegiatan-admin-grid">
+                    <!-- Diisi via JavaScript -->
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- =====================================================================
+         FOOTER SEDERHANA
+         ===================================================================== -->
+    <footer class="site-footer">
+        <p><strong id="footerSchoolName">SiKesiswaan</strong> - Sistem Pembinaan Karakter & Prestasi Siswa</p>
+    </footer>
+
+    <!-- =====================================================================
+         MODAL 1: CATAT PELANGGARAN
+         ===================================================================== -->
+    <!-- =====================================================================
+         MODAL 1: CATAT PELANGGARAN
+         ===================================================================== -->
+    <div id="modalViolation" class="modal-backdrop">
+        <div class="modal-card">
+            <div class="modal-card-header">
+                <h3>⚠️ Catat Pelanggaran Siswa</h3>
+                <button class="btn-outline btn-sm" onclick="Forms.closeAllModals()">&times; Tutup</button>
+            </div>
+            <form id="violationForm">
+                <div class="modal-card-body">
+                    <!-- 1. SISWA YANG DITUJU (TERKUNCI & TANPA DROPDOWN) -->
+                    <div class="form-group-clean">
+                        <label>Siswa yang Dituju</label>
+                        <input type="hidden" id="formPelanggaranSiswaId" required>
+                        <div id="formPelanggaranLockedStudentBox" style="background: #f8fafc; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0.65rem 0.85rem; display: flex; align-items: center; justify-content: space-between;">
+                            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                <span style="font-size: 1.4rem;">🎓</span>
+                                <div>
+                                    <strong id="formPelanggaranLockedNama" style="font-size: 0.95rem; color: var(--text-main);">Nama Siswa</strong>
+                                    <div id="formPelanggaranLockedInfo" style="font-size: 0.75rem; color: var(--text-muted);">NISN: - • Kelas: -</div>
+                                </div>
+                            </div>
+                            <span class="status-pill pill-gray" style="font-size: 0.7rem; font-weight: 700;">🔒 Siswa Terkunci</span>
+                        </div>
+                    </div>
+
+                    <!-- 2. TANGGAL KEJADIAN (DI BAWAH NAMA SISWA) -->
+                    <div class="form-group-clean">
+                        <label>Tanggal Kejadian *</label>
+                        <input type="date" id="formPelanggaranTanggal" class="form-control-clean" required>
+                    </div>
+
+                    <!-- 3. PILIH JENIS PELANGGARAN (DENGAN BOBOT POIN RESMI) -->
+                    <div class="form-group-clean">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                            <label style="margin-bottom: 0;">Pilih Jenis Pelanggaran *</label>
+                            <span style="font-size: 0.75rem; color: var(--text-muted);">*Edit poin hanya via Super Admin</span>
+                        </div>
+                        <select id="formPelanggaranKatalog" class="form-control-clean" required></select>
+                        <input type="hidden" id="formPelanggaranNama">
+                        <input type="hidden" id="formPelanggaranPoin" value="0">
+                    </div>
+
+                    <!-- 4. REKAP TOTAL PELANGGARAN & RIWAYAT SISWA (OTOMATIS MENGGANTIKAN BOBOT NILAI MANUAL) -->
+                    <div class="form-group-clean">
+                        <label>Riwayat & Rekap Akumulasi Poin Pelanggaran</label>
+                        <div style="background: #fef2f2; border: 1px solid var(--danger-border); border-radius: var(--radius-sm); padding: 0.85rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                <span style="font-size: 0.8rem; font-weight: 700; color: var(--danger-text);">📊 Rekap Poin Otomatis:</span>
+                                <span id="rekapPointCalculationPill" class="status-pill pill-red" style="font-size: 0.75rem;">
+                                    0 + 0 = 0 Poin
+                                </span>
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; text-align: center; background: #ffffff; padding: 0.5rem; border-radius: var(--radius-sm); border: 1px solid #fee2e2;">
+                                <div>
+                                    <div style="font-size: 0.7rem; color: var(--text-muted);">Poin Sebelumnya</div>
+                                    <strong id="rekapPoinLama" style="color: var(--text-main); font-size: 0.95rem;">0 Poin</strong>
+                                </div>
+                                <div>
+                                    <div style="font-size: 0.7rem; color: var(--text-muted);">Pelanggaran Ini</div>
+                                    <strong id="rekapPoinBaru" style="color: var(--danger); font-size: 0.95rem;">+0 Poin</strong>
+                                </div>
+                                <div>
+                                    <div style="font-size: 0.7rem; color: var(--text-muted);">Total Akumulasi</div>
+                                    <strong id="rekapPoinTotal" style="color: var(--danger); font-size: 1.05rem;">0 Poin</strong>
+                                </div>
+                            </div>
+
+                            <!-- Riwayat Pelanggaran Sebelumnya -->
+                            <div style="margin-top: 0.65rem; border-top: 1px dashed var(--danger-border); padding-top: 0.45rem;">
+                                <div style="font-size: 0.72rem; font-weight: 700; color: var(--danger-text); margin-bottom: 2px;">📜 Riwayat Pelanggaran Sebelumnya:</div>
+                                <div id="formPelanggaranRiwayatList" style="font-size: 0.75rem; color: #475569; max-height: 75px; overflow-y: auto;">
+                                    Belum ada catatan pelanggaran (Catatan Bersih).
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 5. SANKSI / TINDAK LANJUT (TERISI OTOMATIS & TERKUNCI SESUAI RENTANG POIN) -->
+                    <div class="form-group-clean">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                            <label style="margin-bottom: 0;">Sanksi / Tindak Lanjut Otomatis *</label>
+                            <span id="formPelanggaranStatusBadge" class="status-pill pill-green" style="font-size: 0.7rem;">Aman</span>
+                        </div>
+                        <input type="text" id="formPelanggaranSanksi" class="form-control-clean" readonly required style="background: #f8fafc; font-weight: 600; color: var(--text-main); cursor: not-allowed;">
+                        <span style="font-size: 0.72rem; color: var(--text-muted); display: block; margin-top: 3px;">
+                            🔒 Sanksi terisi otomatis dari sistem sesuai rentang poin yang berlaku dan hanya dapat dikelola oleh Super Admin.
+                        </span>
+                    </div>
+
+                    <input type="hidden" id="formPelanggaranKategori" value="Kedisiplinan">
+                </div>
+                <div class="modal-card-footer">
+                    <button type="button" class="btn btn-outline" onclick="Forms.closeAllModals()">Batal</button>
+                    <button type="submit" class="btn btn-danger">Simpan Catatan Pelanggaran</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         MODAL 2: CATAT PRESTASI & FOTO DOKUMENTASI
+         ===================================================================== -->
+    <div id="modalAchievement" class="modal-backdrop">
+        <div class="modal-card">
+            <div class="modal-card-header">
+                <h3>🏆 Catat Prestasi Siswa</h3>
+                <button class="btn-outline btn-sm" onclick="Forms.closeAllModals()">&times; Tutup</button>
+            </div>
+            <form id="achievementForm">
+                <div class="modal-card-body">
+                    <!-- 1. SISWA YANG DITUJU (TERKUNCI & TANPA DROPDOWN SISWA LAIN) -->
+                    <div class="form-group-clean">
+                        <label>Siswa yang Dituju</label>
+                        <input type="hidden" id="formPrestasiSiswaId" required>
+                        <div id="formPrestasiLockedStudentBox" style="background: #f8fafc; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0.65rem 0.85rem; display: flex; align-items: center; justify-content: space-between;">
+                            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                <span style="font-size: 1.4rem;">🎓</span>
+                                <div>
+                                    <strong id="formPrestasiLockedNama" style="font-size: 0.95rem; color: var(--text-main);">Nama Siswa</strong>
+                                    <div id="formPrestasiLockedInfo" style="font-size: 0.75rem; color: var(--text-muted);">NISN: - • Kelas: -</div>
+                                </div>
+                            </div>
+                            <span class="status-pill pill-gray" style="font-size: 0.7rem; font-weight: 700;">🔒 Siswa Terkunci</span>
+                        </div>
+                    </div>
+
+                    <!-- 2. JUARA BERAPA (DROPDOWN 1, 2, 3, HARAPAN 1 s.d HARAPAN 3) -->
+                    <div class="form-group-clean">
+                        <label>Juara Berapa / Peringkat *</label>
+                        <select id="formPrestasiJuara" class="form-control-clean" required>
+                            <option value="">-- Pilih Peringkat Juara --</option>
+                            <option value="Juara 1">Juara 1</option>
+                            <option value="Juara 2">Juara 2</option>
+                            <option value="Juara 3">Juara 3</option>
+                            <option value="Juara Harapan 1">Juara Harapan 1</option>
+                            <option value="Juara Harapan 2">Juara Harapan 2</option>
+                            <option value="Juara Harapan 3">Juara Harapan 3</option>
+                        </select>
+                    </div>
+
+                    <!-- 3. TINGKAT (DROPDOWN KOTA/KABUPATEN, KARESIDENAN, PROVINSI, NASIONAL) -->
+                    <div class="form-group-clean">
+                        <label>Tingkat Kejuaraan *</label>
+                        <select id="formPrestasiTingkat" class="form-control-clean" required>
+                            <option value="">-- Pilih Tingkat Kejuaraan --</option>
+                            <option value="Kota/Kabupaten">Kota / Kabupaten</option>
+                            <option value="Karesidenan">Karesidenan</option>
+                            <option value="Provinsi (Jateng / DIY / Jateng-DIY)">Provinsi (Jateng / DIY / Jateng-DIY)</option>
+                            <option value="Nasional">Nasional</option>
+                            <option value="Internasional">Internasional</option>
+                        </select>
+                    </div>
+
+                    <input type="hidden" id="formPrestasiPoin" value="30">
+
+                    <!-- 4. NAMA KEJUARAAN -->
+                    <div class="form-group-clean">
+                        <label>Nama Kejuaraan / Kegiatan *</label>
+                        <input type="text" id="formPrestasiNama" class="form-control-clean" placeholder="Contoh: Olimpiade Sains Nasional Bidang Informatika 2026" required>
+                    </div>
+
+                    <!-- 5. PENYELENGGARA -->
+                    <div class="form-group-clean">
+                        <label>Penyelenggara *</label>
+                        <input type="text" id="formPrestasiPenyelenggara" class="form-control-clean" placeholder="Contoh: Balai Pengembangan Talenta Indonesia / Kemendikbudristek" required>
+                    </div>
+
+                    <!-- 6. TANGGAL KEJUARAAN -->
+                    <div class="form-group-clean">
+                        <label>Tanggal Kejuaraan *</label>
+                        <input type="date" id="formPrestasiTanggal" class="form-control-clean" required>
+                    </div>
+
+                    <!-- 7. UPLOAD PIAGAM -->
+                    <div class="form-group-clean">
+                        <label>Upload Piagam / Sertifikat Kejuaraan *</label>
+                        <div class="upload-box-wrapper">
+                            <input type="file" id="formPrestasiPiagamFile" accept="image/*" class="form-control-clean" style="padding: 0.35rem 0.5rem;">
+                            <div id="prestasiPiagamPreviewBox" class="upload-preview-container" style="display: none; margin-top: 0.5rem;">
+                                <img id="prestasiPiagamPreviewImg" src="" alt="Pratinjau Piagam" class="upload-preview-thumb">
+                                <div>
+                                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px;">Piagam penghargaan siap diunggah</div>
+                                    <button type="button" class="btn-remove-preview" onclick="Forms.clearPrestasiPiagamUpload()">✕ Hapus Piagam</button>
+                                </div>
+                            </div>
+                        </div>
+                        <input type="url" id="formPrestasiPiagamUrl" class="form-control-clean" style="margin-top: 4px;" placeholder="Atau tautan URL piagam (opsional)">
+                    </div>
+
+                    <!-- 8. UPLOAD FOTO (TIDAK WAJIB) -->
+                    <div class="form-group-clean">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                            <label style="margin-bottom: 0;">Upload Foto Dokumentasi / Penyerahan (Tidak Wajib)</label>
+                            <span style="font-size: 0.72rem; color: var(--text-muted);">*Opsional</span>
+                        </div>
+                        <div class="upload-box-wrapper">
+                            <input type="file" id="formPrestasiFotoFile" accept="image/*" class="form-control-clean" style="padding: 0.35rem 0.5rem;">
+                            <div id="prestasiFotoPreviewBox" class="upload-preview-container" style="display: none; margin-top: 0.5rem;">
+                                <img id="prestasiFotoPreviewImg" src="" alt="Pratinjau Foto" class="upload-preview-thumb">
+                                <div>
+                                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px;">Foto dokumentasi siap ditampilkan</div>
+                                    <button type="button" class="btn-remove-preview" onclick="Forms.clearPrestasiFotoUpload()">✕ Hapus Foto</button>
+                                </div>
+                            </div>
+                        </div>
+                        <input type="url" id="formPrestasiFoto" class="form-control-clean" style="margin-top: 4px;" placeholder="Atau tautan URL foto web (opsional)">
+                        <span style="font-size: 0.72rem; color: var(--text-muted); display: block; margin-top: 3px;">
+                            Foto dokumentasi otomatis tampil di animasi slide galeri prestasi dasbor depan.
+                        </span>
+                    </div>
+
+                    <input type="hidden" id="formPrestasiKategori" value="Akademik">
+                </div>
+                <div class="modal-card-footer">
+                    <button type="button" class="btn btn-outline" onclick="Forms.closeAllModals()">Batal</button>
+                    <button type="submit" class="btn btn-success">Simpan Data Prestasi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         MODAL 3: TAMBAH DATA SISWA BARU
+         ===================================================================== -->
+    <!-- =====================================================================
+         MODAL 3: TAMBAH DATA SISWA BARU
+         ===================================================================== -->
+    <div id="modalStudent" class="modal-backdrop">
+        <div class="modal-card lg">
+            <div class="modal-card-header">
+                <h3>👤 Tambah Data Siswa Baru</h3>
+                <button class="btn-outline btn-sm" onclick="Forms.closeAllModals()">&times; Tutup</button>
+            </div>
+            <form id="studentForm" onsubmit="Forms.handleAddStudent(event)">
+                <input type="hidden" id="formStudentId">
+                <div class="modal-card-body">
+                    <!-- FOTO SISWA -->
+                    <div class="form-group-clean" style="margin-bottom: 1.25rem;">
+                        <label>Foto Siswa</label>
+                        <div style="display: flex; gap: 1rem; align-items: center;">
+                            <img id="formAddStudentFotoPreview" src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=300&q=80" alt="Preview Foto" style="width: 60px; height: 60px; border-radius: 10px; object-fit: cover; border: 1px solid var(--border);">
+                            <div style="flex: 1;">
+                                <input type="file" id="formAddStudentFotoFile" accept="image/*" class="form-control-clean" style="padding: 0.35rem 0.5rem;" onchange="Forms.handleAddStudentFotoUpload(event)">
+                                <input type="text" id="formAddStudentFotoUrl" class="form-control-clean" placeholder="Atau masukkan URL foto siswa..." style="margin-top: 0.35rem;" oninput="Forms.handleAddStudentFotoUrlInput(this.value)">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 0.75rem;">
+                        <div class="form-group-clean" style="flex: 1;">
+                            <label>Nomor Induk Siswa (NIS)</label>
+                            <input type="text" id="formStudentNis" class="form-control-clean" placeholder="Contoh: 240101">
+                        </div>
+                        <div class="form-group-clean" style="flex: 1;">
+                            <label>Nomor NISN *</label>
+                            <input type="text" id="formStudentNisn" class="form-control-clean" placeholder="10 digit nomor NISN" required>
+                        </div>
+                        <div class="form-group-clean" style="flex: 1;">
+                            <label>L / P *</label>
+                            <select id="formStudentGender" class="form-control-clean">
+                                <option value="L">Laki-laki</option>
+                                <option value="P">Perempuan</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group-clean">
+                        <label>Nama Lengkap Siswa *</label>
+                        <input type="text" id="formStudentNama" class="form-control-clean" placeholder="Nama lengkap siswa" required>
+                    </div>
+
+                    <div style="display: flex; gap: 0.75rem;">
+                        <div class="form-group-clean" style="flex: 1;">
+                            <label>Kelas *</label>
+                            <input type="text" id="formStudentKelas" class="form-control-clean" placeholder="Contoh: X RPL 1" required>
+                        </div>
+                        <div class="form-group-clean" style="flex: 1;">
+                            <label>Jurusan</label>
+                            <input type="text" id="formStudentJurusan" class="form-control-clean" placeholder="Contoh: Rekayasa Perangkat Lunak">
+                        </div>
+                        <div class="form-group-clean" style="flex: 1;">
+                            <label>Nama Wali Kelas</label>
+                            <input type="text" id="formStudentWali" class="form-control-clean" placeholder="Nama guru wali kelas">
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 0.75rem;">
+                        <div class="form-group-clean" style="flex: 1;">
+                            <label>Nomor HP Siswa (WhatsApp)</label>
+                            <input type="text" id="formStudentNomorHp" class="form-control-clean" placeholder="08xxxxxxxxxx">
+                        </div>
+                        <div class="form-group-clean" style="flex: 1;">
+                            <label>Jalur / No. Pendaftaran SPMB</label>
+                            <input type="text" id="formStudentSpmb" class="form-control-clean" placeholder="Contoh: SPMB-2026-PRESTASI-001">
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 0.75rem;">
+                        <div class="form-group-clean" style="flex: 1;">
+                            <label>Nama Orang Tua (Bapak)</label>
+                            <input type="text" id="formStudentNamaBapak" class="form-control-clean" placeholder="Nama lengkap ayah">
+                        </div>
+                        <div class="form-group-clean" style="flex: 1;">
+                            <label>No. HP Bapak</label>
+                            <input type="text" id="formStudentHpBapak" class="form-control-clean" placeholder="08xxxxxxxxxx">
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 0.75rem;">
+                        <div class="form-group-clean" style="flex: 1;">
+                            <label>Nama Orang Tua (Ibu)</label>
+                            <input type="text" id="formStudentNamaIbu" class="form-control-clean" placeholder="Nama lengkap ibu">
+                        </div>
+                        <div class="form-group-clean" style="flex: 1;">
+                            <label>No. HP Ibu</label>
+                            <input type="text" id="formStudentHpIbu" class="form-control-clean" placeholder="08xxxxxxxxxx">
+                        </div>
+                    </div>
+
+                    <div class="form-group-clean">
+                        <label>Alamat Lengkap Tempat Tinggal</label>
+                        <textarea id="formStudentAlamat" class="form-control-clean" rows="2" placeholder="Nama jalan, RT/RW, kelurahan, kecamatan, kota/kabupaten"></textarea>
+                    </div>
+
+                    <div class="form-group-clean">
+                        <label>Link Google Maps Alamat Siswa</label>
+                        <input type="text" id="formStudentMapsAlamat" class="form-control-clean" placeholder="Contoh: https://maps.google.com/?q=-6.2088,106.8456">
+                    </div>
+                </div>
+                <div class="modal-card-footer">
+                    <button type="button" class="btn btn-outline" onclick="Forms.closeAllModals()">Batal</button>
+                    <button type="submit" class="btn btn-primary">Simpan Siswa</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         MODAL 3B: EDIT PROFIL LENGKAP SISWA (SESUAI FORMAT EXCEL IMPOR)
+         ===================================================================== -->
+    <div id="modalEditStudent" class="modal-backdrop">
+        <div class="modal-card lg">
+            <div class="modal-card-header">
+                <h3>✏️ Edit Profil & Biodata Siswa</h3>
+                <button class="btn-outline btn-sm" onclick="Forms.closeAllModals()">&times; Tutup</button>
+            </div>
+            <form id="editStudentForm" onsubmit="Forms.handleSaveEditStudent(event)">
+                <input type="hidden" id="formEditStudentId">
+                <div class="modal-card-body">
+                    <!-- FOTO SISWA -->
+                    <div class="form-group-clean" style="margin-bottom: 1.25rem;">
+                        <label>Foto Siswa</label>
+                        <div style="display: flex; gap: 1rem; align-items: center;">
+                            <img id="formEditStudentFotoPreview" src="" alt="Preview Foto" style="width: 65px; height: 65px; border-radius: 12px; object-fit: cover; border: 2px solid var(--border); box-shadow: var(--shadow-soft);">
+                            <div style="flex: 1;">
+                                <input type="file" id="formEditStudentFotoFile" accept="image/*" class="form-control-clean" style="padding: 0.35rem 0.5rem;" onchange="Forms.handleEditStudentFotoUpload(event)">
+                                <input type="text" id="formEditStudentFotoUrl" class="form-control-clean" placeholder="Atau ganti URL foto siswa..." style="margin-top: 0.35rem;" oninput="Forms.handleEditStudentFotoUrlInput(this.value)">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 0.75rem;">
+                        <div class="form-group-clean" style="flex: 1;">
+                            <label>Nomor Induk Siswa (NIS)</label>
+                            <input type="text" id="formEditStudentNis" class="form-control-clean" placeholder="Contoh: 230101">
+                        </div>
+                        <div class="form-group-clean" style="flex: 1;">
+                            <label>Nomor NISN *</label>
+                            <input type="text" id="formEditStudentNisn" class="form-control-clean" placeholder="10 digit nomor NISN" required>
+                        </div>
+                        <div class="form-group-clean" style="flex: 1;">
+                            <label>L / P *</label>
+                            <select id="formEditStudentGender" class="form-control-clean">
+                                <option value="L">Laki-laki</option>
+                                <option value="P">Perempuan</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group-clean">
+                        <label>Nama Lengkap Siswa *</label>
+                        <input type="text" id="formEditStudentNama" class="form-control-clean" placeholder="Nama lengkap siswa" required>
+                    </div>
+
+                    <div style="display: flex; gap: 0.75rem;">
+                        <div class="form-group-clean" style="flex: 1;">
+                            <label>Kelas *</label>
+                            <input type="text" id="formEditStudentKelas" class="form-control-clean" placeholder="Contoh: XII RPL 1" required>
+                        </div>
+                        <div class="form-group-clean" style="flex: 1;">
+                            <label>Jurusan</label>
+                            <input type="text" id="formEditStudentJurusan" class="form-control-clean" placeholder="Contoh: Rekayasa Perangkat Lunak">
+                        </div>
+                        <div class="form-group-clean" style="flex: 1;">
+                            <label>Nama Wali Kelas</label>
+                            <input type="text" id="formEditStudentWali" class="form-control-clean" placeholder="Nama guru wali kelas">
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 0.75rem;">
+                        <div class="form-group-clean" style="flex: 1;">
+                            <label>Nomor HP Siswa (WhatsApp)</label>
+                            <input type="text" id="formEditStudentNomorHp" class="form-control-clean" placeholder="08xxxxxxxxxx">
+                        </div>
+                        <div class="form-group-clean" style="flex: 1;">
+                            <label>Jalur / No. Pendaftaran SPMB</label>
+                            <input type="text" id="formEditStudentSpmb" class="form-control-clean" placeholder="Contoh: SPMB-2023-PRESTASI-001">
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 0.75rem;">
+                        <div class="form-group-clean" style="flex: 1;">
+                            <label>Nama Orang Tua (Bapak)</label>
+                            <input type="text" id="formEditStudentNamaBapak" class="form-control-clean" placeholder="Nama lengkap ayah">
+                        </div>
+                        <div class="form-group-clean" style="flex: 1;">
+                            <label>No. HP Bapak</label>
+                            <input type="text" id="formEditStudentHpBapak" class="form-control-clean" placeholder="08xxxxxxxxxx">
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 0.75rem;">
+                        <div class="form-group-clean" style="flex: 1;">
+                            <label>Nama Orang Tua (Ibu)</label>
+                            <input type="text" id="formEditStudentNamaIbu" class="form-control-clean" placeholder="Nama lengkap ibu">
+                        </div>
+                        <div class="form-group-clean" style="flex: 1;">
+                            <label>No. HP Ibu</label>
+                            <input type="text" id="formEditStudentHpIbu" class="form-control-clean" placeholder="08xxxxxxxxxx">
+                        </div>
+                    </div>
+
+                    <div class="form-group-clean">
+                        <label>Alamat Lengkap Tempat Tinggal</label>
+                        <textarea id="formEditStudentAlamat" class="form-control-clean" rows="2" placeholder="Nama jalan, RT/RW, kelurahan, kecamatan, kota/kabupaten"></textarea>
+                    </div>
+
+                    <div class="form-group-clean">
+                        <label>Link Google Maps Alamat</label>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <input type="text" id="formEditStudentMapsAlamat" class="form-control-clean" placeholder="Contoh: https://maps.google.com/?q=-6.2088,106.8456" style="flex: 1;">
+                            <button type="button" class="btn btn-outline btn-sm" onclick="Forms.testOpenMaps()" style="white-space: nowrap;">
+                                🗺️ Buka & Uji Maps
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-card-footer">
+                    <button type="button" class="btn btn-outline" onclick="Forms.closeAllModals()">Batal</button>
+                    <button type="submit" class="btn btn-primary">💾 Simpan Perubahan Profil</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         MODAL 3C: IMPOR SISWA DARI BERKAS EXCEL / CSV (KHUSUS SUPER ADMIN)
+         ===================================================================== -->
+    <div id="modalImportStudents" class="modal-backdrop">
+        <div class="modal-card xl">
+            <div class="modal-card-header">
+                <div>
+                    <h3>📥 Impor Data Siswa via Excel (.xlsx / .csv)</h3>
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">
+                        Unggah berkas spreadsheet data siswa lengkap untuk sinkronisasi massal secara cepat.
+                    </p>
+                </div>
+                <button class="btn-outline btn-sm" onclick="Forms.closeAllModals()">&times; Tutup</button>
+            </div>
+            <div class="modal-card-body">
+                <!-- 1. KOTAK UNDUH TEMPLATE RESMI -->
+                <div class="import-template-box">
+                    <div class="import-template-info">
+                        <h4>📄 Template Excel Resmi</h4>
+                        <p>
+                            Gunakan template standar agar urutan kolom cocok sempurna: 
+                            <strong>No, Foto, NIS, NISN, Nama, Kelas, Jurusan, Nomor HP, Alamat, Maps Alamat, Nama Ortu Bapak, Nama Ortu Ibu, No HP Bapak, No HP Ibu, Input SPMB</strong>.
+                        </p>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                        <button type="button" class="btn btn-success btn-sm" onclick="Forms.downloadStudentExcelTemplate()">
+                            📊 Unduh Template (.xlsx)
+                        </button>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="Forms.downloadStudentCsvTemplate()">
+                            📄 Unduh Template (.csv)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 2. PILIHAN CARA INPUT: UNGGAH BERKAS ATAU TEMPEL TEKS -->
+                <div class="import-nav-tabs">
+                    <button type="button" id="tabBtnImportFile" class="import-tab-btn active" onclick="Forms.switchImportTab('file')">
+                        📁 Unggah Berkas Excel / CSV
+                    </button>
+                    <button type="button" id="tabBtnImportPaste" class="import-tab-btn" onclick="Forms.switchImportTab('paste')">
+                        📋 Salin & Tempel Langsung (Copy-Paste dari Spreadsheet)
+                    </button>
+                </div>
+
+                <!-- PANEL A: UPLOAD FILE -->
+                <div id="importPanelFile">
+                    <div class="import-dropzone" onclick="document.getElementById('importStudentFileInput').click()" ondragover="Forms.handleDragOver(event)" ondragleave="Forms.handleDragLeave(event)" ondrop="Forms.handleDropFile(event)">
+                        <input type="file" id="importStudentFileInput" accept=".xlsx, .xls, .csv" style="display: none;" onchange="Forms.handleImportFile(event)">
+                        <span class="import-dropzone-icon">📊</span>
+                        <div class="import-dropzone-title">Klik atau Tarik Berkas Excel / CSV ke Sini</div>
+                        <div class="import-dropzone-desc" id="importFileStatusText">Mendukung berkas Microsoft Excel (.xlsx, .xls) dan CSV (.csv)</div>
+                    </div>
+                </div>
+
+                <!-- PANEL B: PASTE TEXTAREA -->
+                <div id="importPanelPaste" style="display: none; margin-bottom: 1.25rem;">
+                    <label style="font-size: 0.85rem; font-weight: 700; margin-bottom: 0.35rem; display: block;">
+                        Tempelkan Baris Data dari Excel / Google Sheets di sini:
+                    </label>
+                    <textarea id="importStudentPasteArea" class="form-control-clean" style="height: 130px; font-family: monospace; font-size: 0.8rem;" placeholder="Buka lembar Excel Anda, blok seluruh kolom & baris (termasuk baris header), tekan Ctrl+C lalu tempelkan (Ctrl+V) di sini..." oninput="Forms.handlePasteImport(this.value)"></textarea>
+                    <span style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-top: 3px;">
+                        Sistem otomatis memisahkan tab dan baris data secara instan.
+                    </span>
+                </div>
+
+                <!-- 3. PILIHAN METODE SINKRONISASI -->
+                <div class="import-mode-options">
+                    <strong style="font-size: 0.82rem; color: var(--text-main);">Pilihan Metode Impor:</strong>
+                    <label class="import-mode-label">
+                        <input type="radio" name="radioImportMode" value="upsert" checked>
+                        <span><strong>Sinkronisasi Cerdas (Rekomendasi):</strong> Perbarui biodata siswa jika NISN sudah terdaftar, dan tambahkan jika NISN baru. (Riwayat poin, prestasi, dan pelanggaran yang sudah ada TIDAK akan terhapus).</span>
+                    </label>
+                    <label class="import-mode-label">
+                        <input type="radio" name="radioImportMode" value="append">
+                        <span><strong>Tambah Baru Saja:</strong> Hanya menambahkan siswa yang belum ada (melewati jika NISN sudah terdaftar).</span>
+                    </label>
+                    <label class="import-mode-label">
+                        <input type="radio" name="radioImportMode" value="replace">
+                        <span><strong style="color: var(--danger);">Gantikan Seluruh Data Siswa:</strong> Menghapus seluruh data siswa lama dan menggantinya dengan data baru dari berkas ini.</span>
+                    </label>
+                </div>
+
+                <!-- 4. PRATINJAU DATA YANG TERBACA -->
+                <div style="margin-top: 1.25rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                        <strong style="font-size: 0.9rem;">Pratinjau Data yang Terbaca:</strong>
+                        <span id="importSummaryBadge" class="status-pill pill-gray">0 siswa terdeteksi</span>
+                    </div>
+
+                    <div class="import-preview-table-wrap">
+                        <table class="import-preview-table">
+                            <thead>
+                                <tr>
+                                    <th>No</th>
+                                    <th>NIS</th>
+                                    <th>NISN</th>
+                                    <th>Nama Siswa</th>
+                                    <th>L/P</th>
+                                    <th>Kelas</th>
+                                    <th>Jurusan</th>
+                                    <th>No. HP</th>
+                                    <th>Alamat</th>
+                                    <th>Bapak</th>
+                                    <th>Ibu</th>
+                                    <th>No. HP Bapak</th>
+                                    <th>No. HP Ibu</th>
+                                    <th>SPMB</th>
+                                </tr>
+                            </thead>
+                            <tbody id="importPreviewTableBody">
+                                <tr>
+                                    <td colspan="14" style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                                        Belum ada berkas yang diunggah. Silakan pilih berkas Excel atau tempel baris data di atas.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-card-footer">
+                <button type="button" class="btn btn-outline" onclick="Forms.closeAllModals()">Batal</button>
+                <button type="button" id="btnExecuteImport" class="btn btn-success" onclick="Forms.handleExecuteImport()" disabled>
+                    🚀 Mulai Impor Data Siswa
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         MODAL 4: PENGATURAN SEKOLAH & DASBOR (SUPER ADMIN)
+         ===================================================================== -->
+    <div id="modalSchoolSettings" class="modal-backdrop">
+        <div class="modal-card lg settings-modal-card">
+            <div class="modal-card-header">
+                <div style="display: flex; align-items: center; gap: 0.6rem;">
+                    <span style="font-size: 1.35rem;">⚙️</span>
+                    <div>
+                        <h3 style="margin-bottom: 2px;">Pengaturan Tulisan, Font, Logo & Tampilan</h3>
+                        <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">Sesuaikan identitas, ukuran proporsional, tipografi luwes, dan estetika visual portal</p>
+                    </div>
+                </div>
+                <button class="btn-outline btn-sm" onclick="Forms.closeAllModals()">&times; Tutup</button>
+            </div>
+            <form id="schoolSettingsForm" onsubmit="Forms.handleSaveSchoolSettings(event)">
+                <div class="modal-card-body" style="padding-top: 1rem;">
+                    
+                    <!-- KARTU PRATINJAU LANGSUNG WAKTU NYATA (REAL-TIME LIVE PREVIEW) -->
+                    <div class="school-settings-preview-card">
+                        <div class="preview-card-header">
+                            <div class="preview-card-title">
+                                <span class="preview-pulse-dot"></span>
+                                <strong>Pratinjau Langsung Header & Identitas Sekolah</strong>
+                            </div>
+                            <span class="preview-tag-badge">✨ Live Preview</span>
+                        </div>
+                        <div class="preview-navbar-sim" id="simNavbarBox">
+                            <div class="sim-logo-area">
+                                <div id="simLogoIcon" class="sim-logo-icon">🏫</div>
+                                <div class="sim-logo-title">
+                                    <div id="simSchoolName" class="sim-school-name">SMA NEGERI 1 KREASI BANGSA</div>
+                                    <div id="simSchoolMotto" class="sim-school-motto">Berkarakter Unggul, Berprestasi Gemilang, Berbudaya Disiplin</div>
+                                </div>
+                            </div>
+                            <div class="sim-user-status">
+                                <div id="simGuestPill" class="sim-badge-pill">
+                                    <span id="simBadgeText">🛡️ Portal Kesiswaan & Kedisiplinan</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="preview-card-footer-hint">
+                            <span>💡 Setiap perubahan tulisan, font, besar-kecil ukuran, dan bentuk logo akan langsung tercermin proporsional di sini.</span>
+                        </div>
+                    </div>
+
+                    <!-- TAB NAVIGATION -->
+                    <div class="settings-tab-nav">
+                        <button type="button" class="settings-tab-btn active" id="tabBtnSettingsText" onclick="Forms.switchSettingsTab('text')">
+                            ✍️ Tulisan & Teks
+                        </button>
+                        <button type="button" class="settings-tab-btn" id="tabBtnSettingsSizing" onclick="Forms.switchSettingsTab('sizing')">
+                            📐 Besar Kecil & Proporsi Logo
+                        </button>
+                        <button type="button" class="settings-tab-btn" id="tabBtnSettingsTheme" onclick="Forms.switchSettingsTab('theme')">
+                            🎨 Font & Tema Visual
+                        </button>
+                    </div>
+
+                    <!-- PANE 1: TULISAN & TEKS -->
+                    <div id="tabSettingsPaneText" class="settings-tab-pane active">
+                        <div class="form-group-clean">
+                            <label>Nama Sekolah / Lembaga *</label>
+                            <input type="text" id="setSchoolName" class="form-control-clean" placeholder="Contoh: SMA NEGERI 1 KREASI BANGSA" required oninput="Forms.updateSettingsLivePreview()">
+                            <small class="form-hint-text">Muncul sebagai judul utama di header website dan kop surat resmi.</small>
+                        </div>
+
+                        <div class="form-group-clean">
+                            <label>Motto / Slogan Sekolah</label>
+                            <input type="text" id="setSchoolMotto" class="form-control-clean" placeholder="Contoh: Berkarakter Unggul, Berprestasi Gemilang, Berbudaya Disiplin" oninput="Forms.updateSettingsLivePreview()">
+                            <small class="form-hint-text">Ditampilkan anggun tepat di bawah nama sekolah pada header.</small>
+                        </div>
+
+                        <div class="form-group-clean">
+                            <label>Teks Label Portal Header (Pill Kanan Atas) *</label>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <input type="text" id="setSchoolHeaderBadge" class="form-control-clean" placeholder="Contoh: 🛡️ Portal Kesiswaan & Kedisiplinan" oninput="Forms.updateSettingsLivePreview()">
+                                <button type="button" class="btn btn-outline btn-sm" onclick="Forms.resetHeaderBadgeDefault()" title="Kembalikan ke Teks Standar">Default</button>
+                            </div>
+                            <small class="form-hint-text">Badge status di pojok kanan atas sebelum pengguna masuk (bisa disesuaikan dengan emoji & kata-kata sekolah Anda).</small>
+                        </div>
+
+                        <div class="form-group-clean">
+                            <label>Alamat Lengkap & Kontak Sekolah (Kop Surat Cetak)</label>
+                            <input type="text" id="setSchoolAddress" class="form-control-clean" placeholder="Jl. Ki Hajar Dewantara No. 101, Kota Pendidikan - Telp. (021) 7890-1234">
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                            <div class="form-group-clean">
+                                <label>Nama Kepala Sekolah</label>
+                                <input type="text" id="setHeadmaster" class="form-control-clean" placeholder="Nama & Gelar Lengkap">
+                            </div>
+                            <div class="form-group-clean">
+                                <label>Nama Wakasek Kesiswaan</label>
+                                <input type="text" id="setHeadOfStudent" class="form-control-clean" placeholder="Nama & Gelar Lengkap">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PANE 2: BESAR KECIL & PROPORSI LOGO -->
+                    <div id="tabSettingsPaneSizing" class="settings-tab-pane">
+                        <!-- PENGATUR UKURAN LOGO -->
+                        <div class="sizing-section-card">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                <label style="font-weight: 700; color: var(--text-main); margin: 0;">📏 Ukuran Logo Header (Proporsional Slider)</label>
+                                <span id="logoSizeValBadge" class="size-pill-badge">46 px</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 1rem;">
+                                <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">36px</span>
+                                <input type="range" id="setSchoolLogoSize" min="36" max="76" step="2" value="46" class="form-range-clean" oninput="Forms.updateSettingsLivePreview()">
+                                <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">76px</span>
+                            </div>
+                            <!-- Tombol Preset Ukuran Cepat -->
+                            <div style="display: flex; gap: 0.4rem; margin-top: 0.6rem; flex-wrap: wrap;">
+                                <button type="button" class="btn-preset-size" onclick="Forms.setLogoSizePreset(40)">Ringkas (40px)</button>
+                                <button type="button" class="btn-preset-size" onclick="Forms.setLogoSizePreset(46)">Standar (46px)</button>
+                                <button type="button" class="btn-preset-size" onclick="Forms.setLogoSizePreset(54)">Sedang (54px)</button>
+                                <button type="button" class="btn-preset-size" onclick="Forms.setLogoSizePreset(64)">Besar (64px)</button>
+                            </div>
+                        </div>
+
+                        <!-- BENTUK & GAYA LOGO -->
+                        <div class="form-group-clean" style="margin-top: 1rem;">
+                            <label>Bentuk Proporsi Logo (Border Radius)</label>
+                            <input type="hidden" id="setSchoolLogoShape" value="rounded">
+                            <div class="shape-grid-picker" id="shapeGridContainer">
+                                <div class="shape-picker-card active" data-shape="rounded" onclick="Forms.setLogoShape('rounded')">
+                                    <div class="shape-visual shape-rounded"></div>
+                                    <span class="shape-label">Melengkung Halus</span>
+                                    <span class="shape-sub">Rounded (12px)</span>
+                                </div>
+                                <div class="shape-picker-card" data-shape="circle" onclick="Forms.setLogoShape('circle')">
+                                    <div class="shape-visual shape-circle"></div>
+                                    <span class="shape-label">Lingkaran Sempurna</span>
+                                    <span class="shape-sub">Circle (Bulat)</span>
+                                </div>
+                                <div class="shape-picker-card" data-shape="squircle" onclick="Forms.setLogoShape('squircle')">
+                                    <div class="shape-visual shape-squircle"></div>
+                                    <span class="shape-label">Kurva Modern</span>
+                                    <span class="shape-sub">Squircle (18px)</span>
+                                </div>
+                                <div class="shape-picker-card" data-shape="square" onclick="Forms.setLogoShape('square')">
+                                    <div class="shape-visual shape-square"></div>
+                                    <span class="shape-label">Kotak Tegas</span>
+                                    <span class="shape-sub">Square (4px)</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- LATAR BELAKANG LOGO -->
+                        <div class="form-group-clean">
+                            <label>Latar Belakang Wadah Logo</label>
+                            <select id="setSchoolLogoBg" class="form-control-clean" onchange="Forms.updateSettingsLivePreview()">
+                                <option value="white">⚪ Putih Bersih (Sangat Direkomendasikan untuk Logo Transparan / Resmi)</option>
+                                <option value="theme">🎨 Mengikuti Warna Aksen Tema Sekolah</option>
+                                <option value="transparent">🪟 Transparan Penuh (Tanpa Wadah)</option>
+                            </select>
+                        </div>
+
+                        <!-- BESAR KECIL HURUF JUDUL & SLOGAN -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 0.5rem;">
+                            <div class="form-group-clean">
+                                <label>Besar Kecil Nama Sekolah</label>
+                                <select id="setSchoolTitleSize" class="form-control-clean" onchange="Forms.updateSettingsLivePreview()">
+                                    <option value="small">🔤 Ringkas (1.02rem)</option>
+                                    <option value="normal" selected>🔤 Standar Proporsional (1.18rem)</option>
+                                    <option value="large">🔤 Sedang Berwibawa (1.38rem)</option>
+                                    <option value="xlarge">🔤 Besar Menonjol (1.58rem)</option>
+                                </select>
+                            </div>
+                            <div class="form-group-clean">
+                                <label>Besar Kecil Motto / Slogan</label>
+                                <select id="setSchoolMottoSize" class="form-control-clean" onchange="Forms.updateSettingsLivePreview()">
+                                    <option value="small">🔤 Minimalis (0.70rem)</option>
+                                    <option value="normal" selected>🔤 Standar Proporsional (0.78rem)</option>
+                                    <option value="large">🔤 Jelas & Nyaman (0.88rem)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                            <div class="form-group-clean">
+                                <label>Besar Kecil Teks Badge Portal</label>
+                                <select id="setSchoolBadgeSize" class="form-control-clean" onchange="Forms.updateSettingsLivePreview()">
+                                    <option value="small">🔤 Ringkas Halus (0.78rem)</option>
+                                    <option value="normal" selected>🔤 Standar Proporsional (0.85rem)</option>
+                                    <option value="large">🔤 Luwes Menonjol (0.95rem)</option>
+                                </select>
+                            </div>
+                            <div class="form-group-clean">
+                                <label>Skala Ukuran Seluruh Website</label>
+                                <select id="setSchoolBaseFontScale" class="form-control-clean" onchange="Forms.updateSettingsLivePreview()">
+                                    <option value="compact">🔍 95% (Ringkas & Kompak)</option>
+                                    <option value="normal" selected>🔍 100% (Standar Ideal Proporsional)</option>
+                                    <option value="relaxed">🔍 105% (Luwes & Lega di Mata)</option>
+                                    <option value="large">🔍 110% (Besar Ramah Penglihatan)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PANE 3: FONT, LOGO & TEMA VISUAL -->
+                    <div id="tabSettingsPaneTheme" class="settings-tab-pane">
+                        <!-- UPLOAD BERKAS GAMBAR LOGO SEKOLAH -->
+                        <div class="form-group-clean">
+                            <label>Berkas Gambar Logo Sekolah (PNG / JPG / WebP / SVG)</label>
+                            <div class="upload-box-wrapper">
+                                <input type="file" id="setSchoolLogoFile" accept="image/*" class="form-control-clean" style="padding: 0.35rem 0.5rem;">
+                                <div id="logoPreviewBox" class="upload-preview-container" style="display: none;">
+                                    <img id="logoPreviewImg" src="" alt="Pratinjau Logo" class="upload-preview-thumb">
+                                    <div>
+                                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px;">Logo gambar aktif</div>
+                                        <button type="button" class="btn-remove-preview" onclick="Forms.clearLogoUpload()">✕ Gunakan Emoji Saja</button>
+                                    </div>
+                                </div>
+                                <span style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-top: 4px;">
+                                    Logo gambar akan ditampilkan proporsional di header navbar dan kop surat laporan.
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="form-group-clean">
+                            <label>Logo Cadangan (Emoji / Teks Singkat jika tidak ada gambar)</label>
+                            <input type="text" id="setSchoolLogo" class="form-control-clean" maxlength="4" placeholder="🏫" oninput="Forms.updateSettingsLivePreview()">
+                        </div>
+
+                        <!-- PILIHAN FONT UTAMA SEKOLAH -->
+                        <div class="form-group-clean">
+                            <label>Pilihan Font Populer & Luwes (Google Fonts)</label>
+                            <select id="setSchoolFont" class="form-control-clean" onchange="Forms.updateSettingsLivePreview()">
+                                <option value="'Plus Jakarta Sans', sans-serif">🎯 Plus Jakarta Sans (Modern, Bersih & Standar UI Digital Nasional)</option>
+                                <option value="'Outfit', sans-serif">💎 Outfit (Geometris Elegan, Luwes & Segar Kekinian)</option>
+                                <option value="'Poppins', sans-serif">🌟 Poppins (Bulat Ramah, Sangat Nyaman & Menyenangkan Dibaca)</option>
+                                <option value="'Inter', sans-serif">⚡ Inter (Presisi Tinggi, Standar UI Global & Ultra Jelas)</option>
+                                <option value="'Montserrat', sans-serif">🏛️ Montserrat (Megah, Kokoh, Bergengsi & Berkarakter)</option>
+                                <option value="'Playfair Display', serif">📜 Playfair Display (Klasik Mewah, Berwibawa & Literer)</option>
+                                <option value="'Merriweather', serif">📖 Merriweather (Literasi Formal Akademik & Hangat)</option>
+                            </select>
+                            
+                            <!-- Sampel Teks Font -->
+                            <div id="fontSamplePreview" class="font-sample-card">
+                                <span style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 4px;">Contoh Tampilan Huruf:</span>
+                                <div style="font-size: 1.05rem; font-weight: 700; color: var(--text-main); margin-bottom: 2px;">
+                                    SIKESISWAAN: Membangun Karakter Unggul & Berakhlak Mulia
+                                </div>
+                                <div style="font-size: 0.85rem; color: var(--text-muted);">
+                                    ABCDEFGHIJKLMNOPQRSTUVWXYZ &bull; 0123456789
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group-clean">
+                            <label>Warna Aksen Tema Dasbor & Tombol</label>
+                            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                <select id="setThemeColor" class="form-control-clean" style="flex: 1;" onchange="Forms.handleThemeColorPresetChange()">
+                                    <option value="#2563eb">🔵 Biru Royal (Standar)</option>
+                                    <option value="#059669">🟢 Hijau Zamrud (Islami / Karakter)</option>
+                                    <option value="#7c3aed">🟣 Ungu Elegan (Ningrat / Prestisius)</option>
+                                    <option value="#4f46e5">🔷 Indigo Modern (Teknologi & Inovasi)</option>
+                                    <option value="#dc2626">🔴 Merah Berani (Semangat Juara)</option>
+                                    <option value="#d97706">👑 Emas Kemuliaan (Royal Gold)</option>
+                                    <option value="#0f172a">🌌 Midnight Slate (Elegan Minimalis)</option>
+                                    <option value="custom">🎨 Pilih Warna Kustom Bebas...</option>
+                                </select>
+                                <input type="color" id="setThemeColorCustom" value="#2563eb" title="Pilih warna kustom bebas" style="width: 44px; height: 40px; padding: 2px; border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer;" oninput="Forms.handleCustomThemeColorInput()">
+                            </div>
+                        </div>
+
+                        <!-- UPLOAD BERKAS GAMBAR TEMA LATAR BELAKANG DASBOR -->
+                        <div class="form-group-clean">
+                            <label>Upload Berkas Gambar Tema Dasbor (Wallpaper Latar Belakang)</label>
+                            <div class="upload-box-wrapper">
+                                <input type="file" id="setDashboardBgFile" accept="image/*" class="form-control-clean" style="padding: 0.35rem 0.5rem;">
+                                <div id="bgPreviewBox" class="upload-preview-container" style="display: none;">
+                                    <img id="bgPreviewImg" src="" alt="Pratinjau Wallpaper" class="upload-preview-bg">
+                                    <div>
+                                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px;">Wallpaper dasbor aktif</div>
+                                        <button type="button" class="btn-remove-preview" onclick="Forms.clearDashboardBgUpload()">✕ Hapus Wallpaper</button>
+                                    </div>
+                                </div>
+                                <span style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-top: 4px;">
+                                    Dasbor awal akan menggunakan gambar ini secara penuh (edge-to-edge).
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="form-group-clean">
+                            <label>Efek & Kelembutan Latar Belakang (Glassmorphism & Kenyamanan Visual)</label>
+                            <select id="setWallpaperEffect" class="form-control-clean">
+                                <option value="light">🌟 Rekomendasi Profesional: Seimbang, Sejuk & Nyaman di Mata (Default)</option>
+                                <option value="glass">💎 Frosted Glass Modern (Kaca Buram Mewah & Halus)</option>
+                                <option value="dark">🌌 Dark Cinematic (Mode Gelap Berkelas & Elegan)</option>
+                                <option value="vignette">🎭 Shadow Vignette (Sorot Fokus Tengah Sinematik)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="modal-card-footer" style="display: flex; justify-content: space-between; align-items: center;">
+                    <button type="button" class="btn btn-outline" onclick="Forms.closeAllModals()">Batal</button>
+                    <button type="submit" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 0.5rem;">
+                        <span>💾</span> Simpan Pengaturan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         MODAL 5: KELOLA ANGGOTA GURU / KESISWAAN (SUPER ADMIN)
+         ===================================================================== -->
+    <!-- =====================================================================
+         MODAL 5: KELOLA ANGGOTA GURU / KESISWAAN (SUPER ADMIN)
+         ===================================================================== -->
+    <div id="modalManageTeachers" class="modal-backdrop">
+        <div class="modal-card" style="max-width: 800px; width: 95%;">
+            <div class="modal-card-header">
+                <div>
+                    <h3 style="margin-bottom: 2px;">👥 Kelola Anggota Guru & Tim Kesiswaan</h3>
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">Tambah, perbarui data anggota, jabatan, sekbid, pokja, dan kelola password akun</p>
+                </div>
+                <button class="btn-outline btn-sm" onclick="Forms.closeAllModals()">&times; Tutup</button>
+            </div>
+            <div class="modal-card-body" style="max-height: 80vh; overflow-y: auto;">
+                <!-- FORM TAMBAH GURU BARU -->
+                <div style="background: #f8fafc; border: 1px solid var(--border); border-radius: 10px; padding: 1.15rem; margin-bottom: 1.25rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                        <strong style="color: var(--text-main); font-size: 0.95rem;">➕ Tambah Anggota / Guru Baru:</strong>
+                        <span style="font-size: 0.75rem; color: var(--text-muted);">Data dapat diedit kembali kapan saja</span>
+                    </div>
+                    <form id="addTeacherForm" onsubmit="Forms.handleAddTeacher(event)">
+                        <!-- Baris 1: Nama & Jabatan -->
+                        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 0.65rem; margin-bottom: 0.65rem;">
+                            <div>
+                                <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 2px;">Nama Lengkap & Gelar Guru *</label>
+                                <input type="text" id="newTeacherName" class="form-control-clean" placeholder="Contoh: Dra. Hj. Siti Rahma, M.Pd" required>
+                            </div>
+                            <div>
+                                <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 2px;">Jabatan Utama *</label>
+                                <select id="newTeacherRoleSelect" class="form-control-clean">
+                                    <option value="Waka Kesiswaan" selected>Waka Kesiswaan</option>
+                                    <option value="Sekretaris">Sekretaris</option>
+                                    <option value="Bendahara">Bendahara</option>
+                                    <option value="Admin">Admin</option>
+                                    <option value="Staf Sekbid 1">Staf Sekbid 1</option>
+                                    <option value="Staf Sekbid 2">Staf Sekbid 2</option>
+                                    <option value="Staf Sekbid 3">Staf Sekbid 3</option>
+                                    <option value="Staf Sekbid 4">Staf Sekbid 4</option>
+                                    <option value="Staf Sekbid 5">Staf Sekbid 5</option>
+                                    <option value="Staf Sekbid 6">Staf Sekbid 6</option>
+                                    <option value="Staf Sekbid 7">Staf Sekbid 7</option>
+                                    <option value="Staf Sekbid 8">Staf Sekbid 8</option>
+                                    <option value="Staf Sekbid 9">Staf Sekbid 9</option>
+                                    <option value="Staf Sekbid 10">Staf Sekbid 10</option>
+                                    <option value="Koordinator BK">Koordinator BK</option>
+                                    <option value="Guru BK / Konselor">Guru BK / Konselor</option>
+                                    <option value="Wali Kelas">Wali Kelas</option>
+                                    <option value="Pembina Ekstrakurikuler">Pembina Ekstrakurikuler</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Baris 2: Sekbid & Pembina (Bisa pilih lebih dari 1) -->
+                        <div style="display: grid; grid-template-columns: 1fr 1.6fr; gap: 0.65rem; margin-bottom: 0.65rem;">
+                            <div>
+                                <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 2px;">Seksi Bidang (Sekbid)</label>
+                                <select id="newTeacherSekbid" class="form-control-clean">
+                                    <option value="-">- Tidak Ada (Pembina Umum) -</option>
+                                    <option value="Sekbid 1: Keimanan & Ketaqwaan">Sekbid 1: Keimanan & Ketaqwaan</option>
+                                    <option value="Sekbid 2: Budi Pekerti Luhur">Sekbid 2: Budi Pekerti Luhur</option>
+                                    <option value="Sekbid 3: Kepribadian Unggul & Wawasan Kebangsaan">Sekbid 3: Kepribadian Unggul & Kebangsaan</option>
+                                    <option value="Sekbid 4: Prestasi Akademik, Seni & Olahraga">Sekbid 4: Prestasi Akademik & Olahraga</option>
+                                    <option value="Sekbid 5: Demokrasi, HAM & Lingkungan Hidup">Sekbid 5: Demokrasi & Lingkungan Hidup</option>
+                                    <option value="Sekbid 6: Kreativitas & Kewirausahaan">Sekbid 6: Kreativitas & Kewirausahaan</option>
+                                    <option value="Sekbid 7: Kualitas Jasmani & Kesehatan">Sekbid 7: Jasmani, Kesehatan & Gizi</option>
+                                    <option value="Sekbid 8: Sastra, Bahasa & Budaya">Sekbid 8: Sastra & Budaya</option>
+                                    <option value="Sekbid 9: Teknologi Informasi & Komunikasi (TIK)">Sekbid 9: TIK & Komunikasi</option>
+                                    <option value="Sekbid 10: Komunikasi Bahasa Asing">Sekbid 10: Bahasa Asing</option>
+                                    <option value="Semua Sekbid (Koordinator Utama)">Semua Sekbid (Koordinator)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 2px;">Pembina : <span style="font-weight: 400; color: var(--primary);">(Bisa pilih lebih dari 1)</span></label>
+                                <div class="pembina-selector-wrap">
+                                    <div class="pembina-chips-grid" id="newTeacherPembinaChipsGrid"></div>
+                                    <div class="pembina-custom-row">
+                                        <input type="text" id="newTeacherCustomPembinaInput" class="form-control-clean" style="height: 30px; font-size: 0.76rem; padding: 2px 8px;" placeholder="+ Tulis ekskul / pembina lainnya..." onkeydown="if(event.key==='Enter'){event.preventDefault(); Forms.addCustomPembinaChip('new');}">
+                                        <button type="button" class="btn btn-outline btn-sm" onclick="Forms.addCustomPembinaChip('new')" style="padding: 2px 8px; font-size: 0.76rem; white-space: nowrap;">+ Tambah</button>
+                                    </div>
+                                    <input type="hidden" id="newTeacherPokja" value="">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Baris 3: Username, Password & Tombol -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 0.65rem; align-items: flex-end;">
+                            <div>
+                                <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 2px;">Username Login *</label>
+                                <input type="text" id="newTeacherUsername" class="form-control-clean" placeholder="Contoh: gurubk2" required>
+                            </div>
+                            <div>
+                                <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 2px;">Password Akun *</label>
+                                <input type="text" id="newTeacherPassword" class="form-control-clean" placeholder="Password (misal: 123)" required>
+                            </div>
+                            <button type="submit" class="btn btn-success" style="white-space: nowrap; height: 38px;">
+                                + Daftarkan Guru
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- DAFTAR GURU TERDAFTAR -->
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                    <strong>Daftar Guru / Staf Terdaftar:</strong>
+                    <span style="font-size: 0.75rem; color: var(--text-muted);">Klik ✏️ Edit untuk mengubah nama, jabatan, sekbid, pokja & password</span>
+                </div>
+                <div id="teachersListContainer" style="max-height: 280px; overflow-y: auto;">
+                    <!-- Diisi via JavaScript -->
+                </div>
+            </div>
+            <div class="modal-card-footer">
+                <button type="button" class="btn btn-outline" onclick="Forms.closeAllModals()">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         MODAL 5B: EDIT ANGGOTA GURU / KESISWAAN (SUPER ADMIN)
+         ===================================================================== -->
+    <div id="modalEditTeacher" class="modal-backdrop">
+        <div class="modal-card" style="max-width: 600px; width: 95%;">
+            <div class="modal-card-header">
+                <div>
+                    <h3 style="margin-bottom: 2px;">✏️ Edit Data Guru & Tim Kesiswaan</h3>
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">Ubah nama, jabatan, sekbid, pokja, dan password akun</p>
+                </div>
+                <button class="btn-outline btn-sm" onclick="Forms.closeModal('modalEditTeacher')">&times; Tutup</button>
+            </div>
+            <form id="editTeacherForm" onsubmit="Forms.handleSaveEditTeacher(event)">
+                <div class="modal-card-body">
+                    <input type="hidden" id="editTeacherUsername">
+
+                    <div class="form-group-clean">
+                        <label>Nama Lengkap & Gelar Guru *</label>
+                        <input type="text" id="editTeacherName" class="form-control-clean" required placeholder="Contoh: Dra. Hj. Siti Rahma, M.Pd">
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                        <div class="form-group-clean">
+                            <label>Jabatan Utama *</label>
+                            <select id="editTeacherJabatanPreset" class="form-control-clean" onchange="Forms.handleEditTeacherJabatanChange()">
+                                <option value="Waka Kesiswaan">Waka Kesiswaan</option>
+                                <option value="Sekretaris">Sekretaris</option>
+                                <option value="Bendahara">Bendahara</option>
+                                <option value="Admin">Admin</option>
+                                <option value="Staf Sekbid 1">Staf Sekbid 1</option>
+                                <option value="Staf Sekbid 2">Staf Sekbid 2</option>
+                                <option value="Staf Sekbid 3">Staf Sekbid 3</option>
+                                <option value="Staf Sekbid 4">Staf Sekbid 4</option>
+                                <option value="Staf Sekbid 5">Staf Sekbid 5</option>
+                                <option value="Staf Sekbid 6">Staf Sekbid 6</option>
+                                <option value="Staf Sekbid 7">Staf Sekbid 7</option>
+                                <option value="Staf Sekbid 8">Staf Sekbid 8</option>
+                                <option value="Staf Sekbid 9">Staf Sekbid 9</option>
+                                <option value="Staf Sekbid 10">Staf Sekbid 10</option>
+                                <option value="Koordinator BK">Koordinator BK</option>
+                                <option value="Guru BK / Konselor">Guru BK / Konselor</option>
+                                <option value="Wali Kelas">Wali Kelas</option>
+                                <option value="Pembina Ekstrakurikuler">Pembina Ekstrakurikuler</option>
+                                <option value="custom">✏️ Tulis Jabatan Lainnya...</option>
+                            </select>
+                            <input type="text" id="editTeacherCustomJabatan" class="form-control-clean" placeholder="Tulis nama jabatan..." style="display: none; margin-top: 5px;">
+                        </div>
+
+                        <div class="form-group-clean">
+                            <label>Hak Akses Sistem *</label>
+                            <select id="editTeacherRole" class="form-control-clean">
+                                <option value="guru">Guru / Tim Kesiswaan</option>
+                                <option value="superadmin">Super Administrator (Akses Penuh)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group-clean">
+                        <label>Seksi Bidang (Sekbid) Pembinaan Kesiswaan</label>
+                        <select id="editTeacherSekbid" class="form-control-clean">
+                            <option value="-">- Tidak Ada (Pembina Umum / Pengarah) -</option>
+                            <option value="Sekbid 1: Keimanan & Ketaqwaan">Sekbid 1: Keimanan & Ketaqwaan terhadap Tuhan YME</option>
+                            <option value="Sekbid 2: Budi Pekerti Luhur">Sekbid 2: Budi Pekerti Luhur & Akhlak Mulia</option>
+                            <option value="Sekbid 3: Kepribadian Unggul & Wawasan Kebangsaan">Sekbid 3: Kepribadian Unggul, Kebangsaan & Bela Negara</option>
+                            <option value="Sekbid 4: Prestasi Akademik, Seni & Olahraga">Sekbid 4: Prestasi Akademik, Seni & Olahraga</option>
+                            <option value="Sekbid 5: Demokrasi, HAM & Lingkungan Hidup">Sekbid 5: Demokrasi, HAM & Lingkungan Hidup</option>
+                            <option value="Sekbid 6: Kreativitas, Keterampilan & Kewirausahaan">Sekbid 6: Kreativitas, Keterampilan & Kewirausahaan</option>
+                            <option value="Sekbid 7: Kualitas Jasmani, Kesehatan & Gizi">Sekbid 7: Kualitas Jasmani, Kesehatan & Gizi</option>
+                            <option value="Sekbid 8: Sastra, Bahasa & Budaya">Sekbid 8: Sastra, Bahasa & Budaya</option>
+                            <option value="Sekbid 9: Teknologi Informasi & Komunikasi (TIK)">Sekbid 9: Teknologi Informasi & Komunikasi (TIK)</option>
+                            <option value="Sekbid 10: Komunikasi Bahasa Asing">Sekbid 10: Komunikasi dalam Bahasa Asing</option>
+                            <option value="Semua Sekbid (Koordinator Utama)">Semua Sekbid (Koordinator Utama)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group-clean">
+                        <label>Pembina : <span style="font-weight: 400; color: var(--primary);">(Bisa pilih lebih dari 1)</span></label>
+                        <div class="pembina-selector-wrap">
+                            <div class="pembina-chips-grid" id="editTeacherPembinaChipsGrid"></div>
+                            <div class="pembina-custom-row">
+                                <input type="text" id="editTeacherCustomPembinaInput" class="form-control-clean" style="height: 30px; font-size: 0.76rem; padding: 2px 8px;" placeholder="+ Tulis ekskul / pembina lainnya..." onkeydown="if(event.key==='Enter'){event.preventDefault(); Forms.addCustomPembinaChip('edit');}">
+                                <button type="button" class="btn btn-outline btn-sm" onclick="Forms.addCustomPembinaChip('edit')" style="padding: 2px 8px; font-size: 0.76rem; white-space: nowrap;">+ Tambah</button>
+                            </div>
+                            <input type="hidden" id="editTeacherPokja" value="">
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                        <div class="form-group-clean">
+                            <label>Username (ID Login Akun)</label>
+                            <input type="text" id="editTeacherUsernameDisplay" class="form-control-clean" readonly disabled style="background: #f1f5f9; cursor: not-allowed; font-weight: 600;">
+                        </div>
+                        <div class="form-group-clean">
+                            <label>Password Akun *</label>
+                            <input type="text" id="editTeacherPassword" class="form-control-clean" required placeholder="Ketik kata sandi akun">
+                            <span style="font-size: 0.72rem; color: var(--text-muted); display: block; margin-top: 3px;">
+                                Password dapat diubah/direset langsung di sini.
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-card-footer">
+                    <button type="submit" class="btn btn-primary">
+                        💾 Simpan Perubahan Guru
+                    </button>
+                    <button type="button" class="btn btn-outline" onclick="Forms.closeModal('modalEditTeacher')">
+                        Batal
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         MODAL 6: KELOLA KATA MUTIARA / MOTIVASI (SUPER ADMIN)
+         ===================================================================== -->
+    <div id="modalManageQuotes" class="modal-backdrop">
+        <div class="modal-card" style="max-width: 680px; width: 95%;">
+            <div class="modal-card-header">
+                <div>
+                    <h3 style="margin-bottom: 2px;">💡 Kelola Kata Mutiara & Motivasi Dasbor</h3>
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">Kustomisasi kata mutiara dengan tema warna, gaya tipografi font, dan efek visual</p>
+                </div>
+                <button class="btn-outline btn-sm" onclick="Forms.closeAllModals()">&times; Tutup</button>
+            </div>
+            <div class="modal-card-body" style="max-height: 78vh; overflow-y: auto;">
+                <!-- FORM TAMBAH KATA MUTIARA -->
+                <form id="addQuoteForm" onsubmit="Forms.handleAddQuote(event)" style="margin-bottom: 1.25rem;">
+                    
+                    <div class="form-group-clean">
+                        <label>Tulis Kata Mutiara / Motivasi Baru *</label>
+                        <textarea id="newQuoteText" class="form-control-clean" rows="2" placeholder="Tulis kutipan yang menginspirasi siswa..." required oninput="Forms.updateQuoteLivePreview()"></textarea>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                        <div class="form-group-clean">
+                            <label>Tokoh / Sumber Kutipan *</label>
+                            <input type="text" id="newQuoteAuthor" class="form-control-clean" placeholder="Contoh: Ki Hajar Dewantara / B.J. Habibie" required oninput="Forms.updateQuoteLivePreview()">
+                        </div>
+                        <div class="form-group-clean">
+                            <label>Lencana / Kategori Motivasi</label>
+                            <select id="newQuoteKategori" class="form-control-clean" onchange="Forms.updateQuoteLivePreview()">
+                                <option value="💡 Kata Mutiara & Motivasi Hari Ini">💡 Kata Mutiara & Motivasi</option>
+                                <option value="🌟 Motivasi Berkarakter">🌟 Motivasi Berkarakter</option>
+                                <option value="🏆 Semangat Juara & Prestasi">🏆 Semangat Juara & Prestasi</option>
+                                <option value="💎 Nilai Budi Pekerti">💎 Nilai Budi Pekerti</option>
+                                <option value="📜 Nasihat Bijak Kehidupan">📜 Nasihat Bijak Kehidupan</option>
+                                <option value="🚀 Cita-cita & Sukses Masa Depan">🚀 Cita-cita Masa Depan</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- KUSTOMISASI: WARNA, FONT, EFEK LAINNYA -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; margin-top: 0.25rem;">
+                        <!-- 1. WARNA & TEMA -->
+                        <div class="form-group-clean">
+                            <label>🎨 Warna & Tema Kartu</label>
+                            <select id="newQuoteWarna" class="form-control-clean" onchange="Forms.handleQuoteThemeChange()">
+                                <option value="ocean">🌊 Deep Ocean (Biru Samudra)</option>
+                                <option value="gold">👑 Royal Gold (Emas Juara)</option>
+                                <option value="emerald">🌿 Emerald (Hijau Karakter)</option>
+                                <option value="purple">🔮 Amethyst (Ungu Ningrat)</option>
+                                <option value="ruby">🍷 Crimson (Merah Semangat)</option>
+                                <option value="sunset">🌅 Sunset (Jingga Senja)</option>
+                                <option value="dark">🌌 Midnight (Hitam Pekat)</option>
+                                <option value="glass">💎 Frosted Glass (Kaca Transparan)</option>
+                                <option value="custom">🎨 Warna Kustom Bebas...</option>
+                            </select>
+                            <input type="color" id="newQuoteCustomColor" value="#1e3a8a" title="Pilih warna latar kustom" style="display: none; width: 100%; height: 36px; margin-top: 4px; padding: 2px; border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer;" oninput="Forms.updateQuoteLivePreview()">
+                        </div>
+
+                        <!-- 2. FONT -->
+                        <div class="form-group-clean">
+                            <label>✒️ Gaya Tulisan (Font)</label>
+                            <select id="newQuoteFont" class="form-control-clean" onchange="Forms.updateQuoteLivePreview()">
+                                <option value="playfair">📜 Playfair Display (Serif Mewah)</option>
+                                <option value="caveat">✒️ Caveat (Tulisan Tangan Indah)</option>
+                                <option value="merriweather">📖 Merriweather (Literasi Klasik)</option>
+                                <option value="cinzel">🏛️ Cinzel (Monumen Formal)</option>
+                                <option value="outfit">💎 Outfit (Modern Geometris)</option>
+                                <option value="jakarta">🎯 Plus Jakarta Sans (Bersih)</option>
+                            </select>
+                        </div>
+
+                        <!-- 3. EFEK LAINNYA -->
+                        <div class="form-group-clean">
+                            <label>✨ Efek Visual Lainnya</label>
+                            <select id="newQuoteEfek" class="form-control-clean" onchange="Forms.updateQuoteLivePreview()">
+                                <option value="all">🌟 Efek Komplet (Glow+Watermark+Shimmer)</option>
+                                <option value="glow">✨ Radiant Glow (Pendar Kilau)</option>
+                                <option value="watermark">❝ ❞ Watermark Petik Raksasa</option>
+                                <option value="shimmer">💫 Animasi Shimmer Cahaya</option>
+                                <option value="float">🪟 Kaca Melayang (3D Hover)</option>
+                                <option value="neon">⚡ Neon Accent Border</option>
+                                <option value="none">🚫 Tanpa Efek Tambahan</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- KOTAK PRATINJAU LANGSUNG (LIVE PREVIEW) -->
+                    <div style="margin: 0.85rem 0 1rem 0;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                            <span style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em;">
+                                👁️ Pratinjau Tampilan Langsung (Live Preview)
+                            </span>
+                            <span style="font-size: 0.72rem; color: var(--text-light);">Tampilan yang akan terlihat di dasbor utama</span>
+                        </div>
+                        <div id="quoteLivePreviewCard" class="quote-card quote-theme-ocean quote-fx-all" style="margin-bottom: 0; min-height: 95px; padding: 1.15rem 1.35rem;">
+                            <div class="quote-watermark">“</div>
+                            <div class="quote-shimmer-beam"></div>
+                            <div class="quote-content" style="max-width: 100%;">
+                                <div id="prevQuoteBadge" class="quote-badge">💡 Kata Mutiara & Motivasi Hari Ini</div>
+                                <div id="prevQuoteText" class="quote-text quote-font-playfair">
+                                    "Disiplin adalah jembatan antara cita-cita mulia dan pencapaian yang nyata."
+                                </div>
+                                <div id="prevQuoteAuthor" class="quote-author">— Ki Hajar Dewantara</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 0.65rem; font-weight: 600;">
+                        + Tambah Kata Mutiara Berdesain
+                    </button>
+                </form>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.25rem; margin-bottom: 0.4rem;">
+                    <strong>Daftar Kata Mutiara Aktif:</strong>
+                    <span style="font-size: 0.75rem; color: var(--text-muted);">Klik 👁️ untuk tampilkan di dasbor</span>
+                </div>
+                <div id="quotesListContainer" style="max-height: 230px; overflow-y: auto;">
+                    <!-- Diisi via JavaScript -->
+                </div>
+            </div>
+            <div class="modal-card-footer">
+                <button type="button" class="btn btn-outline" onclick="Forms.closeAllModals()">Tutup</button>
+            </div>
+        </div>
+    </div>
+    <!-- =====================================================================
+         MODAL 7: TAMBAH AGENDA KEGIATAN KESISWAAN (ADMIN & SUPER ADMIN)
+         ===================================================================== -->
+    <div id="modalActivity" class="modal-backdrop">
+        <div class="modal-card">
+            <div class="modal-card-header">
+                <h3>📅 Tambah Agenda Kegiatan Kesiswaan</h3>
+                <button class="btn-outline btn-sm" onclick="Forms.closeAllModals()">&times; Tutup</button>
+            </div>
+            <form id="activityForm" onsubmit="Forms.handleActivitySubmit(event)">
+                <div class="modal-card-body">
+                    <div class="form-group-clean">
+                        <label>Nama Kegiatan Kesiswaan *</label>
+                        <input type="text" id="formActivityNama" class="form-control-clean" placeholder="Misal: Lomba Kebersihan Kelas & Go Green" required>
+                    </div>
+
+                    <div style="display: flex; gap: 0.75rem;">
+                        <div class="form-group-clean" style="flex: 1;">
+                            <label>Tanggal Pelaksanaan *</label>
+                            <input type="text" id="formActivityTanggal" class="form-control-clean" placeholder="Contoh: 15 Okt 2025" required>
+                        </div>
+                        <div class="form-group-clean" style="flex: 1;">
+                            <label>Kategori *</label>
+                            <select id="formActivityKategori" class="form-control-clean">
+                                <option value="Kedisiplinan & Karakter">Kedisiplinan & Karakter</option>
+                                <option value="Akademik & Riset">Akademik & Riset</option>
+                                <option value="Olahraga & Kesehatan">Olahraga & Kesehatan</option>
+                                <option value="Seni & Budaya">Seni & Budaya</option>
+                                <option value="Organisasi / OSIS">Organisasi / OSIS</option>
+                                <option value="Keagamaan">Keagamaan</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group-clean">
+                        <label>Tempat / Lokasi Kegiatan *</label>
+                        <input type="text" id="formActivityTempat" class="form-control-clean" placeholder="Contoh: Lapangan Utama / Aula Sekolah" required>
+                    </div>
+
+                    <div class="form-group-clean">
+                        <label>Deskripsi / Keterangan Singkat *</label>
+                        <textarea id="formActivityKeterangan" class="form-control-clean" rows="3" placeholder="Jelaskan tujuan dan partisipan kegiatan ini..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-card-footer">
+                    <button type="button" class="btn btn-outline" onclick="Forms.closeAllModals()">Batal</button>
+                    <button type="submit" class="btn btn-primary">Simpan Agenda Kegiatan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         MODAL 8: KELOLA JENIS PELANGGARAN & ATURAN SANKSI (SUPER ADMIN)
+         ===================================================================== -->
+    <div id="modalManageViolationsRules" class="modal-backdrop">
+        <div class="modal-card lg">
+            <div class="modal-card-header">
+                <h3>⚖️ Kelola Jenis Pelanggaran & Aturan Sanksi</h3>
+                <button class="btn-outline btn-sm" onclick="Forms.closeAllModals()">&times; Tutup</button>
+            </div>
+            <div class="modal-card-body">
+                <!-- SUB-TABS KHUSUS MODAL -->
+                <div class="simple-tabs-nav" style="margin-bottom: 1rem;">
+                    <button id="tabBtnManageViolations" class="simple-tab-btn active" onclick="Forms.switchViolationsRulesSubTab('violations')">
+                        ⚠️ Jenis Pelanggaran & Bobot Poin
+                    </button>
+                    <button id="tabBtnManageRules" class="simple-tab-btn" onclick="Forms.switchViolationsRulesSubTab('rules')">
+                        ⚖️ Rentang Poin & Sanksi Otomatis
+                    </button>
+                    <button id="tabBtnManageSurat" class="simple-tab-btn" onclick="Forms.switchViolationsRulesSubTab('surat')">
+                        📝 Format Surat Panggilan (Doc & PDF)
+                    </button>
+                </div>
+
+                <!-- SUB-PANE 1: MASTER JENIS PELANGGARAN -->
+                <div id="subPaneManageViolations">
+                    <div style="background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 1rem; margin-bottom: 1.25rem;">
+                        <strong style="display: block; margin-bottom: 0.75rem;">➕ Tambah Jenis Pelanggaran Baru:</strong>
+                        <form id="addViolationMasterForm" onsubmit="Forms.handleAddViolationMaster(event)">
+                            <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                <input type="text" id="newViolationName" class="form-control-clean" placeholder="Nama pelanggaran (contoh: Merusak fasilitas sekolah)" required style="flex: 2;">
+                                <select id="newViolationKategori" class="form-control-clean" style="flex: 1;">
+                                    <option value="Kedisiplinan">Kedisiplinan</option>
+                                    <option value="Kerapian">Kerapian</option>
+                                    <option value="Etika">Etika & Sopan Santun</option>
+                                    <option value="Berat">Pelanggaran Berat</option>
+                                </select>
+                            </div>
+                            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                <div style="display: flex; align-items: center; gap: 0.5rem; flex: 1;">
+                                    <span style="font-size: 0.85rem; font-weight: 600; white-space: nowrap;">Bobot Poin:</span>
+                                    <input type="number" id="newViolationPoints" class="form-control-clean" min="1" max="100" value="10" required style="width: 100px;">
+                                </div>
+                                <button type="submit" class="btn btn-danger" style="white-space: nowrap;">
+                                    + Tambah Pelanggaran
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <strong>Daftar Jenis Pelanggaran Terdaftar:</strong>
+                    <div id="violationsMasterListContainer" style="margin-top: 0.5rem; max-height: 280px; overflow-y: auto;">
+                        <!-- Diisi via JavaScript -->
+                    </div>
+                </div>
+
+                <!-- SUB-PANE 2: ATURAN RENTANG POIN & SANKSI OTOMATIS -->
+                <div id="subPaneManageRules" style="display: none;">
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+                        Tindak lanjut dan sanksi berikut akan otomatis terisi saat guru mencatat pelanggaran berdasarkan total akumulasi poin siswa.
+                    </p>
+                    <div id="rulesListContainer" style="max-height: 380px; overflow-y: auto;">
+                        <!-- Diisi via JavaScript -->
+                    </div>
+                </div>
+
+                <!-- SUB-PANE 3: FORMAT SURAT PANGGILAN ORANG TUA (SUPER ADMIN) -->
+                <div id="subPaneManageSurat" style="display: none;">
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+                        Atur redaksi template surat panggilan orang tua / wali siswa. Template ini akan otomatis diterapkan saat pengunduhan format Microsoft Word (.doc) dan cetak PDF resmi.
+                    </p>
+                    <form id="suratTemplateForm" onsubmit="Forms.handleSaveSuratTemplate(event)">
+                        <div style="display: flex; gap: 0.75rem; margin-bottom: 0.5rem;">
+                            <div class="form-group-clean" style="flex: 2;">
+                                <label>Instansi Pemerintah / Kop Surat Atas *</label>
+                                <input type="text" id="setSuratKopInstansi" class="form-control-clean" placeholder="Contoh: PEMERINTAH PROVINSI PENDIDIKAN" required>
+                            </div>
+                            <div class="form-group-clean" style="flex: 2;">
+                                <label>Format Nomor Surat *</label>
+                                <input type="text" id="setSuratNomorFormat" class="form-control-clean" placeholder="Contoh: 421.3 / {NOMOR} / KESISWAAN / {TAHUN}" required>
+                                <span style="font-size: 0.75rem; color: var(--text-muted);">{NOMOR} dan {TAHUN} otomatis terisi dinamis</span>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 0.75rem; margin-bottom: 0.5rem;">
+                            <div class="form-group-clean" style="flex: 2;">
+                                <label>Judul / Perihal Surat *</label>
+                                <input type="text" id="setSuratPerihal" class="form-control-clean" placeholder="Contoh: PANGGILAN ORANG TUA / WALI SISWA" required>
+                            </div>
+                            <div class="form-group-clean" style="flex: 1;">
+                                <label>Selang Hari Panggilan *</label>
+                                <input type="number" id="setSuratHariKerjaOffset" class="form-control-clean" min="1" max="14" value="2" required>
+                                <span style="font-size: 0.75rem; color: var(--text-muted);">Hari kerja dari tanggal terbit</span>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 0.75rem; margin-bottom: 0.5rem;">
+                            <div class="form-group-clean" style="flex: 1;">
+                                <label>Waktu / Jam Kehadiran *</label>
+                                <input type="text" id="setSuratWaktu" class="form-control-clean" placeholder="Contoh: Pukul 08.30 WIB s.d Selesai" required>
+                            </div>
+                            <div class="form-group-clean" style="flex: 1;">
+                                <label>Tempat / Ruangan Kehadiran *</label>
+                                <input type="text" id="setSuratTempat" class="form-control-clean" placeholder="Contoh: Ruang Bimbingan Konseling (BK) / Ruang Kesiswaan" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group-clean">
+                            <label>Teks / Paragraf Pembuka Surat *</label>
+                            <textarea id="setSuratPembuka" class="form-control-clean" rows="3" placeholder="Teks pembuka sebelum identitas siswa..." required></textarea>
+                        </div>
+
+                        <div class="form-group-clean">
+                            <label>Teks / Paragraf Penutup Surat *</label>
+                            <textarea id="setSuratPenutup" class="form-control-clean" rows="3" placeholder="Teks penutup setelah jadwal kehadiran..." required></textarea>
+                        </div>
+
+                        <div style="display: flex; gap: 0.75rem; margin-bottom: 0.5rem;">
+                            <div class="form-group-clean" style="flex: 1;">
+                                <label>Pejabat Kiri (Jabatan & Nama) *</label>
+                                <input type="text" id="setSuratPejabatKiriJabatan" class="form-control-clean" placeholder="Jabatan (contoh: Koordinator Guru BK)" required style="margin-bottom: 4px;">
+                                <input type="text" id="setSuratPejabatKiriNama" class="form-control-clean" placeholder="Nama Lengkap Pejabat" required>
+                            </div>
+                            <div class="form-group-clean" style="flex: 1;">
+                                <label>Pejabat Kanan (Jabatan & Nama) *</label>
+                                <input type="text" id="setSuratPejabatKananJabatan" class="form-control-clean" placeholder="Jabatan (contoh: Wakasek Bidang Kesiswaan)" required style="margin-bottom: 4px;">
+                                <input type="text" id="setSuratPejabatKananNama" class="form-control-clean" placeholder="Nama Lengkap Pejabat" required>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1rem;">
+                            <button type="button" class="btn btn-outline" onclick="Forms.resetSuratTemplateToDefault()">
+                                🔄 Kembalikan ke Standar
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                💾 Simpan Format Surat Panggilan
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="modal-card-footer">
+                <button type="button" class="btn btn-outline" onclick="Forms.closeAllModals()">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         MODAL 9: PRATINJAU & UNDUH SURAT PANGGILAN ORANG TUA (DOC / PDF)
+         ===================================================================== -->
+    <div id="modalSuratPanggilan" class="modal-backdrop">
+        <div class="modal-card xl">
+            <div class="modal-card-header" style="background: #fffbeb;">
+                <div>
+                    <h3 style="color: #92400e; font-size: 1.15rem; display: flex; align-items: center; gap: 0.5rem;">
+                        📄 Surat Panggilan Orang Tua / Wali Siswa
+                    </h3>
+                    <p id="modalSuratPanggilanSub" style="font-size: 0.8rem; color: #b45309; margin: 2px 0 0 0;">
+                        Diterbitkan otomatis karena akumulasi poin pelanggaran siswa telah melampaui batas kadar SP.
+                    </p>
+                </div>
+                <button class="btn-outline btn-sm" onclick="Forms.closeAllModals()">&times; Tutup</button>
+            </div>
+            <div class="modal-card-body" style="background: #f8fafc; padding: 1.25rem;">
+                <!-- ACTION BAR ATAS: DOWNLOAD DOC & CETAK PDF -->
+                <div style="display: flex; justify-content: space-between; align-items: center; background: #ffffff; padding: 0.85rem 1.25rem; border: 1px solid var(--border); border-radius: var(--radius-md); margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
+                    <div>
+                        <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-main);">Pilihan Ekspor Dokumen:</span>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">Unduh Word (.doc) untuk diedit di laptop, atau Cetak langsung jadi PDF</div>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                        <button id="btnDownloadSuratDocTop" class="btn btn-primary" onclick="Forms.downloadCurrentSuratDoc()">
+                            📥 Download Word (.doc)
+                        </button>
+                        <button id="btnPrintSuratPdfTop" class="btn btn-danger" onclick="Forms.printCurrentSuratPdf()">
+                            🖨️ Cetak / Simpan PDF
+                        </button>
+                    </div>
+                </div>
+
+                <!-- PRATINJAU SURAT RESMI DI LEMBAR KERTAS -->
+                <div id="previewSuratContainer" class="paper-sheet-preview">
+                    <!-- Diisi dinamis via Forms.openSuratPanggilanModal() -->
+                </div>
+            </div>
+            <div class="modal-card-footer">
+                <button type="button" class="btn btn-outline" onclick="Forms.closeAllModals()">Tutup</button>
+                <button type="button" class="btn btn-primary" onclick="Forms.downloadCurrentSuratDoc()">
+                    📥 Download Word (.doc)
+                </button>
+                <button type="button" class="btn btn-danger" onclick="Forms.printCurrentSuratPdf()">
+                    🖨️ Cetak / Simpan PDF
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         MODAL 10: PRATINJAU & CETAK RAPOR KARAKTER SISWA (PDF)
+         ===================================================================== -->
+    <div id="modalRaporKarakter" class="modal-backdrop">
+        <div class="modal-card xl">
+            <div class="modal-card-header" style="background: #f0fdf4;">
+                <div>
+                    <h3 style="color: #166534; font-size: 1.15rem; display: flex; align-items: center; gap: 0.5rem;">
+                        🖨️ Rapor Karakter, Disiplin & Prestasi Siswa
+                    </h3>
+                    <p style="font-size: 0.8rem; color: #15803d; margin: 2px 0 0 0;">
+                        Dokumen resmi rekapitulasi biodata lengkap, riwayat prestasi, dan catatan pelanggaran siswa (Siap Cetak / Simpan PDF).
+                    </p>
+                </div>
+                <button class="btn-outline btn-sm" onclick="Forms.closeAllModals()">&times; Tutup</button>
+            </div>
+            <div class="modal-card-body" style="background: #f8fafc; padding: 1.25rem;">
+                <!-- ACTION BAR ATAS -->
+                <div style="display: flex; justify-content: space-between; align-items: center; background: #ffffff; padding: 0.85rem 1.25rem; border: 1px solid var(--border); border-radius: var(--radius-md); margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
+                    <div>
+                        <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-main);">Pratinjau Dokumen PDF Resmi:</span>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">Memuat biodata lengkap, tabel prestasi, tabel pelanggaran, dan 4 kolom tanda tangan.</div>
+                    </div>
+                    <button class="btn btn-danger" onclick="SiswaPortal.executePrintRapor()">
+                        🖨️ Cetak / Simpan PDF Sekarang
+                    </button>
+                </div>
+
+                <!-- LEMBAR PRATINJAU RAPOR KARAKTER -->
+                <div id="previewRaporKarakterContent" class="paper-sheet-preview">
+                    <!-- Diisi dinamis via SiswaPortal.openRaporKarakterModal() -->
+                </div>
+            </div>
+            <div class="modal-card-footer">
+                <button type="button" class="btn btn-outline" onclick="Forms.closeAllModals()">Tutup</button>
+                <button type="button" class="btn btn-danger" onclick="SiswaPortal.executePrintRapor()">
+                    🖨️ Cetak / Simpan PDF Sekarang
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         MODAL BACA DETAIL PENGUMUMAN
+         ===================================================================== -->
+    <div id="modalDetailPengumuman" class="modal-backdrop" style="display: none;">
+        <div class="modal-card" style="max-width: 650px;">
+            <div class="modal-card-header">
+                <div style="display: flex; align-items: center; gap: 0.65rem;">
+                    <span id="detailPengumumanCategoryBadge" class="status-pill pill-red">PENTING</span>
+                    <span id="detailPengumumanTanggal" style="font-size: 0.8rem; color: var(--text-muted);">22 Maret 2026</span>
+                </div>
+                <button type="button" class="modal-close-icon" onclick="Forms.closeAllModals()">✕</button>
+            </div>
+            <div class="modal-card-body" style="padding: 1.5rem;">
+                <h3 id="detailPengumumanJudul" style="font-size: 1.25rem; font-weight: 800; color: var(--text-main); margin-bottom: 0.65rem; line-height: 1.4;">
+                    Judul Pengumuman
+                </h3>
+                <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border);">
+                    <span>✍️ Diterbitkan oleh:</span>
+                    <strong id="detailPengumumanPenulis" style="color: var(--text-main);">Wakasek Kesiswaan</strong>
+                </div>
+                <div id="detailPengumumanIsi" style="font-size: 0.95rem; line-height: 1.7; color: var(--text-main); white-space: pre-line;">
+                    Isi pengumuman lengkap...
+                </div>
+            </div>
+            <div class="modal-card-footer">
+                <button type="button" class="btn btn-outline" onclick="Forms.closeAllModals()">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         MODAL BUAT PENGUMUMAN BARU (SUPER ADMIN & GURU)
+         ===================================================================== -->
+    <div id="modalTambahPengumuman" class="modal-backdrop" style="display: none;">
+        <div class="modal-card" style="max-width: 620px;">
+            <div class="modal-card-header">
+                <div>
+                    <h3 style="font-size: 1.15rem; color: var(--text-main); margin: 0;">📢 Buat Pengumuman Kesiswaan Baru</h3>
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin: 2px 0 0 0;">Pengumuman akan langsung tampil di Dasbor utama sekolah untuk publik.</p>
+                </div>
+                <button type="button" class="modal-close-icon" onclick="Forms.closeAllModals()">✕</button>
+            </div>
+            <form onsubmit="App.handleSaveNewAnnouncement(event)">
+                <div class="modal-card-body" style="padding: 1.25rem 1.5rem; display: flex; flex-direction: column; gap: 0.85rem;">
+                    <div class="form-group-clean">
+                        <label style="font-size: 0.825rem; font-weight: 700; color: var(--text-main);">Kategori Pengumuman</label>
+                        <select id="inputAnnKategori" class="form-control-clean" required>
+                            <option value="penting">🔴 PENTING (Wajib & Prioritas Tinggi)</option>
+                            <option value="prestasi">🟢 PRESTASI (Apresiasi & Juara)</option>
+                            <option value="kegiatan">🔵 KEGIATAN (Agenda & Acara)</option>
+                            <option value="informasi" selected>🟡 INFORMASI (Umum / Edukasi / BK)</option>
+                        </select>
+                    </div>
+                    <div class="form-group-clean">
+                        <label style="font-size: 0.825rem; font-weight: 700; color: var(--text-main);">Judul Pengumuman</label>
+                        <input type="text" id="inputAnnJudul" class="form-control-clean" placeholder="Contoh: Jadwal Penertiban Kedisiplinan..." required>
+                    </div>
+                    <div class="form-group-clean">
+                        <label style="font-size: 0.825rem; font-weight: 700; color: var(--text-main);">Penerbit / Penulis</label>
+                        <input type="text" id="inputAnnPenulis" class="form-control-clean" placeholder="Contoh: Dra. Hj. Siti Rahma (Wakasek Kesiswaan)" required>
+                    </div>
+                    <div class="form-group-clean">
+                        <label style="font-size: 0.825rem; font-weight: 700; color: var(--text-main);">Ringkasan Singkat (Tampil di Kartu Depan)</label>
+                        <textarea id="inputAnnRingkasan" class="form-control-clean" rows="2" placeholder="Ringkasan 1 - 2 kalimat yang menarik..." required></textarea>
+                    </div>
+                    <div class="form-group-clean">
+                        <label style="font-size: 0.825rem; font-weight: 700; color: var(--text-main);">Isi Pengumuman Lengkap</label>
+                        <textarea id="inputAnnIsi" class="form-control-clean" rows="6" placeholder="Ketik rincian pengumuman resmi..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-card-footer">
+                    <button type="button" class="btn btn-outline" onclick="Forms.closeAllModals()">Batal</button>
+                    <button type="submit" class="btn btn-primary">📢 Publikasikan Sekarang</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- AREA CETAK LAPORAN (Hanya Muncul Saat Cetak) -->
+    <div id="printRaporContainer" class="print-only-container"></div>
+    <div id="printSuratContainer" class="print-only-container"></div>
+
+    <!-- NOTIFIKASI TOAST -->
+    <div id="toastContainer"></div>
+
+    <!-- SCRIPTS -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/siswa-portal.js"></script>
+    <script src="js/admin-portal.js"></script>
+    <script src="js/forms.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js').catch(() => {});
+            });
+        }
+    </script>
+</body>
+</html>

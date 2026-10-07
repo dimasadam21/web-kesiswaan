@@ -1,0 +1,175 @@
+/* ==========================================================================
+   PRINT MEDIA STYLESHEET
+   Format Dokumen Cetak Resmi Sekolah (Kop Surat, Rapor Karakter, Surat Panggilan)
+   ========================================================================== */
+
+@media print {
+    /* Sembunyikan elemen navigasi dan tombol web */
+    .app-header,
+    .app-footer,
+    .nav-links,
+    .header-actions,
+    .hero-banner,
+    .profile-tabs,
+    .profile-actions,
+    .dashboard-topbar,
+    .table-filter-bar,
+    .action-btn-group,
+    .btn,
+    .toast-container,
+    .modal-backdrop,
+    .no-print {
+        display: none !important;
+    }
+
+    body {
+        background: #ffffff !important;
+        color: #000000 !important;
+        font-size: 11pt !important;
+        line-height: 1.4 !important;
+    }
+
+    .main-wrapper {
+        padding: 0 !important;
+        margin: 0 !important;
+        max-width: 100% !important;
+    }
+
+    .view-section {
+        display: block !important;
+    }
+
+    /* Print Template Container */
+    .print-only-container {
+        display: block !important;
+        padding: 20mm 15mm;
+    }
+
+    /* Kop Surat Resmi */
+    .kop-surat {
+        display: flex !important;
+        align-items: center;
+        gap: 20px;
+        border-bottom: 3px double #000000;
+        padding-bottom: 12px;
+        margin-bottom: 20px;
+        text-align: center;
+    }
+
+    .kop-logo {
+        width: 75px;
+        height: 75px;
+    }
+
+    .kop-text {
+        flex: 1;
+    }
+
+    .kop-text h2 {
+        font-size: 15pt;
+        font-weight: bold;
+        margin: 0;
+        text-transform: uppercase;
+        color: #000;
+    }
+
+    .kop-text h1 {
+        font-size: 18pt;
+        font-weight: 800;
+        margin: 2px 0;
+        text-transform: uppercase;
+        color: #000;
+    }
+
+    .kop-text p {
+        font-size: 9pt;
+        margin: 0;
+        color: #222;
+    }
+
+    /* Document Title */
+    .doc-title-box {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .doc-title {
+        font-size: 14pt;
+        font-weight: bold;
+        text-decoration: underline;
+        margin: 0;
+        text-transform: uppercase;
+    }
+
+    .doc-number {
+        font-size: 10pt;
+        margin-top: 4px;
+    }
+
+    /* Biodata Table */
+    .print-bio-table {
+        width: 100%;
+        margin-bottom: 20px;
+        border-collapse: collapse;
+    }
+
+    .print-bio-table td {
+        padding: 4px 6px;
+        font-size: 10.5pt;
+        vertical-align: top;
+    }
+
+    /* Print Tables */
+    .print-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 15px 0 25px 0;
+    }
+
+    .print-table th,
+    .print-table td {
+        border: 1px solid #000000 !important;
+        padding: 6px 8px !important;
+        font-size: 9.5pt !important;
+        text-align: left;
+    }
+
+    .print-table th {
+        background-color: #f0f0f0 !important;
+        font-weight: bold !important;
+        text-align: center;
+    }
+
+    /* Signature Area */
+    .print-signature-grid {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 40px;
+        page-break-inside: avoid;
+    }
+
+    .sig-box {
+        text-align: center;
+        width: 200px;
+    }
+
+    .sig-space {
+        height: 70px;
+    }
+
+    .sig-name {
+        font-weight: bold;
+        text-decoration: underline;
+    }
+
+    .sig-nip {
+        font-size: 9pt;
+    }
+}
+
+/* Hide print templates on regular screen */
+@media screen {
+    .print-only-container {
+        display: none !important;
+    }
+}
