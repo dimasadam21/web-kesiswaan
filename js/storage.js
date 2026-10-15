@@ -246,13 +246,30 @@ const StorageManager = {
         if (!data.violationsMaster) data.violationsMaster = [...MASTER_PELANGGARAN];
         const newV = {
             id: "P" + (Date.now().toString().slice(-4)),
-            nama: violationData.nama,
+            nama: violationData.nama ? violationData.nama.trim() : "",
             kategori: violationData.kategori || "Kedisiplinan",
-            poin: Number(violationData.poin) || 5
+            poin: Math.min(150, Math.max(1, Number(violationData.poin) || 5))
         };
         data.violationsMaster.push(newV);
         this.saveData(data);
         return newV;
+    },
+
+    updateViolationMaster(id, violationData) {
+        const data = this.getData();
+        if (!data.violationsMaster) data.violationsMaster = [...MASTER_PELANGGARAN];
+        const index = data.violationsMaster.findIndex(v => v.id === id);
+        if (index !== -1) {
+            data.violationsMaster[index] = {
+                ...data.violationsMaster[index],
+                nama: violationData.nama !== undefined ? violationData.nama.trim() : data.violationsMaster[index].nama,
+                kategori: violationData.kategori !== undefined ? violationData.kategori : data.violationsMaster[index].kategori,
+                poin: violationData.poin !== undefined ? Math.min(150, Math.max(1, Number(violationData.poin) || 1)) : data.violationsMaster[index].poin
+            };
+            this.saveData(data);
+            return data.violationsMaster[index];
+        }
+        return null;
     },
 
     deleteViolationMaster(id) {

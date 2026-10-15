@@ -2287,6 +2287,7 @@ const Forms = {
             return;
         }
 
+        this.editingViolationMasterId = null;
         this.switchViolationsRulesSubTab('violations');
         this.renderViolationsMasterList();
         this.renderRulesList();
@@ -2314,6 +2315,8 @@ const Forms = {
         }
     },
 
+    editingViolationMasterId: null,
+
     renderViolationsMasterList() {
         const container = document.getElementById("violationsMasterListContainer");
         if (!container) return;
@@ -2324,22 +2327,116 @@ const Forms = {
             return;
         }
 
-        container.innerHTML = list.map((v) => `
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.65rem 0.85rem; background: #ffffff; border: 1px solid var(--border); border-radius: 6px; margin-bottom: 0.4rem;">
-                <div>
-                    <strong style="font-size: 0.9rem; color: var(--text-main);">${v.nama}</strong>
-                    <div style="font-size: 0.75rem; color: var(--text-muted);">Kategori: ${v.kategori || 'Kedisiplinan'}</div>
-                </div>
-                <div style="display: flex; align-items: center; gap: 0.6rem;">
-                    <span class="status-pill pill-red" style="font-size: 0.75rem; font-weight: 700;">+${v.poin} Poin</span>
-                    ${list.length > 1 ? `
-                        <button type="button" class="btn btn-outline btn-sm" style="color: var(--danger); padding: 3px 8px; font-size: 0.75rem;" onclick="Forms.handleDeleteViolationMaster('${v.id}')">
-                            🗑️ Hapus
+        container.innerHTML = list.map((v) => {
+            if (this.editingViolationMasterId === v.id) {
+                return `
+                    <div style="background: #f8fafc; border: 2px solid var(--primary); border-radius: 6px; padding: 0.75rem; margin-bottom: 0.5rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                            <span style="font-size: 0.8rem; font-weight: 700; color: var(--primary);">✏️ Edit Jenis Pelanggaran & Poin</span>
+                            <span style="font-size: 0.75rem; color: var(--text-muted);">Maks. 150 Poin</span>
+                        </div>
+                        <div style="margin-bottom: 0.5rem;">
+                            <label style="display: block; font-size: 0.75rem; font-weight: 600; margin-bottom: 0.2rem; color: var(--text-main);">Jenis / Nama Pelanggaran *</label>
+                            <input type="text" id="editViolationName_${v.id}" class="form-control-clean" value="${(v.nama || '').replace(/"/g, '&quot;')}" placeholder="Nama pelanggaran" required style="width: 100%; font-size: 0.85rem;">
+                        </div>
+                        <div style="display: flex; gap: 0.5rem; margin-bottom: 0.6rem;">
+                            <div style="flex: 2;">
+                                <label style="display: block; font-size: 0.75rem; font-weight: 600; margin-bottom: 0.2rem; color: var(--text-main);">Kategori</label>
+                                <select id="editViolationKategori_${v.id}" class="form-control-clean" style="width: 100%; font-size: 0.85rem;">
+                                    <option value="Kedisiplinan" ${v.kategori === 'Kedisiplinan' ? 'selected' : ''}>Kedisiplinan</option>
+                                    <option value="Kerapian" ${v.kategori === 'Kerapian' ? 'selected' : ''}>Kerapian</option>
+                                    <option value="Etika" ${v.kategori === 'Etika' ? 'selected' : ''}>Etika & Sopan Santun</option>
+                                    <option value="Berat" ${v.kategori === 'Berat' ? 'selected' : ''}>Pelanggaran Berat</option>
+                                </select>
+                            </div>
+                            <div style="flex: 1;">
+                                <label style="display: block; font-size: 0.75rem; font-weight: 600; margin-bottom: 0.2rem; color: var(--text-main);">Bobot Poin (1-150) *</label>
+                                <input type="number" id="editViolationPoints_${v.id}" class="form-control-clean" min="1" max="150" value="${v.poin}" required style="width: 100%; font-size: 0.85rem;">
+                            </div>
+                        </div>
+                        <div style="display: flex; justify-content: flex-end; gap: 0.4rem;">
+                            <button type="button" class="btn btn-outline btn-sm" style="padding: 4px 10px; font-size: 0.8rem;" onclick="Forms.handleCancelEditViolationMaster()">
+                                Batal
+                            </button>
+                            <button type="button" class="btn btn-primary btn-sm" style="padding: 4px 12px; font-size: 0.8rem;" onclick="Forms.handleSaveEditViolationMaster('${v.id}')">
+                                💾 Simpan Perubahan
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            return `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.65rem 0.85rem; background: #ffffff; border: 1px solid var(--border); border-radius: 6px; margin-bottom: 0.4rem;">
+                    <div style="flex: 1; padding-right: 0.5rem;">
+                        <strong style="font-size: 0.9rem; color: var(--text-main); display: block; line-height: 1.3;">${v.nama}</strong>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;">Kategori: ${v.kategori || 'Kedisiplinan'}</div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.4rem; flex-shrink: 0;">
+                        <span class="status-pill pill-red" style="font-size: 0.75rem; font-weight: 700;">+${v.poin} Poin</span>
+                        <button type="button" class="btn btn-outline btn-sm" style="color: var(--primary); border-color: var(--primary); padding: 3px 8px; font-size: 0.75rem;" onclick="Forms.handleStartEditViolationMaster('${v.id}')" title="Edit jenis pelanggaran & poin">
+                            ✏️ Edit
                         </button>
-                    ` : ''}
+                        ${list.length > 1 ? `
+                            <button type="button" class="btn btn-outline btn-sm" style="color: var(--danger); padding: 3px 8px; font-size: 0.75rem;" onclick="Forms.handleDeleteViolationMaster('${v.id}')" title="Hapus dari katalog">
+                                🗑️ Hapus
+                            </button>
+                        ` : ''}
+                    </div>
                 </div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
+    },
+
+    handleStartEditViolationMaster(id) {
+        this.editingViolationMasterId = id;
+        this.renderViolationsMasterList();
+        setTimeout(() => {
+            const el = document.getElementById(`editViolationName_${id}`);
+            if (el) {
+                el.focus();
+                el.select();
+            }
+        }, 50);
+    },
+
+    handleCancelEditViolationMaster() {
+        this.editingViolationMasterId = null;
+        this.renderViolationsMasterList();
+    },
+
+    handleSaveEditViolationMaster(id) {
+        const inputNama = document.getElementById(`editViolationName_${id}`);
+        const inputKategori = document.getElementById(`editViolationKategori_${id}`);
+        const inputPoin = document.getElementById(`editViolationPoints_${id}`);
+
+        if (!inputNama || !inputPoin) return;
+
+        const nama = inputNama.value.trim();
+        const kategori = inputKategori ? inputKategori.value : "Kedisiplinan";
+        const poin = Number(inputPoin.value);
+
+        if (!nama) {
+            App.showToast("Nama jenis pelanggaran wajib diisi!");
+            inputNama.focus();
+            return;
+        }
+
+        if (isNaN(poin) || poin < 1 || poin > 150) {
+            App.showToast("Bobot poin harus antara 1 sampai 150!");
+            inputPoin.focus();
+            return;
+        }
+
+        const updated = StorageManager.updateViolationMaster(id, { nama, kategori, poin });
+        if (updated) {
+            this.editingViolationMasterId = null;
+            this.renderViolationsMasterList();
+            this.populateDropdowns();
+            App.showToast(`Jenis pelanggaran "${nama}" (${poin} Poin) berhasil diperbarui.`);
+        } else {
+            App.showToast("Gagal memperbarui data jenis pelanggaran.");
+        }
     },
 
     handleAddViolationMaster(e) {
@@ -2348,8 +2445,12 @@ const Forms = {
         const kategori = document.getElementById("newViolationKategori").value;
         const poin = Number(document.getElementById("newViolationPoints").value);
 
-        if (!nama || !poin) {
-            App.showToast("Nama dan poin pelanggaran wajib diisi!");
+        if (!nama) {
+            App.showToast("Nama pelanggaran wajib diisi!");
+            return;
+        }
+        if (isNaN(poin) || poin < 1 || poin > 150) {
+            App.showToast("Bobot poin harus antara 1 sampai 150!");
             return;
         }
 
@@ -2364,6 +2465,10 @@ const Forms = {
 
     handleDeleteViolationMaster(id) {
         if (!confirm("Hapus jenis pelanggaran ini dari katalog resmi?")) return;
+
+        if (this.editingViolationMasterId === id) {
+            this.editingViolationMasterId = null;
+        }
 
         StorageManager.deleteViolationMaster(id);
         this.renderViolationsMasterList();
