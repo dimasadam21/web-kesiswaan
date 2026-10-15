@@ -56,6 +56,16 @@ const AdminPortal = {
             btnTambahSiswa.style.display = isSuperAdmin ? "inline-flex" : "none";
         }
 
+        const btnImporSiswa = document.getElementById("btnImporSiswaSuperAdmin");
+        if (btnImporSiswa) {
+            btnImporSiswa.style.display = isSuperAdmin ? "inline-flex" : "none";
+        }
+
+        const btnKelolaSiswa = document.getElementById("btnKelolaSiswaSuperAdmin");
+        if (btnKelolaSiswa) {
+            btnKelolaSiswa.style.display = isSuperAdmin ? "inline-flex" : "none";
+        }
+
         const btnEditJadwal = document.getElementById("btnEditJadwalKegiatanSuperAdmin");
         if (btnEditJadwal) {
             btnEditJadwal.style.display = isSuperAdmin ? "inline-flex" : "none";

@@ -461,14 +461,23 @@ const Forms = {
         this.openModal("modalAchievement");
     },
 
-    openStudentModal() {
+    openStudentModal(fromManage = false) {
         if (!AuthManager.isSuperAdmin()) {
             App.showToast("Fitur tambah siswa baru hanya dapat diakses oleh Super Admin!");
             return;
         }
+        this.isAddingFromManageStudents = !!fromManage;
         const form = document.getElementById("studentForm");
         if (form) form.reset();
         this.openModal("modalStudent");
+    },
+
+    closeStudentModal() {
+        this.closeModal("modalStudent");
+        if (this.isAddingFromManageStudents) {
+            this.isAddingFromManageStudents = false;
+            this.openManageStudentsModal();
+        }
     },
 
     // 1. Submit Pelanggaran
@@ -657,10 +666,17 @@ const Forms = {
 
             this.closeAllModals();
             this.populateDropdowns();
+            this.populateExportStudentClassFilter();
+            this.renderExportStudentsTable();
 
             if (AuthManager.isTeacher()) {
                 AdminPortal.renderTeacherAllStudents();
                 AdminPortal.selectTargetStudent(newStudent.id);
+            }
+
+            if (this.isAddingFromManageStudents) {
+                this.isAddingFromManageStudents = false;
+                this.openManageStudentsModal();
             }
 
             App.showToast(`Siswa baru ${nama} berhasil ditambahkan.`);
@@ -670,7 +686,8 @@ const Forms = {
     },
 
     // 3B. EDIT PROFIL SISWA (LENGKAP SESUAI FORMAT EXCEL IMPOR)
-    openEditStudentModal(studentId) {
+    openEditStudentModal(studentId, fromManage = false) {
+        this.isEditingFromManageStudents = !!fromManage;
         const id = studentId || (AdminPortal.selectedStudent ? AdminPortal.selectedStudent.id : null);
         if (!id) {
             App.showToast("Pilih siswa yang ingin diedit terlebih dahulu!");
@@ -717,6 +734,14 @@ const Forms = {
         if (urlInput) urlInput.value = "";
 
         this.openModal("modalEditStudent");
+    },
+
+    closeEditStudentModal() {
+        this.closeModal("modalEditStudent");
+        if (this.isEditingFromManageStudents) {
+            this.isEditingFromManageStudents = false;
+            this.openManageStudentsModal();
+        }
     },
 
     handleEditStudentFotoUpload(e) {
@@ -802,6 +827,14 @@ const Forms = {
                 if (AdminPortal.selectedStudent && AdminPortal.selectedStudent.id === id) {
                     AdminPortal.selectTargetStudent(id);
                 }
+            }
+
+            this.renderExportStudentsTable();
+            this.populateExportStudentClassFilter();
+
+            if (this.isEditingFromManageStudents) {
+                this.isEditingFromManageStudents = false;
+                this.openManageStudentsModal();
             }
 
             App.showToast(`✅ Profil siswa ${updated.nama} berhasil diperbarui.`);
@@ -1223,7 +1256,11 @@ const Forms = {
         }
     },
 
-    // 3D. FITUR DIREKTORI & EKSPOR SELURUH SISWA (KHUSUS SUPER ADMIN)
+    // 3D. FITUR KELOLA SELURUH DATA SISWA & EKSPOR (KHUSUS SUPER ADMIN)
+    openManageStudentsModal() {
+        this.openExportStudentsModal();
+    },
+
     openExportStudentsModal() {
         this.exportStudentSearchQuery = "";
         this.exportStudentClassFilter = "";
@@ -1383,8 +1420,14 @@ const Forms = {
                             ${this.escapeHtml(st.status || 'Aman')}
                         </span>
                     </td>
-                    <td style="padding: 8px 10px; text-align: center;">
-                        <button type="button" class="btn btn-primary btn-sm" onclick="Forms.selectStudentFromExportModal('${this.escapeHtml(s.id)}')" style="padding: 4px 10px; font-size: 0.76rem; font-weight: 600; white-space: nowrap;">
+                    <td style="padding: 6px 10px; text-align: center; white-space: nowrap;">
+                        <button type="button" class="btn btn-outline btn-sm" onclick="Forms.openEditStudentModal('${this.escapeHtml(s.id)}', true)" style="padding: 4px 8px; font-size: 0.74rem; font-weight: 600; color: #0284c7; border-color: #7dd3fc; background: #f0f9ff; margin-right: 4px;" title="Edit Biodata Siswa">
+                            ✏️ Edit
+                        </button>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="Forms.handleDeleteStudentFromManage('${this.escapeHtml(s.id)}', '${this.escapeHtml(s.nama)}')" style="padding: 4px 8px; font-size: 0.74rem; font-weight: 600; color: #dc2626; border-color: #fca5a5; background: #fef2f2; margin-right: 4px;" title="Hapus Siswa">
+                            🗑️ Hapus
+                        </button>
+                        <button type="button" class="btn btn-primary btn-sm" onclick="Forms.selectStudentFromExportModal('${this.escapeHtml(s.id)}')" style="padding: 4px 8px; font-size: 0.74rem; font-weight: 600;" title="Buka Siswa ke Dasbor Pencarian">
                             👉 Pilih
                         </button>
                     </td>
@@ -1405,9 +1448,38 @@ const Forms = {
 
     selectStudentFromExportModal(studentId) {
         this.closeAllModals();
-        if (window.AdminPortal && typeof AdminPortal.selectStudent === "function") {
-            AdminPortal.selectStudent(studentId);
+        if (window.AdminPortal) {
+            if (typeof AdminPortal.selectTargetStudent === "function") {
+                AdminPortal.selectTargetStudent(studentId);
+            } else if (typeof AdminPortal.selectStudent === "function") {
+                AdminPortal.selectStudent(studentId);
+            }
             App.showToast("Data siswa berhasil dibuka di dasbor.");
+        }
+    },
+
+    handleDeleteStudentFromManage(studentId, studentName) {
+        if (!confirm(`Yakin ingin menghapus siswa "${studentName}"?\n\nPerhatian: Seluruh catatan pelanggaran dan prestasi siswa ini akan terhapus secara permanen dari sistem.`)) {
+            return;
+        }
+
+        const success = StorageManager.deleteStudent(studentId);
+        if (success) {
+            this.renderExportStudentsTable();
+            this.populateExportStudentClassFilter();
+
+            if (window.AdminPortal) {
+                AdminPortal.renderTeacherAllStudents();
+                AdminPortal.renderClassAttendance();
+                const remaining = StorageManager.getStudents();
+                if (remaining.length > 0) {
+                    AdminPortal.selectTargetStudent(remaining[0].id);
+                }
+            }
+
+            App.showToast(`Siswa "${studentName}" berhasil dihapus.`);
+        } else {
+            App.showToast("Gagal menghapus data siswa.");
         }
     },
 
