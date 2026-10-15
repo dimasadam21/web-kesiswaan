@@ -98,34 +98,8 @@ const Forms = {
     },
 
     updatePrestasiPointsCalculation() {
-        const juara = document.getElementById("formPrestasiJuara")?.value || "";
-        const tingkat = document.getElementById("formPrestasiTingkat")?.value || "";
-
-        let base = 30;
-        const t = tingkat.toLowerCase();
-        const j = juara.toLowerCase();
-
-        if (t.includes("internasional")) base = 120;
-        else if (t.includes("nasional")) base = 90;
-        else if (t.includes("provinsi") || t.includes("jateng") || t.includes("diy")) base = 60;
-        else if (t.includes("karesidenan")) base = 45;
-        else if (t.includes("kota") || t.includes("kabupaten")) base = 30;
-
-        let bonus = 0;
-        if (j === "juara 1") bonus = 15;
-        else if (j === "juara 2") bonus = 10;
-        else if (j === "juara 3") bonus = 5;
-        else if (j.includes("harapan 1")) bonus = 0;
-        else if (j.includes("harapan 2")) bonus = -5;
-        else if (j.includes("harapan 3")) bonus = -10;
-
-        const totalPoints = Math.max(10, base + bonus);
-
-        const badge = document.getElementById("prestasiPoinBadge");
-        if (badge) badge.textContent = `+${totalPoints} Poin`;
-
         const hiddenInput = document.getElementById("formPrestasiPoin");
-        if (hiddenInput) hiddenInput.value = totalPoints;
+        if (hiddenInput) hiddenInput.value = 0;
     },
 
     bindEvents() {
@@ -567,7 +541,7 @@ const Forms = {
                 peringkat,
                 penyelenggara,
                 piagam,
-                poin: Number(poin),
+                poin: 0,
                 tanggal,
                 foto,
                 keterangan,
@@ -590,7 +564,7 @@ const Forms = {
             App.initPrestasiSlider();
 
             const student = StorageManager.getStudentById(studentId);
-            App.showToast(`Prestasi ${student.nama} (${peringkat} ${tingkat} - ${nama}) berhasil disimpan (+${poin} Poin)!`);
+            App.showToast(`Prestasi ${student.nama} (${peringkat} ${tingkat} - ${nama}) berhasil disimpan!`);
         } catch (err) {
             App.showToast(err.message);
         }
@@ -1412,7 +1386,7 @@ const Forms = {
                     </td>
                     <td style="padding: 8px 10px; text-align: center;">
                         <span class="badge" style="background: #dcfce7; color: #166534; font-weight: 700; font-size: 0.75rem; padding: 3px 8px; border-radius: 99px;">
-                            +${st.totalPoinPrestasi || 0}
+                            ${(s.prestasi || []).length}
                         </span>
                     </td>
                     <td style="padding: 8px 10px; text-align: center;">
@@ -1510,7 +1484,7 @@ const Forms = {
                 "Maps Alamat": s.mapsAlamat || "-",
                 "Input SPMB": s.inputSpmb || "-",
                 "Poin Pelanggaran": st.totalPoinPelanggaran || 0,
-                "Poin Prestasi": st.totalPoinPrestasi || 0,
+                "Jumlah Prestasi": (s.prestasi || []).length,
                 "Status Kedisiplinan": st.status || "Aman",
                 "Tindak Lanjut / Sanksi": st.action || "-"
             };
@@ -1540,7 +1514,7 @@ const Forms = {
                     { wch: 25 }, // Maps Alamat
                     { wch: 24 }, // Input SPMB
                     { wch: 16 }, // Poin Pelanggaran
-                    { wch: 14 }, // Poin Prestasi
+                    { wch: 16 }, // Jumlah Prestasi
                     { wch: 26 }, // Status Kedisiplinan
                     { wch: 35 }  // Tindak Lanjut / Sanksi
                 ];
@@ -1567,7 +1541,7 @@ const Forms = {
         const headers = [
             "No", "Foto", "NIS", "NISN", "Nama Siswa", "Kelas", "Jurusan", "Wali Kelas",
             "Nomor HP Siswa", "Nama Ortu Bapak", "No HP Bapak", "Nama Ortu Ibu", "No HP Ibu",
-            "Alamat Lengkap", "Maps Alamat", "Input SPMB", "Poin Pelanggaran", "Poin Prestasi",
+            "Alamat Lengkap", "Maps Alamat", "Input SPMB", "Poin Pelanggaran", "Jumlah Prestasi",
             "Status Kedisiplinan", "Tindak Lanjut / Sanksi"
         ];
 
@@ -1600,7 +1574,7 @@ const Forms = {
                 escapeCsv(s.mapsAlamat || "-"),
                 escapeCsv(s.inputSpmb || "-"),
                 escapeCsv(st.totalPoinPelanggaran || 0),
-                escapeCsv(st.totalPoinPrestasi || 0),
+                escapeCsv((s.prestasi || []).length),
                 escapeCsv(st.status || "Aman"),
                 escapeCsv(st.action || "-")
             ].join(","));

@@ -278,7 +278,7 @@ const AdminPortal = {
         }
 
         document.getElementById("targetStudentPoinPelanggaran").textContent = `${st.totalPoinPelanggaran} Poin`;
-        document.getElementById("targetStudentPoinPrestasi").textContent = `+${st.totalPoinPrestasi} Poin`;
+        document.getElementById("targetStudentPoinPrestasi").textContent = `${(student.prestasi || []).length} Capaian`;
 
         // KONTROL OTOMATIS SURAT PANGGILAN ORANG TUA:
         // HANYA MUNCUL JIKA SUDAH MELEWATI BATAS POIN KADAR SP (>= 31 Poin)
@@ -361,11 +361,11 @@ const AdminPortal = {
 
         if (title) {
             if (mode === 'prestasi') {
-                title.textContent = "🏆 10 Siswa Teratas (Poin Prestasi Tertinggi)";
+                title.textContent = "🏆 10 Siswa Teratas (Prestasi Terbanyak)";
             } else if (mode === 'pelanggaran') {
                 title.textContent = "⚠️ 10 Siswa Teratas (Poin Pelanggaran Tertinggi)";
             } else {
-                title.textContent = "🌟 10 Siswa Teratas (Poin Tertinggi)";
+                title.textContent = "🌟 10 Siswa Teratas";
             }
         }
 
@@ -398,11 +398,11 @@ const AdminPortal = {
             const st = StorageManager.calculateStudentStatus(s);
             let score = 0;
             if (mode === 'prestasi') {
-                score = st.totalPoinPrestasi || 0;
+                score = (s.prestasi || []).length;
             } else if (mode === 'pelanggaran') {
                 score = st.totalPoinPelanggaran || 0;
             } else {
-                score = Math.max(st.totalPoinPrestasi || 0, st.totalPoinPelanggaran || 0);
+                score = Math.max((s.prestasi || []).length, st.totalPoinPelanggaran || 0);
             }
             return {
                 student: s,
@@ -460,10 +460,10 @@ const AdminPortal = {
                         <div style="font-size: 0.7rem; color: var(--text-muted);">${(s.pelanggaran || []).length} Kasus</div>
                     </td>
                     <td>
-                        <strong style="color: ${st.totalPoinPrestasi > 0 ? 'var(--success)' : 'var(--text-muted)'};">
-                            +${st.totalPoinPrestasi} Poin
+                        <strong style="color: ${(s.prestasi || []).length > 0 ? 'var(--success)' : 'var(--text-muted)'}; font-size: 0.95rem;">
+                            ${(s.prestasi || []).length} Prestasi
                         </strong>
-                        <div style="font-size: 0.7rem; color: var(--text-muted);">${(s.prestasi || []).length} Prestasi</div>
+                        <div style="font-size: 0.7rem; color: var(--text-muted);">${(s.prestasi || []).length > 0 ? 'Kejuaraan resmi' : 'Belum ada'}</div>
                     </td>
                     <td>
                         <div style="display: flex; gap: 5px; flex-wrap: wrap;">
@@ -530,7 +530,6 @@ const AdminPortal = {
 
                     <div style="margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
                         <div style="display: flex; gap: 0.35rem; align-items: center; flex-wrap: wrap;">
-                            <span class="status-pill pill-green">+${p.poin} Poin</span>
                             <span class="status-pill pill-gray" style="font-size: 0.7rem;">${p.tingkat}</span>
                             <span style="font-size: 0.75rem; color: var(--text-muted);">📅 ${p.tanggal}</span>
                             ${p.piagam ? `<a href="${p.piagam}" target="_blank" class="status-pill pill-yellow" style="font-size: 0.7rem; text-decoration: none; font-weight: 600;">📜 Piagam</a>` : ''}

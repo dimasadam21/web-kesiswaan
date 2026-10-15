@@ -347,17 +347,17 @@ const MASTER_PELANGGARAN = [
 ];
 
 const MASTER_PRESTASI = [
-    { id: "PR01", kategori: "Akademik", nama: "Juara 1 Lomba Akademik / Olimpiade Sains Nasional", poin: 100 },
-    { id: "PR02", kategori: "Akademik", nama: "Juara 2/3 Olimpiade Sains Tingkat Nasional", poin: 80 },
-    { id: "PR03", kategori: "Akademik", nama: "Juara 1 Lomba Akademik Tingkat Provinsi", poin: 60 },
-    { id: "PR04", kategori: "Akademik", nama: "Juara 2/3 Lomba Akademik Tingkat Provinsi", poin: 50 },
-    { id: "PR05", kategori: "Akademik", nama: "Juara 1/2/3 Lomba Akademik Tingkat Kota/Kabupaten", poin: 35 },
-    { id: "PR06", kategori: "Non-Akademik", nama: "Juara 1 Kejuaraan Olahraga / Seni Tingkat Nasional", poin: 90 },
-    { id: "PR07", kategori: "Non-Akademik", nama: "Juara 1 Kejuaraan Olahraga / Seni Tingkat Provinsi", poin: 55 },
-    { id: "PR08", kategori: "Non-Akademik", nama: "Juara 1/2/3 Kejuaraan Olahraga / Seni Kota/Kabupaten", poin: 30 },
-    { id: "PR09", kategori: "Karakter", nama: "Ketua OSIS / MPK Aktif dan Berintegritas", poin: 30 },
-    { id: "PR10", kategori: "Karakter", nama: "Hafiz Quran (Juz Amma / 3+ Juz)", poin: 40 },
-    { id: "PR11", kategori: "Karakter", nama: "Aksi Terpuji (Mengembalikan Barang Berharga)", poin: 20 }
+    { id: "PR01", kategori: "Akademik", nama: "Juara 1 Lomba Akademik / Olimpiade Sains Nasional", poin: 0 },
+    { id: "PR02", kategori: "Akademik", nama: "Juara 2/3 Olimpiade Sains Tingkat Nasional", poin: 0 },
+    { id: "PR03", kategori: "Akademik", nama: "Juara 1 Lomba Akademik Tingkat Provinsi", poin: 0 },
+    { id: "PR04", kategori: "Akademik", nama: "Juara 2/3 Lomba Akademik Tingkat Provinsi", poin: 0 },
+    { id: "PR05", kategori: "Akademik", nama: "Juara 1/2/3 Lomba Akademik Tingkat Kota/Kabupaten", poin: 0 },
+    { id: "PR06", kategori: "Non-Akademik", nama: "Juara 1 Kejuaraan Olahraga / Seni Tingkat Nasional", poin: 0 },
+    { id: "PR07", kategori: "Non-Akademik", nama: "Juara 1 Kejuaraan Olahraga / Seni Tingkat Provinsi", poin: 0 },
+    { id: "PR08", kategori: "Non-Akademik", nama: "Juara 1/2/3 Kejuaraan Olahraga / Seni Kota/Kabupaten", poin: 0 },
+    { id: "PR09", kategori: "Karakter", nama: "Ketua OSIS / MPK Aktif dan Berintegritas", poin: 0 },
+    { id: "PR10", kategori: "Karakter", nama: "Hafiz Quran (Juz Amma / 3+ Juz)", poin: 0 },
+    { id: "PR11", kategori: "Karakter", nama: "Aksi Terpuji (Mengembalikan Barang Berharga)", poin: 0 }
 ];
 
 const INITIAL_STUDENTS = [
@@ -389,7 +389,7 @@ const INITIAL_STUDENTS = [
                 kategori: "Akademik",
                 tingkat: "Nasional",
                 peringkat: "Juara 1",
-                poin: 100,
+                poin: 0,
                 foto: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=800&q=80",
                 keterangan: "Mewakili provinsi ke tingkat nasional di Bandung dan meraih medali emas inovasi teknologi.",
                 pencatat: "Dra. Hj. Siti Rahma (Kesiswaan)"
@@ -401,7 +401,7 @@ const INITIAL_STUDENTS = [
                 kategori: "Karakter",
                 tingkat: "Sekolah",
                 peringkat: "Apresiasi",
-                poin: 20,
+                poin: 0,
                 foto: "https://images.unsplash.com/photo-1511632765486-a01980e01a18?auto=format&fit=crop&w=800&q=80",
                 keterangan: "Keberhasilan mengoordinasikan kegiatan literasi sekolah dengan keterlibatan 800+ siswa.",
                 pencatat: "Budi Santoso, S.Kom"
@@ -447,7 +447,7 @@ const INITIAL_STUDENTS = [
                 kategori: "Akademik",
                 tingkat: "Provinsi",
                 peringkat: "Juara 1",
-                poin: 60,
+                poin: 0,
                 foto: "https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&w=800&q=80",
                 keterangan: "Lolos dengan skor tertinggi se-provinsi dan melaju ke Olimpiade Sains Nasional.",
                 pencatat: "Dewi Lestari, M.Pd"
@@ -459,7 +459,7 @@ const INITIAL_STUDENTS = [
                 kategori: "Akademik",
                 tingkat: "Kota/Kabupaten",
                 peringkat: "Juara 2",
-                poin: 35,
+                poin: 0,
                 foto: "https://images.unsplash.com/photo-1475721027785-f74eccf877e2?auto=format&fit=crop&w=800&q=80",
                 keterangan: "Inter-Highschool English Debating Championship 2025.",
                 pencatat: "Farhan Hakim, S.Pd"
@@ -579,7 +579,7 @@ const INITIAL_STUDENTS = [
                 kategori: "Akademik",
                 tingkat: "Kota/Kabupaten",
                 peringkat: "Juara 1",
-                poin: 35,
+                poin: 0,
                 foto: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=800&q=80",
                 keterangan: "Lomba Akuntansi Keuangan Lembaga Tingkat Kota Bandung.",
                 pencatat: "Rina Kusuma, S.E"
@@ -591,7 +591,7 @@ const INITIAL_STUDENTS = [
                 kategori: "Karakter",
                 tingkat: "Sekolah",
                 peringkat: "Mumtaz",
-                poin: 40,
+                poin: 0,
                 foto: "https://images.unsplash.com/photo-1609599006353-e629aaabfeae?auto=format&fit=crop&w=800&q=80",
                 keterangan: "Wisuda Tahfidz Angkatan 2025 dengan predikat kelulusan Mumtaz.",
                 pencatat: "Ust. M. Ridwan, M.Ag"
@@ -1083,7 +1083,7 @@ const DEFAULT_TATA_TERTIB = [
             "Rentang 51 - 75 Poin (Surat Peringatan 1 / SP 1): Pemanggilan Orang Tua II, penerbitan surat SP 1, dan skorsing pembinaan di rumah selama 3 hari.",
             "Rentang 76 - 99 Poin (Surat Peringatan 2 / SP 2): Pemanggilan Orang Tua III, penerbitan surat SP 2, dan skorsing pembinaan 1 minggu.",
             "Akumulasi 100+ Poin (Surat Peringatan 3 / SP 3): Konferensi kasus dewan guru, Kepala Sekolah, dan pengembalian pembinaan siswa kepada orang tua/wali.",
-            "Hak Apresiasi Siswa: Siswa yang berprestasi mendapatkan poin penghargaan dan piagam apresiasi resmi yang tertera pada Rapor Karakter."
+            "Hak Apresiasi Siswa: Siswa yang memenangkan kejuaraan dan berprestasi mendapatkan piagam apresiasi resmi serta pencatatan rekam jejak kejuaraan yang tertera pada Rapor Karakter."
         ]
     }
 ];
@@ -1112,7 +1112,7 @@ const DEFAULT_PENGUMUMAN = [
         tanggal: "18 Maret 2026",
         penulis: "Pokja Prestasi & Pengembangan Bakat",
         ringkasan: "Sekolah menyampaikan selamat dan apresiasi setinggi-tingginya kepada Ahmad Fauzan Syahputra dan Nabila Aurelia Putri atas torehan juara tingkat nasional & provinsi.",
-        isi: "Keluarga Besar SMA Negeri 1 Kreasi Bangsa menyampaikan rasa bangga dan apresiasi setinggi-tingginya kepada:\n\n1. **Ahmad Fauzan Syahputra (Kelas XII RPL 1)** - Meraih **Juara 1 Tingkat Nasional** pada ajang Web Design & Coding EduTech 2026 di Bandung (+100 Poin Prestasi).\n2. **Nabila Aurelia Putri (Kelas XI MIPA 2)** - Meraih **Medali Emas (Juara 1)** Olimpiade Sains Nasional Tingkat Provinsi (OSN-P) Bidang Biologi dan lolos ke Tingkat Nasional (+60 Poin Prestasi).\n\nPiagam penghargaan dan beasiswa apresiasi kesiswaan akan diserahkan secara resmi saat apel bendera hari Senin mendatang. Semoga pencapaian ini menjadi inspirasi dan pemantik semangat juang bagi seluruh rekan-rekan pelajar lainnya."
+        isi: "Keluarga Besar SMA Negeri 1 Kreasi Bangsa menyampaikan rasa bangga dan apresiasi setinggi-tingginya kepada:\n\n1. **Ahmad Fauzan Syahputra (Kelas XII RPL 1)** - Meraih **Juara 1 Tingkat Nasional** pada ajang Web Design & Coding EduTech 2026 di Bandung.\n2. **Nabila Aurelia Putri (Kelas XI MIPA 2)** - Meraih **Medali Emas (Juara 1)** Olimpiade Sains Nasional Tingkat Provinsi (OSN-P) Bidang Biologi dan lolos ke Tingkat Nasional.\n\nPiagam penghargaan dan beasiswa apresiasi kesiswaan akan diserahkan secara resmi saat apel bendera hari Senin mendatang. Semoga pencapaian ini menjadi inspirasi dan pemantik semangat juang bagi seluruh rekan-rekan pelajar lainnya."
     },
     {
         id: "ANN-03",

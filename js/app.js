@@ -363,8 +363,8 @@ const App = {
             });
         });
 
-        // Urutkan poin prestasi tertinggi
-        list.sort((a, b) => (b.poin || 0) - (a.poin || 0));
+        // Urutkan berdasarkan tanggal prestasi terbaru
+        list.sort((a, b) => new Date(b.tanggal || 0) - new Date(a.tanggal || 0));
         this.achievementSlides = list;
 
         if (list.length === 0) {
@@ -390,7 +390,6 @@ const App = {
                     <h4>${item.nama}</h4>
                     <p class="showcase-description">${item.keterangan || 'Prestasi kebanggaan sekolah yang diraih melalui kerja keras dan dedikasi.'}</p>
                     <div class="showcase-meta-row">
-                        <span class="status-pill pill-green">+${item.poin} Poin Reward</span>
                         <span class="status-pill pill-gray">Tingkat ${item.tingkat}</span>
                         <span class="status-pill pill-gray">📅 ${item.tanggal}</span>
                     </div>

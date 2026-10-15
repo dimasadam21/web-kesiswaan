@@ -23,7 +23,7 @@ const SiswaPortal = {
         document.getElementById("studentPoinPelanggaran").textContent = `${status.totalPoinPelanggaran}`;
         document.getElementById("studentActionTindakan").textContent = status.actionText;
 
-        document.getElementById("studentPoinPrestasi").textContent = `+${status.totalPoinPrestasi}`;
+        document.getElementById("studentPoinPrestasi").textContent = `${(student.prestasi || []).length}`;
         document.getElementById("studentPrestasiCount").textContent = `${(student.prestasi || []).length} Capaian Resmi`;
 
         document.getElementById("studentIndeksNilai").textContent = `${status.saldoPoinKebaikan}/100`;
@@ -80,7 +80,7 @@ const SiswaPortal = {
                         📅 Tanggal: ${pr.tanggal} • Dicatat: ${pr.pencatat || 'Tim Kesiswaan'}
                     </p>
                 </div>
-                <span class="status-pill pill-green">+${pr.poin} Poin</span>
+                <span class="status-pill pill-green" style="font-size: 0.75rem;">🏆 ${pr.peringkat || 'Juara'}</span>
             </div>
         `).join('');
     },
@@ -234,9 +234,9 @@ const SiswaPortal = {
                     <td style="padding: 6px 8px; font-weight: 600;">Akumulasi Pelanggaran</td>
                     <td>:</td>
                     <td style="padding: 6px 8px;"><strong style="color: #b91c1c;">${status.totalPoinPelanggaran} Poin</strong> (${status.statusText})</td>
-                    <td style="padding: 6px 8px; font-weight: 600;">Total Poin Prestasi</td>
+                    <td style="padding: 6px 8px; font-weight: 600;">Total Prestasi</td>
                     <td>:</td>
-                    <td style="padding: 6px 8px;"><strong style="color: #15803d;">+${status.totalPoinPrestasi} Poin</strong> (${(student.prestasi || []).length} Capaian)</td>
+                    <td style="padding: 6px 8px;"><strong style="color: #15803d;">${(student.prestasi || []).length} Capaian Kejuaraan</strong></td>
                 </tr>
             </table>
 

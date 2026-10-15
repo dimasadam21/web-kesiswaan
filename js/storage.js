@@ -31,7 +31,24 @@ const StorageManager = {
             return JSON.parse(localStorage.getItem(STORAGE_KEY));
         }
         try {
-            return JSON.parse(data);
+            const parsed = JSON.parse(data);
+            if (parsed && Array.isArray(parsed.students)) {
+                let changed = false;
+                parsed.students.forEach(s => {
+                    if (Array.isArray(s.prestasi)) {
+                        s.prestasi.forEach(p => {
+                            if (p && p.poin !== 0) {
+                                p.poin = 0;
+                                changed = true;
+                            }
+                        });
+                    }
+                });
+                if (changed) {
+                    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed)); } catch (e) {}
+                }
+            }
+            return parsed;
         } catch (e) {
             this.resetToDefault();
             return JSON.parse(localStorage.getItem(STORAGE_KEY));
@@ -399,7 +416,7 @@ const StorageManager = {
                 });
             });
         });
-        return all.sort((a, b) => (b.poin || 0) - (a.poin || 0));
+        return all.sort((a, b) => new Date(b.tanggal || 0) - new Date(a.tanggal || 0));
     },
 
     deleteAchievement(achievementId) {
@@ -433,7 +450,7 @@ const StorageManager = {
 
     calculateStudentStatus(student) {
         const totalPoinPelanggaran = (student.pelanggaran || []).reduce((acc, curr) => acc + (Number(curr.poin) || 0), 0);
-        const totalPoinPrestasi = (student.prestasi || []).reduce((acc, curr) => acc + (Number(curr.poin) || 0), 0);
+        const totalPrestasi = (student.prestasi || []).length;
         
         const rules = this.getData().rules || DEFAULT_RULES;
         let ruleMatch = rules[0];
@@ -447,13 +464,14 @@ const StorageManager = {
 
         return {
             totalPoinPelanggaran,
-            totalPoinPrestasi,
-            saldoPoinKebaikan: Math.max(0, 100 - totalPoinPelanggaran + Math.floor(totalPoinPrestasi * 0.5)),
+            totalPoinPrestasi: 0,
+            totalPrestasi,
+            saldoPoinKebaikan: Math.max(0, 100 - totalPoinPelanggaran),
             statusText: ruleMatch ? ruleMatch.status : "Aman",
             actionText: ruleMatch ? ruleMatch.action : "Tidak ada sanksi",
             badgeClass: ruleMatch ? ruleMatch.badgeClass : "pill-green",
             isBermasalah: totalPoinPelanggaran >= 31,
-            isBerprestasi: totalPoinPrestasi > 0
+            isBerprestasi: totalPrestasi > 0
         };
     },
 
@@ -496,7 +514,7 @@ const StorageManager = {
             peringkat: achievementData.peringkat || "Juara 1",
             penyelenggara: achievementData.penyelenggara || "-",
             piagam: achievementData.piagam || "",
-            poin: Number(achievementData.poin) || 20,
+            poin: 0,
             foto: achievementData.foto || achievementData.piagam || defaultFoto,
             keterangan: achievementData.keterangan || `${achievementData.peringkat || 'Juara'} ${achievementData.tingkat || ''} (${achievementData.penyelenggara || '-'})`,
             pencatat: achievementData.pencatat || "Tim Kesiswaan"

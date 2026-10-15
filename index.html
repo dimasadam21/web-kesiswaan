@@ -335,8 +335,8 @@
                 </div>
 
                 <div class="sum-card green">
-                    <div class="sum-title">Poin Prestasi / Reward</div>
-                    <div id="studentPoinPrestasi" class="sum-number">+0</div>
+                    <div class="sum-title">Prestasi Kejuaraan</div>
+                    <div id="studentPoinPrestasi" class="sum-number">0</div>
                     <div id="studentPrestasiCount" class="sum-desc">0 Penghargaan</div>
                 </div>
 
@@ -604,7 +604,7 @@
                             <div id="targetStudentStatusPill" class="status-pill pill-green">Status: Aman</div>
                             <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 4px;">
                                 Pelanggaran: <strong id="targetStudentPoinPelanggaran" style="color: var(--danger);">0 Poin</strong> | 
-                                Prestasi: <strong id="targetStudentPoinPrestasi" style="color: var(--success);">+0 Poin</strong>
+                                Prestasi: <strong id="targetStudentPoinPrestasi" style="color: var(--success);">0 Capaian</strong>
                             </div>
                         </div>
                     </div>
@@ -671,9 +671,9 @@
                         <div class="top-students-header-left">
                             <div class="top-students-badge-icon">🏆</div>
                             <div>
-                                <h4 class="top-students-title" id="topStudentsTitle">🏆 10 Siswa Teratas (Poin Prestasi Tertinggi)</h4>
+                                <h4 class="top-students-title" id="topStudentsTitle">🏆 10 Siswa Teratas (Prestasi Terbanyak)</h4>
                                 <p class="top-students-subtitle">
-                                    Peringkat 10 siswa dengan poin tertinggi • Klik <strong>"👉 Pilih"</strong> untuk mengelola data siswa
+                                    Peringkat 10 siswa dengan torehan prestasi & poin kedisiplinan • Klik <strong>"👉 Pilih"</strong> untuk mengelola data siswa
                                 </p>
                             </div>
                         </div>
@@ -681,7 +681,7 @@
                             <span class="filter-label">Urutkan:</span>
                             <div class="filter-pills">
                                 <button type="button" class="filter-pill-btn active" id="btnSortPrestasi" onclick="AdminPortal.setTopStudentsSort('prestasi')">
-                                    🏆 Prestasi Tertinggi
+                                    🏆 Prestasi Terbanyak
                                 </button>
                                 <button type="button" class="filter-pill-btn" id="btnSortPelanggaran" onclick="AdminPortal.setTopStudentsSort('pelanggaran')">
                                     ⚠️ Pelanggaran Tertinggi
@@ -701,7 +701,7 @@
                                     <th width="32%">Nama Siswa</th>
                                     <th width="14%">Kelas</th>
                                     <th width="15%">Poin Pelanggaran</th>
-                                    <th width="15%">Poin Prestasi</th>
+                                    <th width="15%">Capaian Prestasi</th>
                                     <th width="16%">Aksi</th>
                                 </tr>
                             </thead>
