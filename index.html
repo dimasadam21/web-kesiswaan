@@ -423,6 +423,9 @@
                             <button class="hub-btn hub-btn-emerald" onclick="Forms.openImportStudentsModal()" title="Impor Data Siswa dari File Excel/CSV">
                                 📥 Impor Excel
                             </button>
+                            <button class="hub-btn" onclick="Forms.openExportStudentsModal()" style="background: #0284c7; color: #ffffff;" title="Lihat Direktori Seluruh Siswa & Ekspor ke Excel (.xlsx / .csv)">
+                                📊 Ekspor Siswa
+                            </button>
                             <button class="hub-btn hub-btn-slate" onclick="Forms.openManageTeachersModal()" title="Kelola Akun Guru & Tim Kesiswaan">
                                 👥 Kelola Guru
                             </button>
@@ -477,6 +480,9 @@
                 </button>
                 <button id="btnImporSiswaSuperAdmin" class="admin-tab-btn superadmin-tab-action" onclick="Forms.openImportStudentsModal()" style="display: none; background: #059669 !important;" title="Impor Data Siswa dari File Excel / CSV">
                     📥 Impor Excel
+                </button>
+                <button id="btnEksporSiswaSuperAdmin" class="admin-tab-btn superadmin-tab-action" onclick="Forms.openExportStudentsModal()" style="display: none; background: #0284c7 !important;" title="Lihat Seluruh Siswa & Ekspor ke Excel (.xlsx / .csv)">
+                    📊 Ekspor Siswa
                 </button>
             </div>
 
@@ -626,8 +632,11 @@
                         </table>
                     </div>
 
-                    <div class="top-students-footer">
+                    <div class="top-students-footer" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
                         <span>💡 Menampilkan <strong>10 siswa teratas</strong> dengan perolehan poin tertinggi. Cari siswa lainnya menggunakan kotak pencarian di bagian atas.</span>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="Forms.openExportStudentsModal()" style="font-size: 0.76rem; font-weight: 600; color: #0284c7; border-color: #7dd3fc; background: #f0f9ff; padding: 3px 10px; border-radius: 6px;">
+                            📋 Lihat Semua Siswa & Ekspor (.xlsx)
+                        </button>
                     </div>
                 </div>
             </div>
@@ -1266,6 +1275,89 @@
                 <button type="button" class="btn btn-outline" onclick="Forms.closeAllModals()">Batal</button>
                 <button type="button" id="btnExecuteImport" class="btn btn-success" onclick="Forms.handleExecuteImport()" disabled>
                     🚀 Mulai Impor Data Siswa
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         MODAL 3D: DIREKTORI & EKSPOR SELURUH SISWA (KHUSUS SUPER ADMIN)
+         ===================================================================== -->
+    <div id="modalExportStudents" class="modal-backdrop">
+        <div class="modal-card xl" style="max-width: 1200px; width: 95vw;">
+            <div class="modal-card-header">
+                <div>
+                    <h3 style="display: flex; align-items: center; gap: 0.5rem; margin: 0;">
+                        <span>📊 Direktori & Ekspor Seluruh Siswa</span>
+                        <span id="exportModalTotalBadge" class="badge" style="background: #e0f2fe; color: #0369a1; font-size: 0.78rem; font-weight: 700; padding: 3px 10px; border-radius: 99px;">0 Siswa</span>
+                    </h3>
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; margin-bottom: 0;">
+                        Pratinjau lengkap seluruh siswa terdaftar, filter per kelas, dan ekspor ke lembar kerja Excel (.xlsx / .csv).
+                    </p>
+                </div>
+                <button class="btn-outline btn-sm" onclick="Forms.closeAllModals()">&times; Tutup</button>
+            </div>
+            <div class="modal-card-body" style="padding: 1.25rem; max-height: 75vh; overflow-y: auto;">
+                <!-- TOOLBAR KONTROL ATAS -->
+                <div style="background: #f8fafc; border: 1px solid var(--border); border-radius: 10px; padding: 1rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+                    <!-- Filter & Search -->
+                    <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; flex: 1; min-width: 280px;">
+                        <div style="position: relative; flex: 1; min-width: 200px;">
+                            <span style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.9rem; pointer-events: none;">🔍</span>
+                            <input type="text" id="exportStudentSearchInput" class="form-control-clean" placeholder="Cari nama, NIS, NISN, kelas, atau wali kelas..." oninput="Forms.handleSearchExportStudents(this.value)" style="padding-left: 32px; height: 38px; font-size: 0.85rem; width: 100%;">
+                        </div>
+                        <select id="exportStudentFilterKelas" class="form-control-clean" onchange="Forms.handleFilterExportStudentsKelas(this.value)" style="height: 38px; font-size: 0.85rem; width: auto; min-width: 170px;">
+                            <option value="">Semua Tingkat & Kelas</option>
+                            <!-- Diisi via JavaScript -->
+                        </select>
+                    </div>
+
+                    <!-- Tombol Ekspor & Unduh -->
+                    <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                        <button type="button" class="btn btn-success btn-sm" onclick="Forms.exportFilteredStudentsToExcel()" style="height: 38px; display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 600;" title="Unduh data siswa yang tampil / seluruh siswa ke file Excel (.xlsx)">
+                            📊 Unduh Excel (.xlsx)
+                        </button>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="Forms.downloadFilteredStudentsCsv()" style="height: 38px; display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 600; border-color: #cbd5e1; color: var(--text-main); background: #ffffff;" title="Unduh data siswa dalam format CSV">
+                            📄 Unduh CSV
+                        </button>
+                    </div>
+                </div>
+
+                <!-- TABEL DATA SELURUH SISWA -->
+                <div style="border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: #ffffff; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+                    <div style="max-height: 480px; overflow-y: auto; overflow-x: auto;">
+                        <table class="simple-table" style="width: 100%; border-collapse: collapse; font-size: 0.82rem; white-space: nowrap;">
+                            <thead style="position: sticky; top: 0; background: #f8fafc; z-index: 2; border-bottom: 2px solid var(--border);">
+                                <tr>
+                                    <th style="padding: 10px 8px; text-align: center; width: 40px;">No</th>
+                                    <th style="padding: 10px 12px; text-align: left;">Siswa</th>
+                                    <th style="padding: 10px 10px; text-align: left;">Kelas & Jurusan</th>
+                                    <th style="padding: 10px 10px; text-align: left;">Wali Kelas</th>
+                                    <th style="padding: 10px 10px; text-align: left;">No. HP Siswa</th>
+                                    <th style="padding: 10px 10px; text-align: left;">Orang Tua (Bapak/Ibu)</th>
+                                    <th style="padding: 10px 10px; text-align: left;">Alamat</th>
+                                    <th style="padding: 10px 10px; text-align: center;">Pelanggaran</th>
+                                    <th style="padding: 10px 10px; text-align: center;">Prestasi</th>
+                                    <th style="padding: 10px 10px; text-align: center;">Status Disiplin</th>
+                                    <th style="padding: 10px 10px; text-align: center; width: 90px;">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="exportStudentsTableBody">
+                                <!-- Diisi via JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div style="margin-top: 0.75rem; display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem; color: var(--text-muted); flex-wrap: wrap; gap: 0.5rem;">
+                    <span id="exportStudentFilterStatus">Menampilkan seluruh data siswa</span>
+                    <span>Klik <strong>"👉 Pilih"</strong> untuk membuka profil siswa di halaman utama</span>
+                </div>
+            </div>
+            <div class="modal-card-footer" style="display: flex; justify-content: space-between; align-items: center;">
+                <button type="button" class="btn btn-outline" onclick="Forms.closeAllModals()">Tutup</button>
+                <button type="button" class="btn btn-success" onclick="Forms.exportFilteredStudentsToExcel()">
+                    📊 Ekspor ke Excel (.xlsx)
                 </button>
             </div>
         </div>

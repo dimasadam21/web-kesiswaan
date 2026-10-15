@@ -830,6 +830,7 @@ const App = {
         const superAdminToolbar = document.getElementById("superAdminToolbar");
         const btnTambahSiswa = document.getElementById("btnTambahSiswaSuperAdmin");
         const btnImporSiswa = document.getElementById("btnImporSiswaSuperAdmin");
+        const btnEksporSiswa = document.getElementById("btnEksporSiswaSuperAdmin");
 
         if (!user) {
             // BELUM LOGIN
@@ -842,6 +843,7 @@ const App = {
             if (superAdminToolbar) superAdminToolbar.style.display = "none";
             if (btnTambahSiswa) btnTambahSiswa.style.display = "none";
             if (btnImporSiswa) btnImporSiswa.style.display = "none";
+            if (btnEksporSiswa) btnEksporSiswa.style.display = "none";
         } else if (user.role === "siswa") {
             // SISWA LOGIN
             if (viewPublic) viewPublic.style.display = "none";
@@ -855,6 +857,7 @@ const App = {
             if (superAdminToolbar) superAdminToolbar.style.display = "none";
             if (btnTambahSiswa) btnTambahSiswa.style.display = "none";
             if (btnImporSiswa) btnImporSiswa.style.display = "none";
+            if (btnEksporSiswa) btnEksporSiswa.style.display = "none";
 
             SiswaPortal.renderMyStudentPortal(user.studentId);
         } else if (user.role === "guru" || user.role === "superadmin") {
@@ -872,12 +875,14 @@ const App = {
                 if (superAdminToolbar) superAdminToolbar.style.display = "block";
                 if (btnTambahSiswa) btnTambahSiswa.style.display = "inline-flex";
                 if (btnImporSiswa) btnImporSiswa.style.display = "inline-flex";
+                if (btnEksporSiswa) btnEksporSiswa.style.display = "inline-flex";
             } else {
                 if (headerUserName) headerUserName.textContent = `${user.icon || '👨‍🏫'} ${user.name}`;
                 if (headerUserBadge) headerUserBadge.className = "user-badge-pill";
                 if (superAdminToolbar) superAdminToolbar.style.display = "none";
                 if (btnTambahSiswa) btnTambahSiswa.style.display = "none";
                 if (btnImporSiswa) btnImporSiswa.style.display = "none";
+                if (btnEksporSiswa) btnEksporSiswa.style.display = "none";
             }
 
             AdminPortal.initTeacherPortal(user);

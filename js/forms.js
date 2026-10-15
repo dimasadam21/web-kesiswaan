@@ -12,6 +12,8 @@ const Forms = {
     uploadedSuratTtdUrl: null,
     currentSuratSpLevel: "SP 1",
     teacherSearchQuery: "",
+    exportStudentSearchQuery: "",
+    exportStudentClassFilter: "",
 
     init() {
         this.bindEvents();
@@ -1219,6 +1221,332 @@ const Forms = {
         } catch (err) {
             App.showToast("Gagal melakukan impor: " + err.message);
         }
+    },
+
+    // 3D. FITUR DIREKTORI & EKSPOR SELURUH SISWA (KHUSUS SUPER ADMIN)
+    openExportStudentsModal() {
+        this.exportStudentSearchQuery = "";
+        this.exportStudentClassFilter = "";
+
+        const searchInput = document.getElementById("exportStudentSearchInput");
+        if (searchInput) searchInput.value = "";
+
+        this.populateExportStudentClassFilter();
+        this.renderExportStudentsTable();
+        this.openModal("modalExportStudents");
+    },
+
+    populateExportStudentClassFilter() {
+        const select = document.getElementById("exportStudentFilterKelas");
+        if (!select) return;
+
+        const students = StorageManager.getStudents() || [];
+        const kelasSet = new Set();
+        students.forEach(s => {
+            if (s.kelas && s.kelas !== "-") kelasSet.add(s.kelas.trim());
+        });
+
+        const sortedKelas = Array.from(kelasSet).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+
+        select.innerHTML = `
+            <option value="">Semua Tingkat & Kelas (${students.length} Siswa)</option>
+            ${sortedKelas.map(k => {
+                const count = students.filter(s => s.kelas === k).length;
+                return `<option value="${this.escapeHtml(k)}">${this.escapeHtml(k)} (${count} Siswa)</option>`;
+            }).join('')}
+        `;
+        select.value = this.exportStudentClassFilter || "";
+    },
+
+    getFilteredExportStudents() {
+        const allStudents = StorageManager.getStudents() || [];
+        const q = (this.exportStudentSearchQuery || "").toLowerCase();
+        const kFilter = (this.exportStudentClassFilter || "").trim().toLowerCase();
+
+        return allStudents.filter(s => {
+            // Filter Kelas
+            if (kFilter) {
+                const sKelas = (s.kelas || "").trim().toLowerCase();
+                if (sKelas !== kFilter) return false;
+            }
+
+            // Filter Query Search
+            if (q) {
+                const nama = (s.nama || "").toLowerCase();
+                const nis = (s.nis || "").toLowerCase();
+                const nisn = (s.nisn || "").toLowerCase();
+                const kelas = (s.kelas || "").toLowerCase();
+                const jurusan = (s.jurusan || "").toLowerCase();
+                const wali = (s.waliKelas || "").toLowerCase();
+                const alamat = (s.alamat || "").toLowerCase();
+                const ortu = ((s.namaOrtuBapak || "") + " " + (s.namaOrtuIbu || "")).toLowerCase();
+                const spmb = (s.inputSpmb || "").toLowerCase();
+
+                const match = nama.includes(q) || nis.includes(q) || nisn.includes(q) || 
+                              kelas.includes(q) || jurusan.includes(q) || wali.includes(q) || 
+                              alamat.includes(q) || ortu.includes(q) || spmb.includes(q);
+                if (!match) return false;
+            }
+
+            return true;
+        });
+    },
+
+    renderExportStudentsTable() {
+        const tbody = document.getElementById("exportStudentsTableBody");
+        if (!tbody) return;
+
+        const allStudents = StorageManager.getStudents() || [];
+        const filtered = this.getFilteredExportStudents();
+
+        // Update Badge & Status
+        const totalBadge = document.getElementById("exportModalTotalBadge");
+        if (totalBadge) {
+            totalBadge.textContent = `${filtered.length} Siswa`;
+            totalBadge.style.background = filtered.length > 0 ? "#e0f2fe" : "#fee2e2";
+            totalBadge.style.color = filtered.length > 0 ? "#0369a1" : "#991b1b";
+        }
+
+        const statusText = document.getElementById("exportStudentFilterStatus");
+        if (statusText) {
+            if (this.exportStudentSearchQuery || this.exportStudentClassFilter) {
+                statusText.innerHTML = `Menampilkan <strong>${filtered.length}</strong> dari total ${allStudents.length} siswa terdaftar.`;
+            } else {
+                statusText.innerHTML = `Menampilkan seluruh <strong>${allStudents.length}</strong> siswa terdaftar di sistem.`;
+            }
+        }
+
+        if (filtered.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="11" style="text-align: center; padding: 2.5rem 1rem; color: var(--text-muted); background: #f8fafc;">
+                        <div style="font-size: 2rem; margin-bottom: 0.4rem;">🔍</div>
+                        <strong style="color: var(--text-main); display: block; font-size: 0.95rem;">Tidak Ada Siswa yang Sesuai</strong>
+                        <span style="font-size: 0.82rem;">Coba sesuaikan kata kunci pencarian atau ubah pilihan filter kelas.</span>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        tbody.innerHTML = filtered.map((s, idx) => {
+            const st = StorageManager.calculateStudentStatus(s);
+            const fallbackAvatar = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80";
+            const fotoUrl = s.foto || fallbackAvatar;
+
+            return `
+                <tr style="border-bottom: 1px solid var(--border); transition: background 0.15s;" onmouseenter="this.style.background='#f8fafc'" onmouseleave="this.style.background='transparent'">
+                    <td style="padding: 10px 8px; text-align: center; color: var(--text-muted); font-weight: 600;">
+                        ${idx + 1}
+                    </td>
+                    <td style="padding: 8px 12px;">
+                        <div style="display: flex; align-items: center; gap: 0.65rem;">
+                            <img src="${this.escapeHtml(fotoUrl)}" alt="Foto" style="width: 36px; height: 36px; border-radius: 8px; object-fit: cover; border: 1px solid var(--border); flex-shrink: 0;" onerror="this.src='${fallbackAvatar}'">
+                            <div>
+                                <strong style="font-size: 0.88rem; color: var(--text-main); display: block;">${this.escapeHtml(s.nama || '-')}</strong>
+                                <span style="font-size: 0.75rem; color: var(--text-muted); font-family: monospace;">NIS: ${this.escapeHtml(s.nis || '-')} • NISN: ${this.escapeHtml(s.nisn || '-')}</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td style="padding: 8px 10px;">
+                        <span class="badge" style="background: #e0f2fe; color: #0369a1; font-weight: 700; font-size: 0.72rem; padding: 2px 7px; border-radius: 99px;">
+                            ${this.escapeHtml(s.kelas || '-')}
+                        </span>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;">${this.escapeHtml(s.jurusan || '-')}</div>
+                    </td>
+                    <td style="padding: 8px 10px; font-size: 0.82rem; color: var(--text-main);">
+                        ${this.escapeHtml(s.waliKelas || '-')}
+                    </td>
+                    <td style="padding: 8px 10px; font-size: 0.8rem; font-family: monospace;">
+                        ${s.nomorHp ? `<a href="https://wa.me/${s.nomorHp.replace(/[^0-9]/g, '')}" target="_blank" style="color: #0284c7; text-decoration: none;">📱 ${this.escapeHtml(s.nomorHp)}</a>` : '-'}
+                    </td>
+                    <td style="padding: 8px 10px; font-size: 0.78rem;">
+                        <div>👨 ${this.escapeHtml(s.namaOrtuBapak || '-')}</div>
+                        <div style="color: var(--text-muted);">👩 ${this.escapeHtml(s.namaOrtuIbu || '-')}</div>
+                    </td>
+                    <td style="padding: 8px 10px; font-size: 0.78rem; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${this.escapeHtml(s.alamat || '-')}">
+                        <span>${this.escapeHtml(s.alamat || '-')}</span>
+                        ${s.mapsAlamat ? `<a href="${this.escapeHtml(s.mapsAlamat)}" target="_blank" style="margin-left: 4px; color: #0284c7;" title="Buka Peta">🗺️</a>` : ''}
+                    </td>
+                    <td style="padding: 8px 10px; text-align: center;">
+                        <span class="badge" style="background: #fee2e2; color: #991b1b; font-weight: 700; font-size: 0.75rem; padding: 3px 8px; border-radius: 99px;">
+                            ${st.totalPoinPelanggaran || 0}
+                        </span>
+                    </td>
+                    <td style="padding: 8px 10px; text-align: center;">
+                        <span class="badge" style="background: #dcfce7; color: #166534; font-weight: 700; font-size: 0.75rem; padding: 3px 8px; border-radius: 99px;">
+                            +${st.totalPoinPrestasi || 0}
+                        </span>
+                    </td>
+                    <td style="padding: 8px 10px; text-align: center;">
+                        <span class="status-pill ${st.badgeClass || 'pill-green'}" style="font-size: 0.72rem; padding: 2px 7px; white-space: nowrap;">
+                            ${this.escapeHtml(st.status || 'Aman')}
+                        </span>
+                    </td>
+                    <td style="padding: 8px 10px; text-align: center;">
+                        <button type="button" class="btn btn-primary btn-sm" onclick="Forms.selectStudentFromExportModal('${this.escapeHtml(s.id)}')" style="padding: 4px 10px; font-size: 0.76rem; font-weight: 600; white-space: nowrap;">
+                            👉 Pilih
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    },
+
+    handleSearchExportStudents(query) {
+        this.exportStudentSearchQuery = query || "";
+        this.renderExportStudentsTable();
+    },
+
+    handleFilterExportStudentsKelas(kelas) {
+        this.exportStudentClassFilter = kelas || "";
+        this.renderExportStudentsTable();
+    },
+
+    selectStudentFromExportModal(studentId) {
+        this.closeAllModals();
+        if (window.AdminPortal && typeof AdminPortal.selectStudent === "function") {
+            AdminPortal.selectStudent(studentId);
+            App.showToast("Data siswa berhasil dibuka di dasbor.");
+        }
+    },
+
+    exportFilteredStudentsToExcel() {
+        const students = this.getFilteredExportStudents();
+        if (!students || students.length === 0) {
+            App.showToast("Tidak ada data siswa untuk diekspor!");
+            return;
+        }
+
+        const exportData = students.map((s, idx) => {
+            const st = StorageManager.calculateStudentStatus(s);
+            return {
+                "No": idx + 1,
+                "Foto": s.foto || "",
+                "NIS": s.nis || "-",
+                "NISN": s.nisn || "-",
+                "Nama Siswa": s.nama || "-",
+                "Kelas": s.kelas || "-",
+                "Jurusan": s.jurusan || "-",
+                "Wali Kelas": s.waliKelas || "-",
+                "Nomor HP Siswa": s.nomorHp || "-",
+                "Nama Ortu Bapak": s.namaOrtuBapak || "-",
+                "No HP Bapak": s.noHpBapak || "-",
+                "Nama Ortu Ibu": s.namaOrtuIbu || "-",
+                "No HP Ibu": s.noHpIbu || "-",
+                "Alamat Lengkap": s.alamat || "-",
+                "Maps Alamat": s.mapsAlamat || "-",
+                "Input SPMB": s.inputSpmb || "-",
+                "Poin Pelanggaran": st.totalPoinPelanggaran || 0,
+                "Poin Prestasi": st.totalPoinPrestasi || 0,
+                "Status Kedisiplinan": st.status || "Aman",
+                "Tindak Lanjut / Sanksi": st.action || "-"
+            };
+        });
+
+        const dateStr = new Date().toISOString().split("T")[0];
+        const filename = `Data_Seluruh_Siswa_Kesiswaan_${dateStr}.xlsx`;
+
+        if (window.XLSX && XLSX.utils && XLSX.writeFile) {
+            try {
+                const ws = XLSX.utils.json_to_sheet(exportData);
+                ws["!cols"] = [
+                    { wch: 6 },  // No
+                    { wch: 25 }, // Foto
+                    { wch: 12 }, // NIS
+                    { wch: 15 }, // NISN
+                    { wch: 30 }, // Nama Siswa
+                    { wch: 14 }, // Kelas
+                    { wch: 26 }, // Jurusan
+                    { wch: 26 }, // Wali Kelas
+                    { wch: 16 }, // Nomor HP Siswa
+                    { wch: 24 }, // Nama Ortu Bapak
+                    { wch: 16 }, // No HP Bapak
+                    { wch: 24 }, // Nama Ortu Ibu
+                    { wch: 16 }, // No HP Ibu
+                    { wch: 45 }, // Alamat Lengkap
+                    { wch: 25 }, // Maps Alamat
+                    { wch: 24 }, // Input SPMB
+                    { wch: 16 }, // Poin Pelanggaran
+                    { wch: 14 }, // Poin Prestasi
+                    { wch: 26 }, // Status Kedisiplinan
+                    { wch: 35 }  // Tindak Lanjut / Sanksi
+                ];
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Data Siswa");
+                XLSX.writeFile(wb, filename);
+                App.showToast(`Berhasil mengekspor ${exportData.length} data siswa ke file Excel (.xlsx).`);
+                return;
+            } catch (e) {
+                console.warn("Gagal ekspor XLSX, beralih ke format CSV:", e);
+            }
+        }
+
+        this.downloadFilteredStudentsCsv();
+    },
+
+    downloadFilteredStudentsCsv() {
+        const students = this.getFilteredExportStudents();
+        if (!students || students.length === 0) {
+            App.showToast("Tidak ada data siswa untuk diekspor!");
+            return;
+        }
+
+        const headers = [
+            "No", "Foto", "NIS", "NISN", "Nama Siswa", "Kelas", "Jurusan", "Wali Kelas",
+            "Nomor HP Siswa", "Nama Ortu Bapak", "No HP Bapak", "Nama Ortu Ibu", "No HP Ibu",
+            "Alamat Lengkap", "Maps Alamat", "Input SPMB", "Poin Pelanggaran", "Poin Prestasi",
+            "Status Kedisiplinan", "Tindak Lanjut / Sanksi"
+        ];
+
+        const escapeCsv = (val) => {
+            if (val === undefined || val === null) return '""';
+            const s = String(val).replace(/"/g, '""');
+            return `"${s}"`;
+        };
+
+        const lines = [];
+        lines.push(headers.map(escapeCsv).join(","));
+
+        students.forEach((s, idx) => {
+            const st = StorageManager.calculateStudentStatus(s);
+            lines.push([
+                escapeCsv(idx + 1),
+                escapeCsv(s.foto || ""),
+                escapeCsv(s.nis || "-"),
+                escapeCsv(s.nisn || "-"),
+                escapeCsv(s.nama || "-"),
+                escapeCsv(s.kelas || "-"),
+                escapeCsv(s.jurusan || "-"),
+                escapeCsv(s.waliKelas || "-"),
+                escapeCsv(s.nomorHp || "-"),
+                escapeCsv(s.namaOrtuBapak || "-"),
+                escapeCsv(s.noHpBapak || "-"),
+                escapeCsv(s.namaOrtuIbu || "-"),
+                escapeCsv(s.noHpIbu || "-"),
+                escapeCsv(s.alamat || "-"),
+                escapeCsv(s.mapsAlamat || "-"),
+                escapeCsv(s.inputSpmb || "-"),
+                escapeCsv(st.totalPoinPelanggaran || 0),
+                escapeCsv(st.totalPoinPrestasi || 0),
+                escapeCsv(st.status || "Aman"),
+                escapeCsv(st.action || "-")
+            ].join(","));
+        });
+
+        const csvContent = "\uFEFF" + lines.join("\r\n");
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        const link = document.createElement("a");
+        const dateStr = new Date().toISOString().split("T")[0];
+        const filename = `Data_Seluruh_Siswa_Kesiswaan_${dateStr}.csv`;
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", filename);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        App.showToast(`Berhasil mengekspor ${students.length} data siswa ke file CSV.`);
     },
 
     // 4. SUPER ADMIN: PENGATURAN SEKOLAH, TULISAN, UKURAN, FONT, LOGO & TEMA
