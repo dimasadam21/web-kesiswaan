@@ -287,8 +287,80 @@ const StorageManager = {
     updateRules(newRules) {
         const data = this.getData();
         data.rules = newRules;
+        if (Array.isArray(data.rules)) {
+            data.rules.sort((a, b) => (Number(a.minPoint) || 0) - (Number(b.minPoint) || 0));
+        }
         this.saveData(data);
         return data.rules;
+    },
+
+    addRule(ruleData) {
+        const data = this.getData();
+        if (!data.rules) data.rules = JSON.parse(JSON.stringify(DEFAULT_RULES));
+        const newRule = {
+            minPoint: Math.max(0, Number(ruleData.minPoint) || 0),
+            maxPoint: Number(ruleData.maxPoint) >= 9999 ? 9999 : Math.max(0, Number(ruleData.maxPoint) || 9999),
+            status: (ruleData.status || "Aturan Sanksi Baru").trim(),
+            action: (ruleData.action || ruleData.tindakLanjut || "Pembinaan").trim(),
+            tindakLanjut: (ruleData.action || ruleData.tindakLanjut || "Pembinaan").trim(),
+            badgeClass: ruleData.badgeClass || "pill-yellow"
+        };
+        data.rules.push(newRule);
+        data.rules.sort((a, b) => a.minPoint - b.minPoint);
+        this.saveData(data);
+        return data.rules;
+    },
+
+    updateRule(index, ruleData) {
+        const data = this.getData();
+        if (!data.rules) data.rules = JSON.parse(JSON.stringify(DEFAULT_RULES));
+        if (data.rules[index]) {
+            const minP = ruleData.minPoint !== undefined ? Math.max(0, Number(ruleData.minPoint) || 0) : data.rules[index].minPoint;
+            const maxP = ruleData.maxPoint !== undefined ? (Number(ruleData.maxPoint) >= 9999 ? 9999 : Math.max(0, Number(ruleData.maxPoint))) : data.rules[index].maxPoint;
+            const act = ruleData.action !== undefined ? ruleData.action.trim() : (data.rules[index].action || data.rules[index].tindakLanjut || "");
+
+            data.rules[index] = {
+                ...data.rules[index],
+                minPoint: minP,
+                maxPoint: maxP,
+                status: ruleData.status !== undefined ? ruleData.status.trim() : data.rules[index].status,
+                action: act,
+                tindakLanjut: act,
+                badgeClass: ruleData.badgeClass || data.rules[index].badgeClass || "pill-yellow"
+            };
+            data.rules.sort((a, b) => a.minPoint - b.minPoint);
+            this.saveData(data);
+            return data.rules;
+        }
+        return null;
+    },
+
+    deleteRule(index) {
+        const data = this.getData();
+        if (!data.rules) data.rules = JSON.parse(JSON.stringify(DEFAULT_RULES));
+        if (data.rules.length > 1 && data.rules[index]) {
+            data.rules.splice(index, 1);
+            this.saveData(data);
+            return data.rules;
+        }
+        return null;
+    },
+
+    resetRulesToDefault() {
+        const data = this.getData();
+        data.rules = JSON.parse(JSON.stringify(DEFAULT_RULES));
+        this.saveData(data);
+        return data.rules;
+    },
+
+    getRuleForPoints(points) {
+        const rules = this.getRules();
+        for (const rule of rules) {
+            if (points >= rule.minPoint && points <= rule.maxPoint) {
+                return rule;
+            }
+        }
+        return rules[0] || { minPoint: 0, maxPoint: 15, status: "Aman", action: "Peringatan lisan & pembinaan wali kelas", badgeClass: "pill-green" };
     },
 
     // TEMPLATE SURAT PANGGILAN ORANG TUA (SUPER ADMIN)
@@ -309,36 +381,7 @@ const StorageManager = {
         if (!student) return false;
         const status = this.calculateStudentStatus(student);
         // Batas Poin SP adalah >= 31 (dimulai dari Panggilan Orang Tua I / SP 1)
-        return status.totalPoinPelanggaran >= 31;
-    },
-
-    getRuleForPoints(points) {
-        const rules = this.getRules();
-        for (const rule of rules) {
-            if (points >= rule.minPoint && points <= rule.maxPoint) {
-                return rule;
-            }
-        }
-        return rules[0] || { minPoint: 0, maxPoint: 15, status: "Aman", action: "Peringatan lisan & pembinaan wali kelas", badgeClass: "pill-green" };
-    },
-
-    // TEMPLATE SURAT PANGGILAN ORANG TUA (SUPER ADMIN)
-    getSuratTemplate() {
-        return this.getData().suratTemplate || DEFAULT_SURAT_TEMPLATE;
-    },
-
-    updateSuratTemplate(newTemplate) {
-        const data = this.getData();
-        data.suratTemplate = newTemplate;
-        this.saveData(data);
-        return data.suratTemplate;
-    },
-
-    isStudentEligibleForSummons(student) {
-        if (!student) return false;
-        const st = this.calculateStudentStatus(student);
-        // Batas poin SP: minimal 31 Poin (Panggilan Ortu I / SP 1 / SP 2 / SP 3)
-        return (st.totalPoinPelanggaran || 0) >= 31;
+        return (status.totalPoinPelanggaran || 0) >= 31;
     },
 
     // DATA PRESTASI GLOBAL (UNTUK KELOLA PRESTASI DI ADMIN)

@@ -2109,9 +2109,43 @@
 
                 <!-- SUB-PANE 2: ATURAN RENTANG POIN & SANKSI OTOMATIS -->
                 <div id="subPaneManageRules" style="display: none;">
-                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.75rem;">
-                        Tindak lanjut dan sanksi berikut akan otomatis terisi saat guru mencatat pelanggaran berdasarkan total akumulasi poin siswa.
-                    </p>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0; flex: 1;">
+                            Tindak lanjut dan sanksi berikut akan otomatis terisi saat guru mencatat pelanggaran berdasarkan total akumulasi poin siswa.
+                        </p>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="Forms.handleResetRulesToDefault()" style="font-size: 0.75rem; padding: 4px 10px;" title="Kembalikan aturan rentang ke konfigurasi baku sekolah">
+                            🔄 Reset ke Default
+                        </button>
+                    </div>
+
+                    <!-- FORM TAMBAH RENTANG SANKSI BARU -->
+                    <div style="background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 1rem; margin-bottom: 1.25rem;">
+                        <strong style="display: block; margin-bottom: 0.65rem;">➕ Tambah Rentang Poin & Sanksi Baru:</strong>
+                        <form id="addRuleForm" onsubmit="Forms.handleAddRule(event)">
+                            <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem; flex-wrap: wrap;">
+                                <div style="display: flex; align-items: center; gap: 0.35rem;">
+                                    <span style="font-size: 0.8rem; font-weight: 600;">Rentang:</span>
+                                    <input type="number" id="newRuleMinPoint" class="form-control-clean" min="0" placeholder="Min" required style="width: 75px; font-size: 0.85rem;">
+                                    <span style="font-size: 0.8rem; font-weight: 600;">-</span>
+                                    <input type="number" id="newRuleMaxPoint" class="form-control-clean" min="1" placeholder="Max" required style="width: 75px; font-size: 0.85rem;" title="Ketik 9999 atau lebih untuk tanda tanpa batas (∞)">
+                                </div>
+                                <select id="newRuleBadgeClass" class="form-control-clean" style="width: 140px; font-size: 0.85rem;">
+                                    <option value="pill-green">🟢 Hijau (Aman/Ringan)</option>
+                                    <option value="pill-yellow">🟡 Kuning (Peringatan/Ortu)</option>
+                                    <option value="pill-red">🔴 Merah (SP/Skorsing/Keras)</option>
+                                </select>
+                                <input type="text" id="newRuleStatus" class="form-control-clean" placeholder="Nama Status / Tingkatan (Contoh: Peringatan Tertulis II)" required style="flex: 1; min-width: 180px; font-size: 0.85rem;">
+                            </div>
+                            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                <input type="text" id="newRuleAction" class="form-control-clean" placeholder="Tindak Lanjut & Sanksi Otomatis (Contoh: Panggilan Orang Tua & Pembinaan)" required style="flex: 1; font-size: 0.85rem;">
+                                <button type="submit" class="btn btn-primary" style="white-space: nowrap; font-size: 0.85rem; padding: 0.45rem 1rem;">
+                                    + Tambah Rentang
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <strong style="display: block; margin-bottom: 0.5rem;">Daftar Aturan Rentang Poin & Sanksi Terdaftar:</strong>
                     <div id="rulesListContainer" style="max-height: 380px; overflow-y: auto;">
                         <!-- Diisi via JavaScript -->
                     </div>

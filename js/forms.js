@@ -2288,6 +2288,7 @@ const Forms = {
         }
 
         this.editingViolationMasterId = null;
+        this.editingRuleIndex = null;
         this.switchViolationsRulesSubTab('violations');
         this.renderViolationsMasterList();
         this.renderRulesList();
@@ -2476,30 +2477,225 @@ const Forms = {
         App.showToast("Jenis pelanggaran berhasil dihapus.");
     },
 
+    editingRuleIndex: null,
+
     renderRulesList() {
         const container = document.getElementById("rulesListContainer");
         if (!container) return;
 
         const rules = StorageManager.getRules();
-        container.innerHTML = rules.map((r, idx) => `
-            <div style="background: #ffffff; border: 1px solid var(--border); border-radius: 8px; padding: 0.85rem; margin-bottom: 0.65rem;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                    <div style="display: flex; align-items: center; gap: 0.6rem;">
-                        <span class="status-pill ${r.badgeClass || 'pill-green'}" style="font-weight: 700; font-size: 0.8rem;">
-                            ${r.minPoint} - ${r.maxPoint >= 9999 ? '∞' : r.maxPoint} Poin
-                        </span>
-                        <strong style="font-size: 0.9rem; color: var(--text-main);">${r.status}</strong>
+        if (rules.length === 0) {
+            container.innerHTML = `<div style="padding: 1rem; text-align: center; color: var(--text-muted); font-size: 0.85rem;">Belum ada aturan rentang poin sanksi terdaftar.</div>`;
+            return;
+        }
+
+        container.innerHTML = rules.map((r, idx) => {
+            if (this.editingRuleIndex === idx) {
+                return `
+                    <div style="background: #f8fafc; border: 2px solid var(--primary); border-radius: 8px; padding: 0.85rem; margin-bottom: 0.65rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                            <span style="font-size: 0.82rem; font-weight: 700; color: var(--primary);">✏️ Edit Rentang Poin & Sanksi #${idx + 1}</span>
+                            <span style="font-size: 0.72rem; color: var(--text-muted);">(Gunakan 9999 untuk tanpa batas / ∞)</span>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem; flex-wrap: wrap;">
+                            <div style="display: flex; align-items: center; gap: 0.35rem;">
+                                <label style="font-size: 0.75rem; font-weight: 600; margin-bottom: 0;">Min Poin:</label>
+                                <input type="number" id="editRuleMinPoint_${idx}" class="form-control-clean" min="0" value="${r.minPoint}" required style="width: 75px; font-size: 0.85rem; padding: 4px 8px;">
+                                <span style="font-size: 0.8rem; font-weight: 600;">-</span>
+                                <label style="font-size: 0.75rem; font-weight: 600; margin-bottom: 0;">Max Poin:</label>
+                                <input type="number" id="editRuleMaxPoint_${idx}" class="form-control-clean" min="1" value="${r.maxPoint >= 9999 ? 9999 : r.maxPoint}" required style="width: 75px; font-size: 0.85rem; padding: 4px 8px;" title="9999 = tanpa batas (∞)">
+                            </div>
+                            <div style="flex: 1; min-width: 140px;">
+                                <select id="editRuleBadgeClass_${idx}" class="form-control-clean" style="width: 100%; font-size: 0.85rem; padding: 4px 8px;">
+                                    <option value="pill-green" ${r.badgeClass === 'pill-green' ? 'selected' : ''}>🟢 Hijau (Aman/Ringan)</option>
+                                    <option value="pill-yellow" ${r.badgeClass === 'pill-yellow' ? 'selected' : ''}>🟡 Kuning (Peringatan/Ortu)</option>
+                                    <option value="pill-red" ${r.badgeClass === 'pill-red' ? 'selected' : ''}>🔴 Merah (SP/Skorsing/Keras)</option>
+                                </select>
+                            </div>
+                            <div style="flex: 2; min-width: 180px;">
+                                <input type="text" id="editRuleStatus_${idx}" class="form-control-clean" value="${(r.status || '').replace(/"/g, '&quot;')}" placeholder="Nama Status Tingkatan" required style="width: 100%; font-size: 0.85rem; padding: 4px 8px;">
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 0.6rem;">
+                            <label style="display: block; font-size: 0.75rem; font-weight: 600; margin-bottom: 2px;">Tindak Lanjut & Sanksi Otomatis:</label>
+                            <input type="text" id="editRuleAction_${idx}" class="form-control-clean" value="${(r.action || r.tindakLanjut || '').replace(/"/g, '&quot;')}" placeholder="Sanksi / Tindak lanjut otomatis..." required style="width: 100%; font-size: 0.85rem; padding: 6px 10px;">
+                        </div>
+                        <div style="display: flex; justify-content: flex-end; gap: 0.4rem;">
+                            <button type="button" class="btn btn-outline btn-sm" style="padding: 4px 10px; font-size: 0.8rem;" onclick="Forms.handleCancelEditRule()">
+                                Batal
+                            </button>
+                            <button type="button" class="btn btn-primary btn-sm" style="padding: 4px 12px; font-size: 0.8rem;" onclick="Forms.handleSaveEditRule(${idx})">
+                                💾 Simpan Rentang & Sanksi
+                            </button>
+                        </div>
                     </div>
-                    <span style="font-size: 0.72rem; color: var(--text-muted);">Rentang Poin #${idx + 1}</span>
+                `;
+            }
+
+            return `
+                <div style="background: #ffffff; border: 1px solid var(--border); border-radius: 8px; padding: 0.85rem; margin-bottom: 0.65rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.4rem;">
+                        <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
+                            <span class="status-pill ${r.badgeClass || 'pill-green'}" style="font-weight: 700; font-size: 0.8rem;">
+                                ${r.minPoint} - ${r.maxPoint >= 9999 ? '∞' : r.maxPoint} Poin
+                            </span>
+                            <strong style="font-size: 0.9rem; color: var(--text-main);">${r.status}</strong>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 0.4rem;">
+                            <span style="font-size: 0.72rem; color: var(--text-muted); margin-right: 0.2rem;">Rentang Poin #${idx + 1}</span>
+                            <button type="button" class="btn btn-outline btn-sm" style="color: var(--primary); border-color: var(--primary); padding: 2px 7px; font-size: 0.75rem;" onclick="Forms.handleStartEditRule(${idx})" title="Edit rentang poin, status & sanksi">
+                                ✏️ Edit Rentang
+                            </button>
+                            ${rules.length > 1 ? `
+                                <button type="button" class="btn btn-outline btn-sm" style="color: var(--danger); padding: 2px 7px; font-size: 0.75rem;" onclick="Forms.handleDeleteRule(${idx})" title="Hapus aturan rentang ini">
+                                    🗑️ Hapus
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <input type="text" id="ruleActionInput_${idx}" class="form-control-clean" value="${(r.action || r.tindakLanjut || '').replace(/"/g, '&quot;')}" style="flex: 1; font-size: 0.85rem; font-weight: 500;" placeholder="Sanksi / Tindak lanjut otomatis...">
+                        <button type="button" class="btn btn-primary btn-sm" onclick="Forms.handleSaveRuleRow(${idx})" style="white-space: nowrap; padding: 0.45rem 0.85rem;">
+                            💾 Simpan Sanksi
+                        </button>
+                    </div>
                 </div>
-                <div style="display: flex; gap: 0.5rem; align-items: center;">
-                    <input type="text" id="ruleActionInput_${idx}" class="form-control-clean" value="${r.action || r.tindakLanjut || ''}" style="flex: 1; font-size: 0.85rem; font-weight: 500;" placeholder="Sanksi / Tindak lanjut otomatis...">
-                    <button type="button" class="btn btn-primary btn-sm" onclick="Forms.handleSaveRuleRow(${idx})" style="white-space: nowrap; padding: 0.45rem 0.85rem;">
-                        💾 Simpan Sanksi
-                    </button>
-                </div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
+    },
+
+    handleStartEditRule(index) {
+        this.editingRuleIndex = index;
+        this.renderRulesList();
+        setTimeout(() => {
+            const input = document.getElementById(`editRuleStatus_${index}`);
+            if (input) {
+                input.focus();
+                input.select();
+            }
+        }, 50);
+    },
+
+    handleCancelEditRule() {
+        this.editingRuleIndex = null;
+        this.renderRulesList();
+    },
+
+    handleSaveEditRule(index) {
+        const minInput = document.getElementById(`editRuleMinPoint_${index}`);
+        const maxInput = document.getElementById(`editRuleMaxPoint_${index}`);
+        const badgeInput = document.getElementById(`editRuleBadgeClass_${index}`);
+        const statusInput = document.getElementById(`editRuleStatus_${index}`);
+        const actionInput = document.getElementById(`editRuleAction_${index}`);
+
+        if (!minInput || !maxInput || !statusInput || !actionInput) return;
+
+        const minPoint = Number(minInput.value);
+        const maxPoint = Number(maxInput.value);
+        const badgeClass = badgeInput ? badgeInput.value : "pill-yellow";
+        const status = statusInput.value.trim();
+        const action = actionInput.value.trim();
+
+        if (isNaN(minPoint) || minPoint < 0) {
+            App.showToast("Batas minimum poin harus angka >= 0!");
+            minInput.focus();
+            return;
+        }
+
+        if (isNaN(maxPoint) || maxPoint < minPoint) {
+            App.showToast("Batas maksimum poin harus berupa angka dan lebih besar atau sama dengan batas minimum!");
+            maxInput.focus();
+            return;
+        }
+
+        if (!status) {
+            App.showToast("Nama status tingkatan tidak boleh kosong!");
+            statusInput.focus();
+            return;
+        }
+
+        if (!action) {
+            App.showToast("Tindak lanjut / sanksi otomatis tidak boleh kosong!");
+            actionInput.focus();
+            return;
+        }
+
+        StorageManager.updateRule(index, { minPoint, maxPoint, badgeClass, status, action });
+        this.editingRuleIndex = null;
+        this.renderRulesList();
+        App.showToast(`Rentang poin & sanksi "${status}" berhasil diperbarui!`);
+    },
+
+    handleAddRule(e) {
+        e.preventDefault();
+        const minInput = document.getElementById("newRuleMinPoint");
+        const maxInput = document.getElementById("newRuleMaxPoint");
+        const badgeInput = document.getElementById("newRuleBadgeClass");
+        const statusInput = document.getElementById("newRuleStatus");
+        const actionInput = document.getElementById("newRuleAction");
+
+        if (!minInput || !maxInput || !statusInput || !actionInput) return;
+
+        const minPoint = Number(minInput.value);
+        const maxPoint = Number(maxInput.value);
+        const badgeClass = badgeInput ? badgeInput.value : "pill-yellow";
+        const status = statusInput.value.trim();
+        const action = actionInput.value.trim();
+
+        if (isNaN(minPoint) || minPoint < 0) {
+            App.showToast("Batas minimum poin harus angka >= 0!");
+            minInput.focus();
+            return;
+        }
+
+        if (isNaN(maxPoint) || maxPoint < minPoint) {
+            App.showToast("Batas maksimum poin harus lebih besar atau sama dengan batas minimum!");
+            maxInput.focus();
+            return;
+        }
+
+        if (!status) {
+            App.showToast("Nama status tingkatan sanksi wajib diisi!");
+            statusInput.focus();
+            return;
+        }
+
+        if (!action) {
+            App.showToast("Tindak lanjut dan sanksi wajib diisi!");
+            actionInput.focus();
+            return;
+        }
+
+        StorageManager.addRule({ minPoint, maxPoint, badgeClass, status, action });
+        document.getElementById("addRuleForm").reset();
+        this.editingRuleIndex = null;
+        this.renderRulesList();
+        App.showToast(`Aturan rentang "${status}" (${minPoint}-${maxPoint >= 9999 ? '∞' : maxPoint} Poin) berhasil ditambahkan!`);
+    },
+
+    handleDeleteRule(index) {
+        const rules = StorageManager.getRules();
+        const r = rules[index];
+        const statusName = r ? r.status : `#${index + 1}`;
+
+        if (!confirm(`Hapus aturan rentang sanksi "${statusName}"?`)) return;
+
+        if (this.editingRuleIndex === index) {
+            this.editingRuleIndex = null;
+        }
+
+        StorageManager.deleteRule(index);
+        this.renderRulesList();
+        App.showToast(`Aturan rentang sanksi "${statusName}" berhasil dihapus.`);
+    },
+
+    handleResetRulesToDefault() {
+        if (!confirm("Kembalikan seluruh susunan rentang poin & sanksi otomatis ke konfigurasi standar sekolah?")) return;
+
+        StorageManager.resetRulesToDefault();
+        this.editingRuleIndex = null;
+        this.renderRulesList();
+        App.showToast("Seluruh aturan rentang poin & sanksi berhasil dikembalikan ke standar awal.");
     },
 
     handleSaveRuleRow(index) {
