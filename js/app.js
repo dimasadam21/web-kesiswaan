@@ -647,6 +647,8 @@ const App = {
         }
 
         Forms.closeModal("modalTambahPengumuman");
+        const editIdElAfter = document.getElementById("inputAnnEditId");
+        if (editIdElAfter) editIdElAfter.value = "";
         this.renderDashboardPengumuman();
         if (window.AdminPortal) {
             AdminPortal.renderAdminPengumumanList();
@@ -861,6 +863,8 @@ const App = {
             if (btnTambahSiswa) btnTambahSiswa.style.display = "none";
             if (btnImporSiswa) btnImporSiswa.style.display = "none";
             if (btnKelolaSiswa) btnKelolaSiswa.style.display = "none";
+
+            this.renderPublicDashboard();
         } else if (user.role === "siswa") {
             // SISWA LOGIN
             if (viewPublic) viewPublic.style.display = "none";

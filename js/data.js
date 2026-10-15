@@ -1097,11 +1097,11 @@ const DEFAULT_PENGUMUMAN = [
         kategori: "penting",
         kategoriLabel: "🔴 PENTING",
         badgeClass: "pill-red",
-        judul: "Penegakan Disiplin Jam Masuk & Kerapian Seragam Semester Genap",
-        tanggal: "22 Maret 2026",
-        penulis: "Dra. Hj. Siti Rahma (Wakasek Kesiswaan)",
-        ringkasan: "Pemberitahuan kepada seluruh siswa mengenai penertiban presensi pagi pukul 07.00 WIB dan pemeriksaan atribut seragam resmi sekolah.",
-        isi: "Diberitahukan kepada seluruh siswa-siswi SMA Negeri 1 Kreasi Bangsa bahwa terhitung mulai pekan depan, Tim Kesiswaan bersama Guru Piket akan melaksanakan penertiban kedisiplinan secara intensif:\n\n1. Gerbang sekolah ditutup tepat pukul 07.00 WIB. Siswa yang hadir setelah pukul 07.00 WIB wajib mengikuti pembinaan tadarus pagi di serambi masjid sekolah sebelum menerima izin masuk KBM.\n2. Seluruh siswa wajib memakai atribut seragam lengkap (topi, dasi, ikat pinggang hitam berlogo sekolah, kaos kaki putih, dan sepatu dominan hitam bertali).\n3. Bagi siswa laki-laki yang rambutnya telah melebihi batas ketentuan 3-2-1, diimbau untuk segera merapikan sebelum hari Senin mendatang.\n\nMari kita jaga bersama marwah dan budaya disiplin sekolah kita. Atas perhatian dan kerjasama seluruh siswa, kami ucapkan terima kasih."
+        judul: "Penegakan Disiplin Jam Masuk & Kerapian Seragam",
+        tanggal: "16 Oktober 2026",
+        penulis: "Morlan Purba Sibarani, S.Pd., M.Si. (Wakasek Kesiswaan)",
+        ringkasan: "Tertib berangkat, di sekolah dan pulang kerumah",
+        isi: "Maksimal masuk pukul 06.50 WIB, kecuali Selasa dan Kamis 07.00 WIB dan atribut seragam sekolah dan tampilan cerminan siswa/i SMKN 1 Magelang.\n\nPulang maksimal pukul 17.00 WIB (sudah tidak ada siswa/i di SMKN 1 Magelang)"
     },
     {
         id: "ANN-02",

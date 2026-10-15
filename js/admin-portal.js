@@ -1234,9 +1234,31 @@ const AdminPortal = {
         `).join('');
     },
 
+    openAddPengumumanModal() {
+        const editIdEl = document.getElementById("inputAnnEditId");
+        if (editIdEl) editIdEl.value = "";
+        const titleEl = document.getElementById("modalPengumumanTitle");
+        if (titleEl) titleEl.textContent = "📢 Buat Pengumuman Kesiswaan Baru";
+        const btnSubmit = document.getElementById("btnSaveAnnSubmit");
+        if (btnSubmit) btnSubmit.textContent = "📢 Publikasikan Sekarang";
+
+        const katEl = document.getElementById("inputAnnKategori");
+        if (katEl) katEl.value = "penting";
+        const judEl = document.getElementById("inputAnnJudul");
+        if (judEl) judEl.value = "";
+        const penEl = document.getElementById("inputAnnPenulis");
+        if (penEl) penEl.value = "Tim Kesiswaan SMKN 1 Magelang";
+        const ringkEl = document.getElementById("inputAnnRingkasan");
+        if (ringkEl) ringkEl.value = "";
+        const isiEl = document.getElementById("inputAnnIsi");
+        if (isiEl) isiEl.value = "";
+
+        Forms.openModal("modalTambahPengumuman");
+    },
+
     openEditPengumuman(id) {
         const announcements = StorageManager.getAnnouncements();
-        const ann = announcements.find(a => a.id === id);
+        const ann = announcements.find(a => String(a.id).trim() === String(id).trim());
         if (!ann) return;
 
         const editIdEl = document.getElementById("inputAnnEditId");
@@ -1246,11 +1268,16 @@ const AdminPortal = {
         const btnSubmit = document.getElementById("btnSaveAnnSubmit");
         if (btnSubmit) btnSubmit.textContent = "💾 Simpan Perubahan";
 
-        document.getElementById("inputAnnKategori").value = ann.kategori || "informasi";
-        document.getElementById("inputAnnJudul").value = ann.judul || "";
-        document.getElementById("inputAnnPenulis").value = ann.penulis || "";
-        document.getElementById("inputAnnRingkasan").value = ann.ringkasan || "";
-        document.getElementById("inputAnnIsi").value = ann.isi || "";
+        const katEl = document.getElementById("inputAnnKategori");
+        if (katEl) katEl.value = ann.kategori || "penting";
+        const judEl = document.getElementById("inputAnnJudul");
+        if (judEl) judEl.value = ann.judul || "";
+        const penEl = document.getElementById("inputAnnPenulis");
+        if (penEl) penEl.value = ann.penulis || "";
+        const ringkEl = document.getElementById("inputAnnRingkasan");
+        if (ringkEl) ringkEl.value = ann.ringkasan || "";
+        const isiEl = document.getElementById("inputAnnIsi");
+        if (isiEl) isiEl.value = ann.isi || "";
 
         Forms.openModal("modalTambahPengumuman");
     },

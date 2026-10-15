@@ -132,15 +132,39 @@
 
             </div>
 
-            <!-- BILAH PINTAS AKSES CEPAT DASBOR (5 MODUL UTAMA) -->
+            <!-- BILAH PINTAS AKSES CEPAT DASBOR (6 MODUL UTAMA) -->
             <div class="dashboard-jump-nav-bar">
                 <span class="jump-nav-label">🧭 Akses Langsung Konten:</span>
                 <div class="jump-nav-pills">
+                    <button type="button" class="jump-nav-pill" onclick="App.scrollToSection('dashboardPengumumanSection')">📢 Pengumuman</button>
                     <button type="button" class="jump-nav-pill" onclick="App.scrollToSection('dashboardPrestasiSection')">🏆 Galeri Prestasi</button>
                     <button type="button" class="jump-nav-pill" onclick="App.scrollToSection('dashboardKegiatanSection')">📋 Daftar Kegiatan</button>
                     <button type="button" class="jump-nav-pill" onclick="App.scrollToSection('dashboardTataTertibSection')">📜 Tata Tertib</button>
                     <button type="button" class="jump-nav-pill" onclick="App.scrollToSection('dashboardAgendaTerdekatSection')">⏰ Agenda Terdekat</button>
                     <button type="button" class="jump-nav-pill" onclick="App.scrollToSection('dashboardSekbidSection')">🏢 Program Sekbid</button>
+                </div>
+            </div>
+
+            <!-- 1. PAPAN PENGUMUMAN KESISWAAN RESMI -->
+            <div id="dashboardPengumumanSection" class="pengumuman-section">
+                <div class="section-title-wrap">
+                    <div class="section-title-left">
+                        <div class="section-badge-icon" style="background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); color: #dc2626; border-color: #fca5a5;">📢</div>
+                        <div>
+                            <h3 class="section-main-heading">Papan Pengumuman Kesiswaan</h3>
+                            <p class="section-sub-heading">Pengumuman resmi, edaran kedisiplinan, dan publikasi kesiswaan sekolah</p>
+                        </div>
+                    </div>
+                    <div class="pengumuman-filter-pills" id="pengumumanFilterPills">
+                        <button class="filter-pill-btn active" onclick="App.filterPengumuman('all')">Semua</button>
+                        <button class="filter-pill-btn" onclick="App.filterPengumuman('penting')">🔴 Penting</button>
+                        <button class="filter-pill-btn" onclick="App.filterPengumuman('prestasi')">🟢 Prestasi</button>
+                        <button class="filter-pill-btn" onclick="App.filterPengumuman('kegiatan')">🔵 Kegiatan</button>
+                    </div>
+                </div>
+
+                <div id="dashboardPengumumanList" class="pengumuman-grid">
+                    <!-- Diisi via JavaScript App.renderDashboardPengumuman() -->
                 </div>
             </div>
 
@@ -442,7 +466,7 @@
                     <div class="command-hub-card">
                         <div class="command-hub-card-label">📢 Publikasi Dasbor</div>
                         <div class="command-hub-actions">
-                            <button class="hub-btn hub-btn-amber" onclick="Forms.openModal('modalTambahPengumuman')" title="Buat & Publikasikan Pengumuman Baru">
+                            <button class="hub-btn hub-btn-amber" onclick="AdminPortal.openAddPengumumanModal()" title="Buat & Publikasikan Pengumuman Baru">
                                 📢 + Pengumuman
                             </button>
                             <button class="hub-btn hub-btn-emerald" onclick="AdminPortal.openAddAgendaModal()" style="background: #10b981; color: #ffffff;" title="Tambah Agenda Terdekat Baru">
@@ -762,7 +786,7 @@
                             Kelola pengumuman resmi, edaran kedisiplinan, dan berita kesiswaan sekolah.
                         </p>
                     </div>
-                    <button class="btn btn-primary" onclick="Forms.openModal('modalTambahPengumuman')">
+                    <button class="btn btn-primary" onclick="AdminPortal.openAddPengumumanModal()">
                         📢 + Buat Pengumuman Baru
                     </button>
                 </div>

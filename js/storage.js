@@ -796,16 +796,44 @@ const StorageManager = {
     },
 
     getAnnouncements() {
-        const data = this.getData();
-        if (!data.announcements || data.announcements.length === 0) {
-            return DEFAULT_PENGUMUMAN;
+        const dedicated = localStorage.getItem("kesiswaan_announcements_v2");
+        if (dedicated) {
+            try {
+                const parsed = JSON.parse(dedicated);
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                    return parsed;
+                }
+            } catch (e) {}
         }
-        return data.announcements;
+        const data = this.getData();
+        if (data && Array.isArray(data.announcements) && data.announcements.length > 0) {
+            // Jika masih memakai data lama dengan nama Dra. Hj. Siti Rahma di ANN-01, sinkronkan ke default baru
+            const first = data.announcements.find(a => a.id === "ANN-01");
+            if (first && first.penulis && first.penulis.includes("Siti Rahma")) {
+                first.judul = DEFAULT_PENGUMUMAN[0].judul;
+                first.penulis = DEFAULT_PENGUMUMAN[0].penulis;
+                first.ringkasan = DEFAULT_PENGUMUMAN[0].ringkasan;
+                first.isi = DEFAULT_PENGUMUMAN[0].isi;
+                this.saveAnnouncements(data.announcements);
+            }
+            return data.announcements;
+        }
+        return JSON.parse(JSON.stringify(DEFAULT_PENGUMUMAN));
+    },
+
+    saveAnnouncements(list) {
+        try {
+            localStorage.setItem("kesiswaan_announcements_v2", JSON.stringify(list));
+        } catch (e) {
+            console.warn("Gagal simpan ke dedicated announcements storage:", e);
+        }
+        const data = this.getData();
+        data.announcements = list;
+        this.saveData(data);
     },
 
     addAnnouncement(announcement) {
-        const data = this.getData();
-        if (!data.announcements) data.announcements = [...DEFAULT_PENGUMUMAN];
+        const currentList = this.getAnnouncements();
         const newAnn = {
             id: "ANN-" + Date.now(),
             kategori: announcement.kategori || "informasi",
@@ -817,8 +845,8 @@ const StorageManager = {
             ringkasan: announcement.ringkasan,
             isi: announcement.isi
         };
-        data.announcements.unshift(newAnn);
-        this.saveData(data);
+        currentList.unshift(newAnn);
+        this.saveAnnouncements(currentList);
         if (window.SupabaseClient && typeof SupabaseClient.pushAnnouncement === "function") {
             SupabaseClient.pushAnnouncement(newAnn);
         }
@@ -826,24 +854,27 @@ const StorageManager = {
     },
 
     updateAnnouncement(id, updated) {
-        const data = this.getData();
         const currentList = this.getAnnouncements();
-        const idx = currentList.findIndex(a => a.id === id);
+        const idx = currentList.findIndex(a => String(a.id).trim() === String(id).trim());
         if (idx !== -1) {
             currentList[idx] = { ...currentList[idx], ...updated };
-            data.announcements = currentList;
-            this.saveData(data);
+            this.saveAnnouncements(currentList);
+            if (typeof DEFAULT_PENGUMUMAN !== 'undefined') {
+                const defIdx = DEFAULT_PENGUMUMAN.findIndex(a => String(a.id).trim() === String(id).trim());
+                if (defIdx !== -1) {
+                    DEFAULT_PENGUMUMAN[defIdx] = { ...DEFAULT_PENGUMUMAN[defIdx], ...updated };
+                }
+            }
             return currentList[idx];
         }
         return null;
     },
 
     deleteAnnouncement(id) {
-        const data = this.getData();
         const currentList = this.getAnnouncements();
-        data.announcements = currentList.filter(a => a.id !== id);
-        this.saveData(data);
-        return data.announcements;
+        const updatedList = currentList.filter(a => String(a.id).trim() !== String(id).trim());
+        this.saveAnnouncements(updatedList);
+        return updatedList;
     },
 
     // ==========================================
