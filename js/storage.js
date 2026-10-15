@@ -16,6 +16,7 @@ const StorageManager = {
                 teachers: DEFAULT_TEACHERS,
                 students: INITIAL_STUDENTS,
                 rules: DEFAULT_RULES,
+                tataTertib: DEFAULT_TATA_TERTIB,
                 suratTemplate: DEFAULT_SURAT_TEMPLATE,
                 violationsMaster: MASTER_PELANGGARAN,
                 achievementsMaster: MASTER_PRESTASI,
@@ -752,8 +753,15 @@ const StorageManager = {
     getTataTertib() {
         const data = this.getData();
         if (!data.tataTertib || data.tataTertib.length === 0) {
-            return DEFAULT_TATA_TERTIB;
+            return (typeof DEFAULT_TATA_TERTIB !== 'undefined') ? JSON.parse(JSON.stringify(DEFAULT_TATA_TERTIB)) : [];
         }
+        return data.tataTertib;
+    },
+
+    saveTataTertib(rules) {
+        const data = this.getData();
+        data.tataTertib = rules;
+        this.saveData(data);
         return data.tataTertib;
     },
 

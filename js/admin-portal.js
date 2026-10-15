@@ -1405,14 +1405,20 @@ const AdminPortal = {
                             ${this.escapeHtml(r.judul)}
                         </h4>
                     </div>
-                    <span style="font-size: 0.8rem; color: var(--text-muted);">${r.butirAturan.length} Butir Ketentuan</span>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <span style="font-size: 0.8rem; color: var(--text-muted);">${r.butirAturan.length} Butir Ketentuan</span>
+                        <button type="button" class="btn btn-outline btn-sm" style="font-size: 0.75rem; padding: 2px 8px;" onclick="AdminPortal.openEditTataTertibCategoryModal(${catIdx})" title="Edit Judul Kategori">✏️ Edit Judul</button>
+                    </div>
                 </div>
                 <ol style="padding-left: 1.25rem; margin: 0; display: flex; flex-direction: column; gap: 0.5rem;">
                     ${r.butirAturan.map((b, ruleIdx) => `
                         <li style="font-size: 0.875rem; color: var(--text-main); line-height: 1.5;">
                             <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem;">
-                                <span>${this.escapeHtml(b)}</span>
-                                <button class="btn btn-outline btn-sm" style="padding: 2px 6px; font-size: 0.75rem; color: #dc2626;" onclick="AdminPortal.deleteTataTertibRule(${catIdx}, ${ruleIdx})" title="Hapus Aturan Ini">✕</button>
+                                <span style="flex: 1;">${this.escapeHtml(b)}</span>
+                                <div style="display: flex; gap: 4px; flex-shrink: 0; align-items: center;">
+                                    <button type="button" class="btn btn-outline btn-sm" style="padding: 2px 8px; font-size: 0.75rem; color: var(--primary); font-weight: 600;" onclick="AdminPortal.openEditTataTertibModal(${catIdx}, ${ruleIdx})" title="Edit Butir Aturan Ini">✏️ Edit</button>
+                                    <button type="button" class="btn btn-outline btn-sm" style="padding: 2px 6px; font-size: 0.75rem; color: #dc2626;" onclick="AdminPortal.deleteTataTertibRule(${catIdx}, ${ruleIdx})" title="Hapus Aturan Ini">✕</button>
+                                </div>
                             </div>
                         </li>
                     `).join('')}
@@ -1439,6 +1445,91 @@ const AdminPortal = {
             StorageManager.saveTataTertib(rules);
             App.showToast("Aturan tata tertib baru berhasil ditambahkan!");
             Forms.closeModal("modalTambahTataTertib");
+            this.renderAdminTataTertibList();
+            if (typeof App.renderDashboardTataTertib === "function") {
+                App.renderDashboardTataTertib();
+            }
+        }
+    },
+
+    openEditTataTertibModal(catIdx, ruleIdx) {
+        const rules = StorageManager.getTataTertib();
+        if (!rules[catIdx] || !rules[catIdx].butirAturan[ruleIdx]) return;
+
+        const cat = rules[catIdx];
+        const ruleText = cat.butirAturan[ruleIdx];
+
+        const catInput = document.getElementById("editTTCatIdx");
+        const ruleInput = document.getElementById("editTTRuleIdx");
+        const labelInput = document.getElementById("editTTKategoriLabel");
+        const textInput = document.getElementById("editTTText");
+
+        if (catInput) catInput.value = catIdx;
+        if (ruleInput) ruleInput.value = ruleIdx;
+        if (labelInput) labelInput.value = `${cat.kategoriLabel || ''} - ${cat.judul || ''}`;
+        if (textInput) textInput.value = ruleText;
+
+        Forms.openModal("modalEditTataTertib");
+    },
+
+    handleSaveEditTataTertib(event) {
+        event.preventDefault();
+        const catIdx = parseInt(document.getElementById("editTTCatIdx").value, 10);
+        const ruleIdx = parseInt(document.getElementById("editTTRuleIdx").value, 10);
+        const newText = document.getElementById("editTTText").value.trim();
+
+        if (!newText) {
+            App.showToast("Teks aturan tidak boleh kosong!");
+            return;
+        }
+
+        const rules = StorageManager.getTataTertib();
+        if (rules[catIdx] && rules[catIdx].butirAturan && rules[catIdx].butirAturan[ruleIdx] !== undefined) {
+            rules[catIdx].butirAturan[ruleIdx] = newText;
+            StorageManager.saveTataTertib(rules);
+            App.showToast("Butir aturan tata tertib berhasil diperbarui!");
+            Forms.closeModal("modalEditTataTertib");
+            this.renderAdminTataTertibList();
+            if (typeof App.renderDashboardTataTertib === "function") {
+                App.renderDashboardTataTertib();
+            }
+        }
+    },
+
+    openEditTataTertibCategoryModal(catIdx) {
+        const rules = StorageManager.getTataTertib();
+        if (!rules[catIdx]) return;
+
+        const cat = rules[catIdx];
+        const catIdxInput = document.getElementById("editTTCatOnlyIdx");
+        const labelInput = document.getElementById("editTTCatLabel");
+        const judulInput = document.getElementById("editTTCatJudul");
+
+        if (catIdxInput) catIdxInput.value = catIdx;
+        if (labelInput) labelInput.value = cat.kategoriLabel || "";
+        if (judulInput) judulInput.value = cat.judul || "";
+
+        Forms.openModal("modalEditTataTertibCategory");
+    },
+
+    handleSaveEditTataTertibCategory(event) {
+        event.preventDefault();
+        const catIdx = parseInt(document.getElementById("editTTCatOnlyIdx").value, 10);
+        const catLabel = document.getElementById("editTTCatLabel").value.trim();
+        const judul = document.getElementById("editTTCatJudul").value.trim();
+
+        if (!catLabel || !judul) {
+            App.showToast("Label kategori dan judul tidak boleh kosong!");
+            return;
+        }
+
+        const rules = StorageManager.getTataTertib();
+        if (rules[catIdx]) {
+            rules[catIdx].kategoriLabel = catLabel;
+            rules[catIdx].judul = judul;
+            StorageManager.saveTataTertib(rules);
+            App.showToast("Judul kategori tata tertib berhasil diperbarui!");
+            Forms.closeModal("modalEditTataTertibCategory");
             this.renderAdminTataTertibList();
             if (typeof App.renderDashboardTataTertib === "function") {
                 App.renderDashboardTataTertib();

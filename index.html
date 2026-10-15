@@ -2912,6 +2912,71 @@
     </div>
 
     <!-- =====================================================================
+         MODAL EDIT BUTIR ATURAN TATA TERTIB (KHUSUS SUPER ADMIN)
+         ===================================================================== -->
+    <div id="modalEditTataTertib" class="modal-backdrop">
+        <div class="modal-card" style="max-width: 580px;">
+            <div class="modal-card-header">
+                <div>
+                    <h3 style="font-size: 1.15rem; color: var(--text-main); margin: 0;">✏️ Edit Butir Aturan Tata Tertib</h3>
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin: 2px 0 0 0;">Perbarui atau sempurnakan ketentuan butir tata tertib siswa.</p>
+                </div>
+                <button type="button" class="modal-close-icon" onclick="Forms.closeAllModals()">✕</button>
+            </div>
+            <form onsubmit="AdminPortal.handleSaveEditTataTertib(event)">
+                <input type="hidden" id="editTTCatIdx" value="">
+                <input type="hidden" id="editTTRuleIdx" value="">
+                <div class="modal-card-body" style="padding: 1.25rem 1.5rem; display: flex; flex-direction: column; gap: 0.85rem;">
+                    <div class="form-group-clean">
+                        <label style="font-size: 0.825rem; font-weight: 700; color: var(--text-main);">Kategori Tata Tertib</label>
+                        <input type="text" id="editTTKategoriLabel" class="form-control-clean" readonly style="background: var(--bg-hover, #f1f5f9); color: var(--text-muted); font-weight: 600;">
+                    </div>
+                    <div class="form-group-clean">
+                        <label style="font-size: 0.825rem; font-weight: 700; color: var(--text-main);">Teks Ketentuan Aturan *</label>
+                        <textarea id="editTTText" class="form-control-clean" rows="5" placeholder="Ketik ketentuan aturan resmi yang wajib dipatuhi siswa..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-card-footer">
+                    <button type="button" class="btn btn-outline" onclick="Forms.closeAllModals()">Batal</button>
+                    <button type="submit" class="btn btn-primary">💾 Simpan Perubahan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         MODAL EDIT JUDUL KATEGORI TATA TERTIB (KHUSUS SUPER ADMIN)
+         ===================================================================== -->
+    <div id="modalEditTataTertibCategory" class="modal-backdrop">
+        <div class="modal-card" style="max-width: 520px;">
+            <div class="modal-card-header">
+                <div>
+                    <h3 style="font-size: 1.15rem; color: var(--text-main); margin: 0;">✏️ Edit Judul Kategori Tata Tertib</h3>
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin: 2px 0 0 0;">Perbarui label badge dan judul kelompok tata tertib ini.</p>
+                </div>
+                <button type="button" class="modal-close-icon" onclick="Forms.closeAllModals()">✕</button>
+            </div>
+            <form onsubmit="AdminPortal.handleSaveEditTataTertibCategory(event)">
+                <input type="hidden" id="editTTCatOnlyIdx" value="">
+                <div class="modal-card-body" style="padding: 1.25rem 1.5rem; display: flex; flex-direction: column; gap: 0.85rem;">
+                    <div class="form-group-clean">
+                        <label style="font-size: 0.825rem; font-weight: 700; color: var(--text-main);">Label Kategori (Badge) *</label>
+                        <input type="text" id="editTTCatLabel" class="form-control-clean" placeholder="Contoh: 🕒 Waktu & Kehadiran" required>
+                    </div>
+                    <div class="form-group-clean">
+                        <label style="font-size: 0.825rem; font-weight: 700; color: var(--text-main);">Judul Bab Tata Tertib *</label>
+                        <input type="text" id="editTTCatJudul" class="form-control-clean" placeholder="Contoh: Jam Masuk & Presensi Kehadiran Siswa" required>
+                    </div>
+                </div>
+                <div class="modal-card-footer">
+                    <button type="button" class="btn btn-outline" onclick="Forms.closeAllModals()">Batal</button>
+                    <button type="submit" class="btn btn-primary">💾 Simpan Perubahan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- =====================================================================
          MODAL EDIT JADWAL KEGIATAN RUTIN KESISWAAN (KHUSUS SUPER ADMIN)
          ===================================================================== -->
     <div id="modalEditAttendanceSchedule" class="modal-backdrop">
