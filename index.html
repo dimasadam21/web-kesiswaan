@@ -132,40 +132,15 @@
 
             </div>
 
-            <!-- BILAH PINTAS AKSES CEPAT DASBOR (6 MODUL UTAMA) -->
+            <!-- BILAH PINTAS AKSES CEPAT DASBOR (5 MODUL UTAMA) -->
             <div class="dashboard-jump-nav-bar">
                 <span class="jump-nav-label">🧭 Akses Langsung Konten:</span>
                 <div class="jump-nav-pills">
-                    <button type="button" class="jump-nav-pill" onclick="App.scrollToSection('dashboardPengumumanSection')">📢 Pengumuman</button>
                     <button type="button" class="jump-nav-pill" onclick="App.scrollToSection('dashboardPrestasiSection')">🏆 Galeri Prestasi</button>
                     <button type="button" class="jump-nav-pill" onclick="App.scrollToSection('dashboardKegiatanSection')">📋 Daftar Kegiatan</button>
                     <button type="button" class="jump-nav-pill" onclick="App.scrollToSection('dashboardTataTertibSection')">📜 Tata Tertib</button>
                     <button type="button" class="jump-nav-pill" onclick="App.scrollToSection('dashboardAgendaTerdekatSection')">⏰ Agenda Terdekat</button>
                     <button type="button" class="jump-nav-pill" onclick="App.scrollToSection('dashboardSekbidSection')">🏢 Program Sekbid</button>
-                </div>
-            </div>
-
-            <!-- 1. PAPAN PENGUMUMAN KESISWAAN RESMI -->
-            <div id="dashboardPengumumanSection" class="pengumuman-section">
-                <div class="section-title-wrap">
-                    <div class="section-title-left">
-                        <div class="section-badge-icon" style="background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); color: #dc2626; border-color: #fca5a5;">📢</div>
-                        <div>
-                            <h3 class="section-main-heading">Papan Pengumuman & Informasi Kesiswaan</h3>
-                            <p class="section-sub-heading">Pengumuman resmi, edaran kedisiplinan, dan publikasi prestasi sekolah</p>
-                        </div>
-                    </div>
-                    <div class="pengumuman-filter-pills" id="pengumumanFilterPills">
-                        <button class="filter-pill-btn active" onclick="App.filterPengumuman('all')">Semua</button>
-                        <button class="filter-pill-btn" onclick="App.filterPengumuman('penting')">🔴 Penting</button>
-                        <button class="filter-pill-btn" onclick="App.filterPengumuman('prestasi')">🟢 Prestasi</button>
-                        <button class="filter-pill-btn" onclick="App.filterPengumuman('kegiatan')">🔵 Kegiatan</button>
-                        <button class="filter-pill-btn" onclick="App.filterPengumuman('informasi')">🟡 Informasi</button>
-                    </div>
-                </div>
-
-                <div id="dashboardPengumumanList" class="pengumuman-grid">
-                    <!-- Diisi via JavaScript -->
                 </div>
             </div>
 
