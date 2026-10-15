@@ -4043,6 +4043,78 @@ const Forms = {
 
     printSuratPanggilan(studentId) {
         this.openSuratPanggilanModal(studentId);
+    },
+
+    // PENGATURAN JADWAL KEGIATAN KESISWAAN (SUPER ADMIN)
+    openEditAttendanceScheduleModal() {
+        const schedule = StorageManager.getAttendanceSchedule();
+
+        // Senin
+        const act1 = schedule[1] || { nama: "Presensi Upacara", kode: "SENIN UPACARA", aktif: true };
+        const elActive1 = document.getElementById("schedActive1");
+        const elNama1 = document.getElementById("schedNama1");
+        const elKode1 = document.getElementById("schedKode1");
+        if (elActive1) elActive1.checked = act1.aktif !== false;
+        if (elNama1) elNama1.value = act1.nama || "Presensi Upacara";
+        if (elKode1) elKode1.value = act1.kode || "SENIN UPACARA";
+
+        // Rabu
+        const act3 = schedule[3] || { nama: "Senam SAIH", kode: "RABU SENAM SAIH", aktif: true };
+        const elActive3 = document.getElementById("schedActive3");
+        const elNama3 = document.getElementById("schedNama3");
+        const elKode3 = document.getElementById("schedKode3");
+        if (elActive3) elActive3.checked = act3.aktif !== false;
+        if (elNama3) elNama3.value = act3.nama || "Senam SAIH";
+        if (elKode3) elKode3.value = act3.kode || "RABU SENAM SAIH";
+
+        // Jumat
+        const act5 = schedule[5] || { nama: "Senam", kode: "JUMAT SENAM", aktif: true };
+        const elActive5 = document.getElementById("schedActive5");
+        const elNama5 = document.getElementById("schedNama5");
+        const elKode5 = document.getElementById("schedKode5");
+        if (elActive5) elActive5.checked = act5.aktif !== false;
+        if (elNama5) elNama5.value = act5.nama || "Senam";
+        if (elKode5) elKode5.value = act5.kode || "JUMAT SENAM";
+
+        this.openModal("modalEditAttendanceSchedule");
+    },
+
+    handleSaveAttendanceSchedule(e) {
+        e.preventDefault();
+        const schedule = StorageManager.getAttendanceSchedule();
+
+        // Senin
+        schedule[1] = {
+            hari: "Senin",
+            nama: document.getElementById("schedNama1").value.trim() || "Presensi Upacara",
+            kode: document.getElementById("schedKode1").value.trim().toUpperCase() || "SENIN UPACARA",
+            aktif: document.getElementById("schedActive1").checked
+        };
+
+        // Rabu
+        schedule[3] = {
+            hari: "Rabu",
+            nama: document.getElementById("schedNama3").value.trim() || "Senam SAIH",
+            kode: document.getElementById("schedKode3").value.trim().toUpperCase() || "RABU SENAM SAIH",
+            aktif: document.getElementById("schedActive3").checked
+        };
+
+        // Jumat
+        schedule[5] = {
+            hari: "Jumat",
+            nama: document.getElementById("schedNama5").value.trim() || "Senam",
+            kode: document.getElementById("schedKode5").value.trim().toUpperCase() || "JUMAT SENAM",
+            aktif: document.getElementById("schedActive5").checked
+        };
+
+        StorageManager.saveAttendanceSchedule(schedule);
+        this.closeAllModals();
+
+        if (window.AdminPortal) {
+            AdminPortal.renderClassAttendance();
+        }
+
+        App.showToast("Jadwal kegiatan presensi kesiswaan berhasil diperbarui!");
     }
 };
 

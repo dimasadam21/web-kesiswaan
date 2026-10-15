@@ -3478,3 +3478,138 @@ body.has-wallpaper-active .tata-tertib-section {
     100% { transform: scale(0.95); opacity: 0.8; }
 }
 
+/* ==========================================================================
+   PRESENSI & TATA TERTIB DISIPLIN KELAS (WALI KELAS & SUPER ADMIN)
+   ========================================================================== */
+.attendance-table-container {
+    background: #ffffff;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem;
+    box-shadow: var(--shadow-soft);
+    margin-top: 1rem;
+}
+
+.att-banner-kegiatan {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: #0f172a;
+    color: #ffffff;
+    font-size: 0.95rem;
+    font-weight: 800;
+    padding: 8px 16px;
+    border-radius: 8px;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.25);
+}
+
+.att-toggle-switch {
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 84px;
+    height: 28px;
+    border-radius: 99px;
+    padding: 2px 5px;
+    cursor: pointer;
+    user-select: none;
+    font-size: 0.72rem;
+    font-weight: 700;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid transparent;
+}
+
+.att-toggle-switch.att-present {
+    background: #16a34a;
+    color: #ffffff;
+    flex-direction: row-reverse;
+    border-color: #15803d;
+}
+
+.att-toggle-switch.att-absent {
+    background: #dc2626;
+    color: #ffffff;
+    flex-direction: row;
+    border-color: #b91c1c;
+}
+
+.att-toggle-thumb {
+    width: 20px;
+    height: 20px;
+    background: #ffffff;
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+    transition: transform 0.25s;
+}
+
+.att-ket-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    margin-left: 6px;
+}
+
+.att-ket-pill {
+    padding: 2px 7px;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.15s;
+    user-select: none;
+}
+
+.att-ket-pill.pill-alpha {
+    background: #fee2e2;
+    color: #991b1b;
+    border-color: #fca5a5;
+}
+
+.att-ket-pill.pill-alpha.active {
+    background: #dc2626;
+    color: #ffffff;
+    border-color: #b91c1c;
+    box-shadow: 0 1px 3px rgba(220, 38, 38, 0.35);
+}
+
+.att-ket-pill.pill-izin {
+    background: #fef9c3;
+    color: #854d0e;
+    border-color: #fde047;
+}
+
+.att-ket-pill.pill-izin.active {
+    background: #d97706;
+    color: #ffffff;
+    border-color: #b45309;
+    box-shadow: 0 1px 3px rgba(217, 119, 6, 0.35);
+}
+
+.att-ket-pill.pill-sakit {
+    background: #dbeafe;
+    color: #1e40af;
+    border-color: #93c5fd;
+}
+
+.att-ket-pill.pill-sakit.active {
+    background: #2563eb;
+    color: #ffffff;
+    border-color: #1d4ed8;
+    box-shadow: 0 1px 3px rgba(37, 99, 235, 0.35);
+}
+
+.att-checkbox-custom {
+    width: 18px;
+    height: 18px;
+    accent-color: #dc2626;
+    cursor: pointer;
+    transform: scale(1.1);
+}
+
+.att-checkbox-custom:checked {
+    filter: drop-shadow(0 0 2px rgba(220, 38, 38, 0.4));
+}
+
+

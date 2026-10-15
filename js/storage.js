@@ -755,6 +755,119 @@ const StorageManager = {
         return data.announcements;
     },
 
+    // ==========================================
+    // PRESENSI & KEDISIPLINAN KELAS WALI KELAS
+    // ==========================================
+    getAttendanceSchedule() {
+        const data = this.getData();
+        if (!data.attendanceSchedule) {
+            data.attendanceSchedule = (typeof DEFAULT_ATTENDANCE_SCHEDULE !== 'undefined') 
+                ? JSON.parse(JSON.stringify(DEFAULT_ATTENDANCE_SCHEDULE))
+                : {
+                    1: { hari: "Senin", nama: "Presensi Upacara", kode: "SENIN UPACARA", aktif: true },
+                    3: { hari: "Rabu", nama: "Senam SAIH", kode: "RABU SENAM SAIH", aktif: true },
+                    5: { hari: "Jumat", nama: "Senam", kode: "JUMAT SENAM", aktif: true }
+                };
+            this.saveData(data);
+        }
+        return data.attendanceSchedule;
+    },
+
+    saveAttendanceSchedule(schedule) {
+        const data = this.getData();
+        data.attendanceSchedule = schedule;
+        this.saveData(data);
+        return schedule;
+    },
+
+    getClassAttendance(kelas, tanggal) {
+        const data = this.getData();
+        if (!data.classAttendances) data.classAttendances = {};
+        const key = `${kelas}_${tanggal}`;
+        return data.classAttendances[key] || null;
+    },
+
+    saveClassAttendance(kelas, tanggal, payload) {
+        const data = this.getData();
+        if (!data.classAttendances) data.classAttendances = {};
+        const key = `${kelas}_${tanggal}`;
+        data.classAttendances[key] = {
+            kelas,
+            tanggal,
+            kegiatan: payload.kegiatan || "Presensi",
+            updatedAt: new Date().toISOString(),
+            records: payload.records || {}
+        };
+        this.saveData(data);
+        return data.classAttendances[key];
+    },
+
+    addStudentViolation(studentId, violationData) {
+        return this.addViolation(studentId, violationData);
+    },
+
+    deleteStudentViolation(studentId, violationId) {
+        if (!studentId || !violationId) return false;
+        const data = this.getData();
+        const student = (data.students || []).find(s => s.id === studentId);
+        if (!student || !Array.isArray(student.pelanggaran)) return false;
+
+        const initialLen = student.pelanggaran.length;
+        student.pelanggaran = student.pelanggaran.filter(p => p.id !== violationId);
+        if (student.pelanggaran.length !== initialLen) {
+            this.saveData(data);
+            return true;
+        }
+        return false;
+    },
+
+    ensureStudentsForClass(kelasTarget) {
+        if (!kelasTarget) return [];
+        const data = this.getData();
+        if (!data.students) data.students = [];
+
+        let classStudents = data.students.filter(s => s.kelas && s.kelas.trim().toLowerCase() === kelasTarget.trim().toLowerCase());
+        
+        // Khusus jika kelas X TKP belum ada siswanya, otomatis daftarkan 33 siswa resmi
+        if (classStudents.length === 0 && kelasTarget.toUpperCase() === "X TKP" && typeof OFFICIAL_X_TKP_STUDENTS !== 'undefined') {
+            OFFICIAL_X_TKP_STUDENTS.forEach((nama, idx) => {
+                const no = idx + 1;
+                const paddedNo = String(no).padStart(2, '0');
+                const isPutri = /(putri|safira|rahayu|adelia|afifah|panitis|azzahra|aliefa|aksan|izati|azizah|rafiqi|abidah|asiva|arseti|khoirotunhisan)/i.test(nama);
+                const gender = isPutri ? "P" : "L";
+                const student = {
+                    id: `SIS-XTKP-${paddedNo}`,
+                    no: no,
+                    foto: gender === "P" 
+                        ? "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=300&q=80" 
+                        : "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=300&q=80",
+                    nis: `2601${paddedNo}`,
+                    nisn: `00912345${paddedNo}`,
+                    nama: nama,
+                    gender: gender,
+                    kelas: "X TKP",
+                    jurusan: "Teknik Konstruksi dan Perumahan",
+                    waliKelas: "Hafida Kholifatul Janah, S.Pd",
+                    nomorHp: `0812-3401-20${paddedNo}`,
+                    alamat: `Jl. Magelang - Purworejo KM ${no}, Magelang`,
+                    mapsAlamat: "https://maps.google.com/?q=-7.4705,110.2178",
+                    namaOrtuBapak: `Bapak ${nama.split(' ')[0]}`,
+                    namaOrtuIbu: `Ibu ${nama.split(' ')[0]}`,
+                    noHpBapak: `0813-8899-10${paddedNo}`,
+                    noHpIbu: `0813-7766-20${paddedNo}`,
+                    inputSpmb: `SPMB-2026-REG-${paddedNo}`,
+                    prestasi: [],
+                    pelanggaran: []
+                };
+                data.students.push(student);
+            });
+            this.saveData(data);
+            classStudents = data.students.filter(s => s.kelas === "X TKP");
+        }
+
+        return classStudents;
+    },
+
     resetToDefault() {
         localStorage.removeItem(STORAGE_KEY);
         this.init();

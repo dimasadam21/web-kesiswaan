@@ -9,6 +9,8 @@
 const AdminPortal = {
     selectedStudent: null,
     currentTab: 'siswa',
+    currentAttendanceDate: new Date().toISOString().split('T')[0],
+    currentAttendanceClass: 'X TKP',
 
     init() {},
 
@@ -24,7 +26,42 @@ const AdminPortal = {
         const dropdown = document.getElementById("teacherSearchDropdown");
         if (dropdown) dropdown.style.display = "none";
 
-        // Tampilkan siswa pertama sebagai contoh awal
+        const isSuperAdmin = AuthManager.isSuperAdmin();
+        const isWaliKelas = !isSuperAdmin && user && (
+            (user.roleLabel && user.roleLabel.toLowerCase().includes("wali kelas")) ||
+            (user.kelas && user.kelas !== "-")
+        );
+
+        if (user && user.kelas && user.kelas !== "-") {
+            this.currentAttendanceClass = user.kelas;
+        } else {
+            this.currentAttendanceClass = "X TKP";
+        }
+
+        // Tampilkan tombol tab Presensi untuk Wali Kelas & Super Admin
+        const btnPresensi = document.getElementById("adminTabBtnPresensi");
+        if (btnPresensi) {
+            btnPresensi.style.display = (isWaliKelas || isSuperAdmin) ? "inline-flex" : "none";
+        }
+
+        // Sembunyikan tab prestasi & kegiatan untuk Wali Kelas (fokus ke presensi & kedisiplinan)
+        const btnPrestasi = document.getElementById("adminTabBtnPrestasi");
+        const btnKegiatan = document.getElementById("adminTabBtnKegiatan");
+        if (btnPrestasi) btnPrestasi.style.display = isWaliKelas ? "none" : "inline-flex";
+        if (btnKegiatan) btnKegiatan.style.display = isWaliKelas ? "none" : "inline-flex";
+
+        // Tombol Super Admin
+        const btnTambahSiswa = document.getElementById("btnTambahSiswaSuperAdmin");
+        if (btnTambahSiswa) {
+            btnTambahSiswa.style.display = isSuperAdmin ? "inline-flex" : "none";
+        }
+
+        const btnEditJadwal = document.getElementById("btnEditJadwalKegiatanSuperAdmin");
+        if (btnEditJadwal) {
+            btnEditJadwal.style.display = isSuperAdmin ? "inline-flex" : "none";
+        }
+
+        // Tampilkan siswa pertama sebagai contoh awal di tab siswa
         const students = StorageManager.getStudents();
         if (students.length > 0) {
             this.selectTargetStudent(students[0].id);
@@ -35,25 +72,30 @@ const AdminPortal = {
         this.renderAdminKegiatanList();
         this.updateAdminBadgeCounts();
 
-        const btnTambahSiswa = document.getElementById("btnTambahSiswaSuperAdmin");
-        if (btnTambahSiswa) {
-            btnTambahSiswa.style.display = AuthManager.isSuperAdmin() ? "inline-flex" : "none";
-        }
+        // Inisialisasi dropdown kelas presensi
+        this.populateAttendanceClassOptions();
 
-        this.switchAdminTab(this.currentTab || 'siswa');
+        // Untuk wali kelas, menu yang langsung muncul adalah Presensi & Disiplin Kelas
+        if (isWaliKelas) {
+            this.switchAdminTab('presensi');
+        } else {
+            this.switchAdminTab(this.currentTab || 'siswa');
+        }
     },
 
-    // 0. Beralih Antara Sub-Tab Admin (Siswa, Prestasi, Kegiatan)
+    // 0. Beralih Antara Sub-Tab Admin (Presensi, Siswa, Prestasi, Kegiatan)
     switchAdminTab(tabName) {
         this.currentTab = tabName;
 
         const tabBtns = {
+            presensi: document.getElementById("adminTabBtnPresensi"),
             siswa: document.getElementById("adminTabBtnSiswa"),
             prestasi: document.getElementById("adminTabBtnPrestasi"),
             kegiatan: document.getElementById("adminTabBtnKegiatan")
         };
 
         const panes = {
+            presensi: document.getElementById("adminPanePresensi"),
             siswa: document.getElementById("adminPaneSiswa"),
             prestasi: document.getElementById("adminPanePrestasi"),
             kegiatan: document.getElementById("adminPaneKegiatan")
@@ -73,7 +115,9 @@ const AdminPortal = {
             }
         });
 
-        if (tabName === "prestasi") {
+        if (tabName === "presensi") {
+            this.renderClassAttendance();
+        } else if (tabName === "prestasi") {
             this.renderAdminPrestasiList();
         } else if (tabName === "kegiatan") {
             this.renderAdminKegiatanList();
@@ -557,5 +601,516 @@ const AdminPortal = {
                 App.showToast("Gagal menghapus kegiatan.");
             }
         }
+    },
+
+    // =========================================================================
+    // 7. PRESENSI & DISIPLIN KELAS WALI KELAS (UPACARA, SENAM, DAN CHECKLIST)
+    // =========================================================================
+    getHariKegiatanText(dateStr) {
+        if (!dateStr) dateStr = this.currentAttendanceDate || new Date().toISOString().split('T')[0];
+        const dateObj = new Date(dateStr + "T00:00:00");
+        const dayOfWeek = dateObj.getDay(); // 0: Minggu, 1: Senin, 3: Rabu, 5: Jumat
+        const schedule = StorageManager.getAttendanceSchedule();
+
+        if (schedule && schedule[dayOfWeek] && schedule[dayOfWeek].aktif !== false) {
+            return schedule[dayOfWeek].kode || schedule[dayOfWeek].nama;
+        }
+
+        const dayNames = ["MINGGU", "SENIN", "SELASA", "RABU", "KAMIS", "JUMAT", "SABTU"];
+        return `${dayNames[dayOfWeek]} PRESENSI`;
+    },
+
+    populateAttendanceClassOptions() {
+        const select = document.getElementById("attFilterKelas");
+        if (!select) return;
+
+        // Kumpulan semua kelas dari DAFTAR_WALI_KELAS_MASTER atau default
+        const classes = (typeof DAFTAR_WALI_KELAS_MASTER !== 'undefined')
+            ? DAFTAR_WALI_KELAS_MASTER.map(w => w.kode)
+            : ["X TKP", "X DPIB", "XI BA", "XII BA"];
+
+        const uniqueClasses = Array.from(new Set(classes));
+        const currentUser = AuthManager.getCurrentUser();
+        const isSuperAdmin = AuthManager.isSuperAdmin();
+
+        select.innerHTML = uniqueClasses.map(cls => {
+            const selected = cls === this.currentAttendanceClass ? 'selected' : '';
+            return `<option value="${cls}" ${selected}>${cls}</option>`;
+        }).join('');
+
+        // Jika Wali Kelas dan bukan Super Admin, kunci ke kelas miliknya
+        const wrap = document.getElementById("attFilterKelasWrap");
+        if (wrap) {
+            if (!isSuperAdmin && currentUser && currentUser.kelas && currentUser.kelas !== "-") {
+                select.disabled = true;
+            } else {
+                select.disabled = false;
+            }
+        }
+    },
+
+    handleAttendanceDateChange(val) {
+        if (!val) return;
+        this.currentAttendanceDate = val;
+        this.renderClassAttendance();
+    },
+
+    handleAttendanceClassChange(val) {
+        if (!val) return;
+        this.currentAttendanceClass = val;
+        this.renderClassAttendance();
+    },
+
+    renderClassAttendance() {
+        const tbody = document.getElementById("attTableBody");
+        if (!tbody) return;
+
+        if (!this.currentAttendanceDate) {
+            this.currentAttendanceDate = new Date().toISOString().split('T')[0];
+        }
+        if (!this.currentAttendanceClass) {
+            this.currentAttendanceClass = "X TKP";
+        }
+
+        const dateInput = document.getElementById("attFilterTanggal");
+        if (dateInput && dateInput.value !== this.currentAttendanceDate) {
+            dateInput.value = this.currentAttendanceDate;
+        }
+
+        const classSelect = document.getElementById("attFilterKelas");
+        if (classSelect && classSelect.value !== this.currentAttendanceClass) {
+            classSelect.value = this.currentAttendanceClass;
+        }
+
+        const bannerText = this.getHariKegiatanText(this.currentAttendanceDate);
+        const headerBanner = document.getElementById("attHeaderBannerText");
+        if (headerBanner) headerBanner.textContent = `📅 ${bannerText}`;
+
+        const tableBanner = document.getElementById("attTableActivityBanner");
+        if (tableBanner) tableBanner.textContent = bannerText;
+
+        // Pastikan siswa untuk kelas target sudah disiapkan
+        StorageManager.ensureStudentsForClass(this.currentAttendanceClass);
+
+        const allStudents = StorageManager.getStudents();
+        const students = allStudents.filter(s => s.kelas && s.kelas.trim().toUpperCase() === this.currentAttendanceClass.trim().toUpperCase());
+
+        // Urutkan berdasarkan no absen / nama
+        students.sort((a, b) => {
+            if (a.no && b.no) return a.no - b.no;
+            return a.nama.localeCompare(b.nama);
+        });
+
+        const attData = StorageManager.getClassAttendance(this.currentAttendanceClass, this.currentAttendanceDate);
+        const records = (attData && attData.records) ? attData.records : {};
+
+        let countHadir = 0;
+        let countIzin = 0;
+        let countSakit = 0;
+        let countAlpha = 0;
+
+        if (students.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" style="padding: 2.5rem; text-align: center; color: var(--text-muted);">
+                        Belum ada data siswa terdaftar untuk kelas <strong>${this.currentAttendanceClass}</strong>.<br>
+                        ${AuthManager.isSuperAdmin() ? '<button class="btn btn-primary btn-sm" style="margin-top: 0.75rem;" onclick="Forms.openImportStudentsModal()">📥 Impor Siswa Excel</button>' : ''}
+                    </td>
+                </tr>
+            `;
+            const stats = document.getElementById("attSummaryStats");
+            if (stats) stats.textContent = `Total: 0 Siswa`;
+            return;
+        }
+
+        const rowsHtml = students.map((s, idx) => {
+            const no = s.no || (idx + 1);
+            const rec = records[s.id] || {
+                status: 'alpha',
+                rambut: false,
+                atribut: false,
+                makeup: false,
+                seragam: false,
+                violations: {}
+            };
+
+            const status = rec.status || 'alpha';
+            if (status === 'hadir') countHadir++;
+            else if (status === 'izin') countIzin++;
+            else if (status === 'sakit') countSakit++;
+            else countAlpha++;
+
+            const isPresent = (status === 'hadir');
+            const switchClass = isPresent ? 'att-present' : 'att-absent';
+            const switchLabel = isPresent ? 'Hadir' : (status === 'izin' ? 'Izin' : (status === 'sakit' ? 'Sakit' : 'Alpha'));
+
+            return `
+                <tr style="border-bottom: 1px solid #e2e8f0; transition: background 0.15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
+                    <td style="padding: 6px 4px; border-right: 1px solid #e2e8f0; font-weight: 700; color: var(--text-muted); font-size: 0.85rem;">${no}</td>
+                    <td style="padding: 6px 12px; border-right: 1px solid #e2e8f0; text-align: left; font-weight: 700; color: var(--text-main); font-size: 0.88rem;">
+                        ${s.nama}
+                    </td>
+                    <td style="padding: 4px; border-right: 1px solid #e2e8f0; vertical-align: middle;">
+                        <div style="display: flex; align-items: center; justify-content: center; gap: 4px;">
+                            <div class="att-toggle-switch ${switchClass}" onclick="AdminPortal.toggleStudentAttendance('${s.id}')" title="Klik untuk mengubah Hadir / Tidak Hadir">
+                                <span class="att-toggle-thumb"></span>
+                                <span>${switchLabel}</span>
+                            </div>
+                            <div class="att-ket-group">
+                                <span class="att-ket-pill pill-alpha ${status === 'alpha' ? 'active' : ''}" onclick="AdminPortal.setStudentAttendanceKeterangan('${s.id}', 'alpha')" title="Alpha (Tanpa Keterangan)">A</span>
+                                <span class="att-ket-pill pill-izin ${status === 'izin' ? 'active' : ''}" onclick="AdminPortal.setStudentAttendanceKeterangan('${s.id}', 'izin')" title="Izin">I</span>
+                                <span class="att-ket-pill pill-sakit ${status === 'sakit' ? 'active' : ''}" onclick="AdminPortal.setStudentAttendanceKeterangan('${s.id}', 'sakit')" title="Sakit">S</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td style="padding: 4px; border-right: 1px solid #e2e8f0; vertical-align: middle;">
+                        <input type="checkbox" class="att-checkbox-custom" ${rec.rambut ? 'checked' : ''} onchange="AdminPortal.handleViolationCheckbox('${s.id}', 'rambut', this.checked)" title="Rambut panjang/dicat">
+                    </td>
+                    <td style="padding: 4px; border-right: 1px solid #e2e8f0; vertical-align: middle;">
+                        <input type="checkbox" class="att-checkbox-custom" ${rec.atribut ? 'checked' : ''} onchange="AdminPortal.handleViolationCheckbox('${s.id}', 'atribut', this.checked)" title="Atribut seragam tidak lengkap">
+                    </td>
+                    <td style="padding: 4px; border-right: 1px solid #e2e8f0; vertical-align: middle;">
+                        <input type="checkbox" class="att-checkbox-custom" ${rec.makeup ? 'checked' : ''} onchange="AdminPortal.handleViolationCheckbox('${s.id}', 'makeup', this.checked)" title="Make up berlebih">
+                    </td>
+                    <td style="padding: 4px; vertical-align: middle;">
+                        <input type="checkbox" class="att-checkbox-custom" ${rec.seragam ? 'checked' : ''} onchange="AdminPortal.handleViolationCheckbox('${s.id}', 'seragam', this.checked)" title="Seragam tidak benar / tidak lengkap">
+                    </td>
+                </tr>
+            `;
+        }).join('');
+
+        tbody.innerHTML = rowsHtml;
+
+        const stats = document.getElementById("attSummaryStats");
+        if (stats) {
+            stats.innerHTML = `Rekap: <strong>${students.length} Siswa</strong> • Hadir: <span style="color: #16a34a; font-weight:800;">${countHadir}</span> • Izin: <span style="color: #d97706; font-weight:800;">${countIzin}</span> • Sakit: <span style="color: #2563eb; font-weight:800;">${countSakit}</span> • Alpha: <span style="color: #dc2626; font-weight:800;">${countAlpha}</span>`;
+        }
+    },
+
+    toggleStudentAttendance(studentId) {
+        const attData = StorageManager.getClassAttendance(this.currentAttendanceClass, this.currentAttendanceDate) || {
+            records: {},
+            kegiatan: this.getHariKegiatanText(this.currentAttendanceDate)
+        };
+        if (!attData.records) attData.records = {};
+
+        const currentRec = attData.records[studentId] || {
+            status: 'alpha',
+            rambut: false,
+            atribut: false,
+            makeup: false,
+            seragam: false,
+            violations: {}
+        };
+        if (!currentRec.violations) currentRec.violations = {};
+
+        const user = AuthManager.getCurrentUser();
+        const pencatat = user ? user.name : "Wali Kelas";
+
+        if (currentRec.status === 'hadir') {
+            // Geser ke Alpha
+            currentRec.status = 'alpha';
+
+            // Catat pelanggaran Alpha: 10 poin
+            if (!currentRec.violations.alphaId) {
+                const viol = StorageManager.addStudentViolation(studentId, {
+                    nama: "Tidak masuk tanpa keterangan/Alpha baik pelajaran/upacara/senam",
+                    kategori: "Kedisiplinan",
+                    poin: 10,
+                    sanksi: `Pembinaan Wali Kelas & Presensi (${this.getHariKegiatanText(this.currentAttendanceDate)})`,
+                    pencatat: pencatat,
+                    tanggal: this.currentAttendanceDate
+                });
+                if (viol && viol.id) {
+                    currentRec.violations.alphaId = viol.id;
+                }
+            }
+        } else {
+            // Geser ke Hadir
+            currentRec.status = 'hadir';
+
+            // Hapus pelanggaran Alpha jika ada
+            if (currentRec.violations.alphaId) {
+                StorageManager.deleteStudentViolation(studentId, currentRec.violations.alphaId);
+                currentRec.violations.alphaId = null;
+            }
+        }
+
+        attData.records[studentId] = currentRec;
+        StorageManager.saveClassAttendance(this.currentAttendanceClass, this.currentAttendanceDate, attData);
+        this.renderClassAttendance();
+    },
+
+    setStudentAttendanceKeterangan(studentId, newKet) {
+        const attData = StorageManager.getClassAttendance(this.currentAttendanceClass, this.currentAttendanceDate) || {
+            records: {},
+            kegiatan: this.getHariKegiatanText(this.currentAttendanceDate)
+        };
+        if (!attData.records) attData.records = {};
+
+        const currentRec = attData.records[studentId] || {
+            status: 'alpha',
+            rambut: false,
+            atribut: false,
+            makeup: false,
+            seragam: false,
+            violations: {}
+        };
+        if (!currentRec.violations) currentRec.violations = {};
+
+        const user = AuthManager.getCurrentUser();
+        const pencatat = user ? user.name : "Wali Kelas";
+
+        currentRec.status = newKet;
+
+        if (newKet === 'alpha') {
+            // Tambahkan pelanggaran Alpha jika belum ada
+            if (!currentRec.violations.alphaId) {
+                const viol = StorageManager.addStudentViolation(studentId, {
+                    nama: "Tidak masuk tanpa keterangan/Alpha baik pelajaran/upacara/senam",
+                    kategori: "Kedisiplinan",
+                    poin: 10,
+                    sanksi: `Pembinaan Wali Kelas & Presensi (${this.getHariKegiatanText(this.currentAttendanceDate)})`,
+                    pencatat: pencatat,
+                    tanggal: this.currentAttendanceDate
+                });
+                if (viol && viol.id) {
+                    currentRec.violations.alphaId = viol.id;
+                }
+            }
+        } else {
+            // Izin atau Sakit: batalkan/cabut pelanggaran Alpha
+            if (currentRec.violations.alphaId) {
+                StorageManager.deleteStudentViolation(studentId, currentRec.violations.alphaId);
+                currentRec.violations.alphaId = null;
+            }
+        }
+
+        attData.records[studentId] = currentRec;
+        StorageManager.saveClassAttendance(this.currentAttendanceClass, this.currentAttendanceDate, attData);
+        this.renderClassAttendance();
+    },
+
+    handleViolationCheckbox(studentId, field, isChecked) {
+        const attData = StorageManager.getClassAttendance(this.currentAttendanceClass, this.currentAttendanceDate) || {
+            records: {},
+            kegiatan: this.getHariKegiatanText(this.currentAttendanceDate)
+        };
+        if (!attData.records) attData.records = {};
+
+        const currentRec = attData.records[studentId] || {
+            status: 'alpha',
+            rambut: false,
+            atribut: false,
+            makeup: false,
+            seragam: false,
+            violations: {}
+        };
+        if (!currentRec.violations) currentRec.violations = {};
+
+        const user = AuthManager.getCurrentUser();
+        const pencatat = user ? user.name : "Wali Kelas";
+        const violKey = `${field}Id`;
+
+        currentRec[field] = isChecked;
+
+        if (isChecked) {
+            let namaViol = "";
+            let poinViol = 5;
+            let sanksiViol = "";
+
+            if (field === 'rambut' || field === 'makeup') {
+                namaViol = "Rambut panjang (untuk putra)/dicat (untuk putra&putri)/make up berlebih";
+                poinViol = 10;
+                sanksiViol = field === 'rambut' 
+                    ? "Peringatan lisan & potong/rapikan rambut sesuai ketentuan" 
+                    : "Peringatan & pembersihan riasan make up berlebih";
+            } else if (field === 'atribut' || field === 'seragam') {
+                namaViol = "Atribut seragam tidak lengkap/tidak benar";
+                poinViol = 5;
+                sanksiViol = field === 'atribut'
+                    ? "Peringatan kelengkapan atribut seragam sekolah"
+                    : "Peringatan kerapian pakaian seragam sekolah";
+            }
+
+            if (!currentRec.violations[violKey]) {
+                const viol = StorageManager.addStudentViolation(studentId, {
+                    nama: namaViol,
+                    kategori: "Kerapian",
+                    poin: poinViol,
+                    sanksi: sanksiViol,
+                    pencatat: pencatat,
+                    tanggal: this.currentAttendanceDate
+                });
+                if (viol && viol.id) {
+                    currentRec.violations[violKey] = viol.id;
+                }
+            }
+        } else {
+            // Unchecked: cabut/hapus pelanggaran terkait
+            if (currentRec.violations[violKey]) {
+                StorageManager.deleteStudentViolation(studentId, currentRec.violations[violKey]);
+                currentRec.violations[violKey] = null;
+            }
+        }
+
+        attData.records[studentId] = currentRec;
+        StorageManager.saveClassAttendance(this.currentAttendanceClass, this.currentAttendanceDate, attData);
+        this.renderClassAttendance();
+    },
+
+    markAllStudentsPresent() {
+        const attData = StorageManager.getClassAttendance(this.currentAttendanceClass, this.currentAttendanceDate) || {
+            records: {},
+            kegiatan: this.getHariKegiatanText(this.currentAttendanceDate)
+        };
+        if (!attData.records) attData.records = {};
+
+        const allStudents = StorageManager.getStudents();
+        const students = allStudents.filter(s => s.kelas && s.kelas.trim().toUpperCase() === this.currentAttendanceClass.trim().toUpperCase());
+
+        students.forEach(s => {
+            if (!attData.records[s.id]) {
+                attData.records[s.id] = {
+                    status: 'hadir',
+                    rambut: false,
+                    atribut: false,
+                    makeup: false,
+                    seragam: false,
+                    violations: {}
+                };
+            } else {
+                const rec = attData.records[s.id];
+                if (rec.violations && rec.violations.alphaId) {
+                    StorageManager.deleteStudentViolation(s.id, rec.violations.alphaId);
+                    rec.violations.alphaId = null;
+                }
+                rec.status = 'hadir';
+            }
+        });
+
+        StorageManager.saveClassAttendance(this.currentAttendanceClass, this.currentAttendanceDate, attData);
+        this.renderClassAttendance();
+        App.showToast(`Seluruh siswa kelas ${this.currentAttendanceClass} berhasil ditandai Hadir!`);
+    },
+
+    exportAttendanceToExcel() {
+        const allStudents = StorageManager.getStudents();
+        const students = allStudents.filter(s => s.kelas && s.kelas.trim().toUpperCase() === this.currentAttendanceClass.trim().toUpperCase());
+        students.sort((a, b) => (a.no || 0) - (b.no || 0));
+
+        const attData = StorageManager.getClassAttendance(this.currentAttendanceClass, this.currentAttendanceDate);
+        const records = (attData && attData.records) ? attData.records : {};
+        const bannerText = this.getHariKegiatanText(this.currentAttendanceDate);
+
+        const exportData = students.map((s, idx) => {
+            const rec = records[s.id] || { status: 'alpha', rambut: false, atribut: false, makeup: false, seragam: false };
+            const statusUpper = (rec.status || 'alpha').toUpperCase();
+            return {
+                "No": s.no || (idx + 1),
+                "Nama Siswa": s.nama,
+                "Kelas": s.kelas,
+                "Tanggal": this.currentAttendanceDate,
+                "Kegiatan": bannerText,
+                "Kehadiran": statusUpper,
+                "Rambut (10 Poin)": rec.rambut ? "Melanggar" : "Rapi",
+                "Atribut (5 Poin)": rec.atribut ? "Melanggar" : "Lengkap",
+                "Make up (10 Poin)": rec.makeup ? "Melanggar" : "Rapi",
+                "Seragam (5 Poin)": rec.seragam ? "Melanggar" : "Rapi"
+            };
+        });
+
+        if (typeof XLSX === 'undefined') {
+            App.showToast("Pustaka SheetJS belum termuat. Silakan periksa koneksi internet.");
+            return;
+        }
+
+        const worksheet = XLSX.utils.json_to_sheet(exportData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Presensi_Disiplin");
+
+        const cleanClass = this.currentAttendanceClass.replace(/[^a-zA-Z0-9]/g, '_');
+        const filename = `Presensi_${cleanClass}_${this.currentAttendanceDate}.xlsx`;
+        XLSX.writeFile(workbook, filename);
+        App.showToast(`Berkas Excel (${filename}) berhasil diunduh!`);
+    },
+
+    printAttendanceSheet() {
+        const allStudents = StorageManager.getStudents();
+        const students = allStudents.filter(s => s.kelas && s.kelas.trim().toUpperCase() === this.currentAttendanceClass.trim().toUpperCase());
+        students.sort((a, b) => (a.no || 0) - (b.no || 0));
+
+        const attData = StorageManager.getClassAttendance(this.currentAttendanceClass, this.currentAttendanceDate);
+        const records = (attData && attData.records) ? attData.records : {};
+        const bannerText = this.getHariKegiatanText(this.currentAttendanceDate);
+
+        const printContainer = document.getElementById("printRaporContainer");
+        if (!printContainer) return;
+
+        const rowsHtml = students.map((s, idx) => {
+            const rec = records[s.id] || { status: 'alpha', rambut: false, atribut: false, makeup: false, seragam: false };
+            const statusText = (rec.status || 'alpha').toUpperCase();
+            return `
+                <tr>
+                    <td style="border: 1px solid #000; text-align: center; padding: 4px;">${s.no || (idx + 1)}</td>
+                    <td style="border: 1px solid #000; padding: 4px 8px; text-align: left;">${s.nama}</td>
+                    <td style="border: 1px solid #000; text-align: center; padding: 4px; font-weight: bold;">${statusText}</td>
+                    <td style="border: 1px solid #000; text-align: center; padding: 4px;">${rec.rambut ? '✓' : ''}</td>
+                    <td style="border: 1px solid #000; text-align: center; padding: 4px;">${rec.atribut ? '✓' : ''}</td>
+                    <td style="border: 1px solid #000; text-align: center; padding: 4px;">${rec.makeup ? '✓' : ''}</td>
+                    <td style="border: 1px solid #000; text-align: center; padding: 4px;">${rec.seragam ? '✓' : ''}</td>
+                </tr>
+            `;
+        }).join('');
+
+        printContainer.innerHTML = `
+            <div style="font-family: Arial, sans-serif; font-size: 11pt; color: #000; padding: 1.5cm 1cm;">
+                <div style="text-align: center; margin-bottom: 1.25rem;">
+                    <h2 style="margin: 0; font-size: 14pt; text-transform: uppercase;">BLANGKO PRESENSI & KEDISIPLINAN SISWA</h2>
+                    <h3 style="margin: 4px 0 0 0; font-size: 12pt; text-transform: uppercase;">KELAS ${this.currentAttendanceClass} • SMKN 1 MAGELANG</h3>
+                    <div style="margin-top: 6px; font-size: 10pt; font-weight: bold;">Tanggal: ${this.currentAttendanceDate} • Kegiatan: ${bannerText}</div>
+                </div>
+
+                <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 10pt;">
+                    <thead>
+                        <tr>
+                            <th rowspan="2" style="border: 1px solid #000; width: 35px; padding: 6px;">No</th>
+                            <th rowspan="2" style="border: 1px solid #000; text-align: left; padding: 6px 8px;">Nama Siswa</th>
+                            <th style="border: 1px solid #000; width: 90px; padding: 6px;">Kehadiran</th>
+                            <th style="border: 1px solid #000; width: 60px; padding: 6px;">Rambut</th>
+                            <th style="border: 1px solid #000; width: 60px; padding: 6px;">Atribut</th>
+                            <th style="border: 1px solid #000; width: 60px; padding: 6px; font-style: italic;">Make up</th>
+                            <th style="border: 1px solid #000; width: 60px; padding: 6px;">Seragam</th>
+                        </tr>
+                        <tr>
+                            <th colspan="5" style="border: 1px solid #000; padding: 4px; font-weight: bold; background: #eee; text-transform: uppercase;">
+                                ${bannerText}
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rowsHtml}
+                    </tbody>
+                </table>
+
+                <div style="margin-top: 2rem; display: flex; justify-content: space-between; page-break-inside: avoid;">
+                    <div style="text-align: center; width: 220px;">
+                        <br>
+                        Waka Kesiswaan SMKN 1 Magelang
+                        <br><br><br><br>
+                        <strong>Morlan Purba Sibarani, S.Pd., M.Si.</strong><br>
+                        NIP. 19740315 200501 1 004
+                    </div>
+                    <div style="text-align: center; width: 220px;">
+                        Magelang, ${this.currentAttendanceDate}<br>
+                        Wali Kelas ${this.currentAttendanceClass}
+                        <br><br><br><br>
+                        <strong>${AuthManager.getCurrentUser() ? AuthManager.getCurrentUser().name : '...................................'}</strong>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        window.print();
     }
 };

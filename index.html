@@ -465,6 +465,9 @@
 
             <!-- SUB-NAVIGASI TAB MENU ADMIN & SUPER ADMIN -->
             <div class="admin-tabs-nav">
+                <button id="adminTabBtnPresensi" class="admin-tab-btn" onclick="AdminPortal.switchAdminTab('presensi')" style="display: none;">
+                    📋 Presensi & Disiplin Kelas
+                </button>
                 <button id="adminTabBtnSiswa" class="admin-tab-btn active" onclick="AdminPortal.switchAdminTab('siswa')">
                     👥 Cari & Rekap Siswa
                 </button>
@@ -484,6 +487,82 @@
                 <button id="btnEksporSiswaSuperAdmin" class="admin-tab-btn superadmin-tab-action" onclick="Forms.openExportStudentsModal()" style="display: none; background: #0284c7 !important;" title="Lihat Seluruh Siswa & Ekspor ke Excel (.xlsx / .csv)">
                     📊 Ekspor Siswa
                 </button>
+            </div>
+
+            <!-- PANE PRESENSI & DISIPLIN KELAS (KHUSUS WALI KELAS & SUPER ADMIN) -->
+            <div id="adminPanePresensi" class="admin-pane" style="display: none;">
+                <div class="attendance-table-container">
+                    <!-- TOOLBAR ATAS: TANGGAL, PILIH KELAS, TOMBOL AKSI -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.25rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border);">
+                        <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                            <div class="att-banner-kegiatan" id="attHeaderBannerText">
+                                📅 SENIN UPACARA
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <label style="font-size: 0.825rem; font-weight: 700; color: var(--text-main);">Tanggal:</label>
+                                <input type="date" id="attFilterTanggal" class="form-control-clean" style="padding: 0.35rem 0.65rem; font-size: 0.85rem;" onchange="AdminPortal.handleAttendanceDateChange(this.value)">
+                            </div>
+                            <div id="attFilterKelasWrap" style="display: flex; align-items: center; gap: 0.5rem;">
+                                <label style="font-size: 0.825rem; font-weight: 700; color: var(--text-main);">Kelas:</label>
+                                <select id="attFilterKelas" class="form-control-clean" style="padding: 0.35rem 0.65rem; font-size: 0.85rem; font-weight: 700;" onchange="AdminPortal.handleAttendanceClassChange(this.value)">
+                                    <!-- Diisi via JS (X TKP, X DPIB, dst) -->
+                                </select>
+                            </div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                            <button id="btnEditJadwalKegiatanSuperAdmin" class="btn btn-outline" style="font-size: 0.8rem; padding: 0.4rem 0.75rem; display: none;" onclick="Forms.openEditAttendanceScheduleModal()" title="Edit Jadwal Kegiatan Resmi (Super Admin)">
+                                ⚙️ Edit Jadwal Kegiatan
+                            </button>
+                            <button class="btn btn-outline" style="font-size: 0.8rem; padding: 0.4rem 0.75rem; background: #ecfdf5; color: #059669; border-color: #a7f3d0;" onclick="AdminPortal.markAllStudentsPresent()" title="Tandai Semua Siswa Hadir">
+                                ✅ Semua Hadir
+                            </button>
+                            <button class="btn btn-outline" style="font-size: 0.8rem; padding: 0.4rem 0.75rem;" onclick="AdminPortal.exportAttendanceToExcel()" title="Ekspor Blangko Presensi ke Excel">
+                                📊 Ekspor Excel
+                            </button>
+                            <button class="btn btn-outline" style="font-size: 0.8rem; padding: 0.4rem 0.75rem;" onclick="AdminPortal.printAttendanceSheet()" title="Cetak Blangko Presensi Resmi">
+                                🖨️ Cetak Blangko
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- KETERANGAN ATURAN POIN OTOMATIS -->
+                    <div style="background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 0.65rem 1rem; margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; font-size: 0.8rem; color: var(--text-muted);">
+                        <div>
+                            <span>ℹ️ <strong>Aturan Otomatis:</strong></span>
+                            <span style="margin-left: 0.5rem;">• <strong>Alpha</strong>: Otomatis masuk pelanggaran <em>Tidak masuk tanpa keterangan</em> (+10 Poin).</span>
+                            <span style="margin-left: 0.5rem;">• <strong>Rambut / Make up</strong>: Otomatis masuk pelanggaran <em>Rambut/Make up</em> (+10 Poin).</span>
+                            <span style="margin-left: 0.5rem;">• <strong>Atribut / Seragam</strong>: Otomatis masuk pelanggaran <em>Atribut/Seragam</em> (+5 Poin).</span>
+                        </div>
+                        <div id="attSummaryStats" style="font-weight: 700; color: var(--text-main);">
+                            <!-- Rekap: 33 Siswa • Hadir: 30 • Izin: 1 • Sakit: 1 • Alpha: 1 -->
+                        </div>
+                    </div>
+
+                    <!-- TABEL BLANGKO SESUAI FORMAT UPLOAD USER -->
+                    <div class="table-responsive" style="max-height: 70vh; overflow-y: auto; border: 1px solid #cbd5e1; border-radius: 8px;">
+                        <table class="table-modern" id="tableAttendanceSheet" style="width: 100%; border-collapse: collapse; text-align: center;">
+                            <thead style="position: sticky; top: 0; background: #f8fafc; z-index: 10;">
+                                <tr style="border-bottom: 1px solid #cbd5e1;">
+                                    <th rowspan="2" style="width: 45px; border-right: 1px solid #cbd5e1; vertical-align: middle; padding: 8px 4px; font-weight: 800; font-size: 0.85rem;">No</th>
+                                    <th rowspan="2" style="border-right: 1px solid #cbd5e1; vertical-align: middle; text-align: left; padding: 8px 12px; font-weight: 800; font-size: 0.85rem; min-width: 240px;">Nama</th>
+                                    <th style="width: 175px; border-right: 1px solid #cbd5e1; padding: 6px; font-weight: 700; font-size: 0.825rem;">Kehadiran</th>
+                                    <th style="width: 65px; border-right: 1px solid #cbd5e1; padding: 6px; font-weight: 700; font-size: 0.825rem;">Rambut</th>
+                                    <th style="width: 65px; border-right: 1px solid #cbd5e1; padding: 6px; font-weight: 700; font-size: 0.825rem;">Atribut</th>
+                                    <th style="width: 75px; border-right: 1px solid #cbd5e1; padding: 6px; font-weight: 700; font-size: 0.825rem; font-style: italic;">Make up</th>
+                                    <th style="width: 65px; padding: 6px; font-weight: 700; font-size: 0.825rem;">Seragam</th>
+                                </tr>
+                                <tr style="background: #f1f5f9; border-bottom: 2px solid #94a3b8;">
+                                    <th colspan="5" id="attTableActivityBanner" style="padding: 6px; font-weight: 800; font-size: 0.85rem; letter-spacing: 0.5px; color: #0f172a; text-transform: uppercase;">
+                                        SENIN UPACARA
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody id="attTableBody">
+                                <!-- Diisi via JavaScript renderClassAttendance() -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
 
             <!-- PANE 1: CARI & REKAP SISWA -->
@@ -2657,6 +2736,90 @@
                 <div class="modal-card-footer">
                     <button type="button" class="btn btn-outline" onclick="Forms.closeAllModals()">Batal</button>
                     <button type="submit" class="btn btn-primary">📢 Publikasikan Sekarang</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         MODAL EDIT JADWAL KEGIATAN RUTIN KESISWAAN (KHUSUS SUPER ADMIN)
+         ===================================================================== -->
+    <div id="modalEditAttendanceSchedule" class="modal-backdrop">
+        <div class="modal-card" style="max-width: 600px;">
+            <div class="modal-card-header">
+                <div>
+                    <h3 style="font-size: 1.15rem; color: var(--text-main); margin: 0;">⚙️ Pengaturan Jadwal Kegiatan Presensi</h3>
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin: 2px 0 0 0;">Atur otomatisasi kegiatan hari Senin (Upacara), Rabu (Senam SAIH), dan Jumat (Senam) untuk wali kelas.</p>
+                </div>
+                <button type="button" class="modal-close-icon" onclick="Forms.closeAllModals()">✕</button>
+            </div>
+            <form onsubmit="Forms.handleSaveAttendanceSchedule(event)">
+                <div class="modal-card-body" style="padding: 1.25rem 1.5rem; display: flex; flex-direction: column; gap: 1rem;">
+                    
+                    <!-- HARI SENIN -->
+                    <div style="background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 0.85rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                            <strong style="color: var(--primary); font-size: 0.9rem;">📍 Hari Senin</strong>
+                            <label style="font-size: 0.8rem; display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
+                                <input type="checkbox" id="schedActive1" checked> Aktifkan Otomatis
+                            </label>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.65rem;">
+                            <div class="form-group-clean">
+                                <label style="font-size: 0.75rem; font-weight: 700;">Nama Kegiatan</label>
+                                <input type="text" id="schedNama1" class="form-control-clean" value="Presensi Upacara" required>
+                            </div>
+                            <div class="form-group-clean">
+                                <label style="font-size: 0.75rem; font-weight: 700;">Teks Banner Blangko</label>
+                                <input type="text" id="schedKode1" class="form-control-clean" value="SENIN UPACARA" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- HARI RABU -->
+                    <div style="background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 0.85rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                            <strong style="color: var(--primary); font-size: 0.9rem;">📍 Hari Rabu</strong>
+                            <label style="font-size: 0.8rem; display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
+                                <input type="checkbox" id="schedActive3" checked> Aktifkan Otomatis
+                            </label>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.65rem;">
+                            <div class="form-group-clean">
+                                <label style="font-size: 0.75rem; font-weight: 700;">Nama Kegiatan</label>
+                                <input type="text" id="schedNama3" class="form-control-clean" value="Senam SAIH" required>
+                            </div>
+                            <div class="form-group-clean">
+                                <label style="font-size: 0.75rem; font-weight: 700;">Teks Banner Blangko</label>
+                                <input type="text" id="schedKode3" class="form-control-clean" value="RABU SENAM SAIH" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- HARI JUMAT -->
+                    <div style="background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 0.85rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                            <strong style="color: var(--primary); font-size: 0.9rem;">📍 Hari Jumat</strong>
+                            <label style="font-size: 0.8rem; display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
+                                <input type="checkbox" id="schedActive5" checked> Aktifkan Otomatis
+                            </label>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.65rem;">
+                            <div class="form-group-clean">
+                                <label style="font-size: 0.75rem; font-weight: 700;">Nama Kegiatan</label>
+                                <input type="text" id="schedNama5" class="form-control-clean" value="Senam" required>
+                            </div>
+                            <div class="form-group-clean">
+                                <label style="font-size: 0.75rem; font-weight: 700;">Teks Banner Blangko</label>
+                                <input type="text" id="schedKode5" class="form-control-clean" value="JUMAT SENAM" required>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="modal-card-footer">
+                    <button type="button" class="btn btn-outline" onclick="Forms.closeAllModals()">Batal</button>
+                    <button type="submit" class="btn btn-primary">💾 Simpan Jadwal Kegiatan</button>
                 </div>
             </form>
         </div>

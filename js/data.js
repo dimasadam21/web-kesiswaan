@@ -285,15 +285,59 @@ const DEFAULT_RULES = [
     { minPoint: 100, maxPoint: 9999, status: "Surat Peringatan 3 (SP 3 / Dikeluarkan)", action: "Konferensi Kasus & Pengembalian Siswa ke Orang Tua", badgeClass: "pill-red" }
 ];
 
+// DAFTAR RESMI 33 SISWA X TKP (SESUAI BLANGKO PRESENSI RESMI KESISWAAN)
+const OFFICIAL_X_TKP_STUDENTS = [
+    "ADRIAN DEVA NICO SETIAWAN",
+    "ANINDA OKTAVIA AZZAHRA",
+    "ARDI PUTRA",
+    "ARYA GUMILANG SETIAWAN",
+    "ATTAYA FIRLY ALIEFA",
+    "CEREL ANINDHITA AKSAN",
+    "DAMAR HAFID ALHAQ",
+    "DANDI KURNIAWAN",
+    "DESTIAN ADHAM SYAHFAHAD",
+    "FAJAR AZKA ARYAPUTRA",
+    "FINA LAILA IZATI",
+    "HAMKA CHANDRA WINATA",
+    "HANA SALMA AZIZAH",
+    "HANIFAH AUFA RAFIQI",
+    "MUHAMMAD RIFAN ROMADHON",
+    "MUHAMMAD RIVAL BAGUS N.",
+    "MUHAMMAD ROFIK HAMDANI",
+    "NADIA NUR ABIDAH",
+    "NAILA AZZAHRA",
+    "NEISYA GIVRI NUR ASIVA",
+    "NOVA ZULIA PUTRI",
+    "NURAKBAR JAHRO' DWIZHANI",
+    "QUEENSHA PUTRI ARSETI",
+    "RADITYA FADIN APRILISANSYAH",
+    "RAFAEL ZAHRAN RACHMADIAN",
+    "RAISSA KHOIROTUNHISAN",
+    "RAYHAN NANDA PUTRA HARTONO",
+    "SEPTI ISTIANA RAHAYU",
+    "SUKMA PUSPITA ADELIA",
+    "UMMA AFIFAH",
+    "WANGI LARAS PANITIS",
+    "YAFIQ YUGNI FIRDAUS LADJAR",
+    "YOGI DWI PRADANA"
+];
+
+// JADWAL DEFAULT KEGIATAN RUTIN KESISWAAN (SENIN UPACARA, RABU SENAM SAIH, JUMAT SENAM)
+const DEFAULT_ATTENDANCE_SCHEDULE = {
+    1: { hari: "Senin", nama: "Presensi Upacara", kode: "SENIN UPACARA", aktif: true },
+    3: { hari: "Rabu", nama: "Senam SAIH", kode: "RABU SENAM SAIH", aktif: true },
+    5: { hari: "Jumat", nama: "Senam", kode: "JUMAT SENAM", aktif: true }
+};
+
 const MASTER_PELANGGARAN = [
     { id: "P01", kategori: "Kedisiplinan", nama: "Terlambat masuk sekolah (1-15 menit)", poin: 5 },
     { id: "P02", kategori: "Kedisiplinan", nama: "Terlambat masuk sekolah (>15 menit)", poin: 10 },
     { id: "P03", kategori: "Kedisiplinan", nama: "Keluar kelas/sekolah tanpa izin (Membolos)", poin: 20 },
-    { id: "P04", kategori: "Kedisiplinan", nama: "Tidak mengikuti upacara bendera / apel pagi", poin: 10 },
+    { id: "P04", kategori: "Kedisiplinan", nama: "Tidak masuk tanpa keterangan/Alpha baik pelajaran/upacara/senam", poin: 10 },
     { id: "P05", kategori: "Kedisiplinan", nama: "Tidak masuk sekolah tanpa keterangan (Alfa)", poin: 10 },
-    { id: "P06", kategori: "Kerapian", nama: "Seragam tidak lengkap / tidak beratribut resmi", poin: 5 },
+    { id: "P06", kategori: "Kerapian", nama: "Atribut seragam tidak lengkap/tidak benar", poin: 5 },
     { id: "P07", kategori: "Kerapian", nama: "Pakaian ketat, tidak dimasukkan, atau tidak sesuai jadwal", poin: 5 },
-    { id: "P08", kategori: "Kerapian", nama: "Rambut gondrong / diwarnai (Laki-laki)", poin: 10 },
+    { id: "P08", kategori: "Kerapian", nama: "Rambut panjang (untuk putra)/dicat (untuk putra&putri)/make up berlebih", poin: 10 },
     { id: "P09", kategori: "Etika", nama: "Menggunakan HP saat KBM tanpa instruksi guru", poin: 10 },
     { id: "P10", kategori: "Etika", nama: "Bersikap tidak sopan / membantah guru atau karyawan", poin: 25 },
     { id: "P11", kategori: "Berat", nama: "Merokok / membawa rokok atau vape di lingkungan sekolah", poin: 40 },
