@@ -23,24 +23,47 @@ const DEFAULT_CONFIG = {
     wallpaperEffect: "light",
     academicYear: "2025/2026",
     headmaster: "Dr. H. Sulaiman Effendi, M.Pd",
-    headOfStudentAffairs: "Dra. Hj. Siti Rahma, M.Pd",
+    headOfStudentAffairs: "Morlan Purba Sibarani, S.Pd., M.Si.",
     bkCoordinator: "Bambang Wijaya, S.Pd, M.Kons"
 };
 
 // TEMPLATE DEFAULT SURAT PANGGILAN ORANG TUA (BISA DIEDIT SUPER ADMIN)
 const DEFAULT_SURAT_TEMPLATE = {
-    kopInstansi: "PEMERINTAH PROVINSI PENDIDIKAN",
-    nomorFormat: "421.3 / {NOMOR} / KESISWAAN / {TAHUN}",
+    kopInstansi: "PEMERINTAH PROVINSI JAWA TENGAH\nDINAS PENDIDIKAN DAN KEBUDAYAAN\nSMK NEGERI 1 MAGELANG",
+    kopImageUrl: "", // URL / Base64 File Gambar Kop Surat Resmi
+    ttdImageUrl: "", // URL / Base64 File Tanda Tangan Waka Kesiswaan
+    nomorFormat: "421.3 / {NOMOR} / SMKN1.MGL / {TAHUN}",
     perihal: "PANGGILAN ORANG TUA / WALI SISWA",
-    hariKerjaOffset: 2,
     waktu: "Pukul 08.30 WIB s.d Selesai",
-    tempat: "Ruang Bimbingan Konseling (BK) / Ruang Kesiswaan",
-    pembuka: "Sehubungan dengan evaluasi tata tertib serta pembinaan kedisiplinan dan karakter putra/putri Bapak/Ibu di lingkungan sekolah, dengan ini kami mengharapkan kehadiran Bapak/Ibu orang tua/wali dari:",
+    tempat: "Ruang Bimbingan Konseling (BK) / Ruang Kesiswaan SMKN 1 Magelang",
+
+    // ISI BERBEDA SP 1 s/d SP 4
+    sp1_judul: "SURAT PANGGILAN ORANG TUA / WALI SISWA (SP 1)",
+    sp1_pembuka: "Sehubungan dengan evaluasi tata tertib serta pembinaan kedisiplinan dan karakter putra/putri Bapak/Ibu di lingkungan sekolah yang telah mencapai batas akumulasi Surat Peringatan 1 (SP 1), dengan ini kami mengharapkan kehadiran Bapak/Ibu orang tua/wali untuk koordinasi pembinaan awal:",
+    sp1_penutup: "Mengingat pentingnya koordinasi pembinaan karakter ini demi kelancaran proses pendidikan dan masa depan putra/putri Bapak/Ibu, kami sangat mengharapkan kehadiran Bapak/Ibu tepat pada waktu yang telah ditentukan. Atas perhatian dan kerja samanya, kami ucapkan terima kasih.",
+
+    sp2_judul: "SURAT PANGGILAN ORANG TUA / WALI SISWA (SP 2)",
+    sp2_pembuka: "Menindaklanjuti pembinaan kedisiplinan sebelumnya, di mana berdasarkan catatan rekap kesiswaan putra/putri Bapak/Ibu kembali melakukan pelanggaran hingga mencapai batas akumulasi Surat Peringatan 2 (SP 2), dengan ini kami memanggil kehadiran Bapak/Ibu orang tua/wali guna penandatanganan Surat Perjanjian Khusus II serta pelaksanaan pembinaan intensif:",
+    sp2_penutup: "Kami mohon kerja sama Bapak/Ibu untuk hadir tepat waktu demi masa depan putra/putri kita bersama. Apabila tidak hadir tanpa pemberitahuan resmi, pihak sekolah akan mengambil tindakan tegas sesuai tata tertib yang berlaku. Terima kasih atas kerja samanya.",
+
+    sp3_judul: "SURAT PANGGILAN ORANG TUA / WALI SISWA (SP 3)",
+    sp3_pembuka: "Diberitahukan dengan hormat bahwa catatan pelanggaran dan perilaku putra/putri Bapak/Ibu telah mencapai batas kritis Surat Peringatan 3 (SP 3 / Skorsing Pembinaan). Sehubungan dengan status kedisiplinan tingkat akhir tersebut, kami mewajibkan kehadiran Bapak/Ibu orang tua/wali untuk evaluasi penegakan disiplin tingkat akhir bersama pimpinan sekolah:",
+    sp3_penutup: "Panggilan ini merupakan peringatan disiplin keras terakhir sebelum tindakan pengembalian siswa kepada orang tua. Kehadiran Bapak/Ibu bersifat mutlak dan tidak dapat diwakilkan. Atas perhatian dan kepatuhan yang diberikan, kami ucapkan terima kasih.",
+
+    sp4_judul: "SURAT PANGGILAN KONFERENSI KASUS / PENGEMBALIAN SISWA (SP 4)",
+    sp4_pembuka: "Mengingat putra/putri Bapak/Ibu telah melampaui batas maksimal akumulasi pelanggaran tata tertib sekolah (SP 4 / Konferensi Kasus Khusus) dan tidak menunjukkan perubahan perilaku setelah berbagai tahapan pembinaan dan skorsing, dengan ini kami memanggil kehadiran Bapak/Ibu orang tua/wali dalam Sidang Kasus Khusus untuk penyerahan dan pengembalian pembinaan siswa secara penuh kepada orang tua/wali:",
+    sp4_penutup: "Demikian surat panggilan khusus ini kami sampaikan, mengingat urgensi penuntasan status kesiswaan siswa yang bersangkutan. Kehadiran orang tua/wali bersifat wajib demi kelanjutan administrasi kesiswaan. Terima kasih.",
+
+    pembuka: "Sehubungan dengan evaluasi tata tertib serta pembinaan kedisiplinan dan karakter putra/putri Bapak/Ibu di lingkungan sekolah yang telah mencapai batas akumulasi Surat Peringatan 1 (SP 1), dengan ini kami mengharapkan kehadiran Bapak/Ibu orang tua/wali untuk koordinasi pembinaan awal:",
     penutup: "Mengingat pentingnya koordinasi pembinaan karakter ini demi kelancaran proses pendidikan dan masa depan putra/putri Bapak/Ibu, kami sangat mengharapkan kehadiran Bapak/Ibu tepat pada waktu yang telah ditentukan. Atas perhatian dan kerja samanya, kami ucapkan terima kasih.",
-    pejabatKiriJabatan: "Koordinator Guru BK",
-    pejabatKiriNama: "Bambang Wijaya, S.Pd",
-    pejabatKananJabatan: "Wakil Kepala Sekolah Bidang Kesiswaan",
-    pejabatKananNama: "Dra. Hj. Siti Rahma"
+
+    // Pejabat Tunggal: Waka Kesiswaan SMKN 1 Magelang
+    pejabatJabatan: "Waka Kesiswaan SMKN 1 Magelang",
+    pejabatNama: "Morlan Purba Sibarani, S.Pd., M.Si.",
+    pejabatNip: "NIP. 19740315 200501 1 004",
+
+    pejabatKananJabatan: "Waka Kesiswaan SMKN 1 Magelang",
+    pejabatKananNama: "Morlan Purba Sibarani, S.Pd., M.Si."
 };
 
 const DEFAULT_QUOTES = [
@@ -117,13 +140,13 @@ const DEFAULT_TEACHERS = [
     {
         username: "kesiswaan",
         password: "123",
-        name: "Dra. Hj. Siti Rahma, M.Pd",
+        name: "Morlan Purba Sibarani, S.Pd., M.Si.",
         role: "guru",
         roleLabel: "Waka Kesiswaan",
         sekbid: "Pembina Umum Seluruh Sekbid",
         pembina: "OSIS, Dewan Ambalan, PMR",
         pokja: "Pokja Karakter & Budaya Sekolah",
-        icon: "👩‍💼"
+        icon: "👨‍💼"
     },
     {
         username: "gurubk",

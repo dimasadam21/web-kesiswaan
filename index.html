@@ -2154,65 +2154,191 @@
                 <!-- SUB-PANE 3: FORMAT SURAT PANGGILAN ORANG TUA (SUPER ADMIN) -->
                 <div id="subPaneManageSurat" style="display: none;">
                     <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
-                        Atur redaksi template surat panggilan orang tua / wali siswa. Template ini akan otomatis diterapkan saat pengunduhan format Microsoft Word (.doc) dan cetak PDF resmi.
+                        Atur redaksi template surat panggilan orang tua / wali siswa SMKN 1 Magelang. Template ini akan otomatis diterapkan saat pengunduhan format Microsoft Word (.doc) dan cetak PDF resmi.
                     </p>
                     <form id="suratTemplateForm" onsubmit="Forms.handleSaveSuratTemplate(event)">
-                        <div style="display: flex; gap: 0.75rem; margin-bottom: 0.5rem;">
-                            <div class="form-group-clean" style="flex: 2;">
-                                <label>Instansi Pemerintah / Kop Surat Atas *</label>
-                                <input type="text" id="setSuratKopInstansi" class="form-control-clean" placeholder="Contoh: PEMERINTAH PROVINSI PENDIDIKAN" required>
+                        <!-- 1. UPLOAD FILE KOP SURAT RESMI -->
+                        <div style="background: #f8fafc; border: 1px dashed var(--primary); border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
+                            <label style="font-weight: 700; display: block; margin-bottom: 0.35rem; color: var(--primary);">
+                                🖼️ File Kop Surat Resmi (Header Gambar):
+                            </label>
+                            <p style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0.6rem;">
+                                Upload gambar kop surat resmi sekolah (PNG/JPG). Jika diunggah, gambar kop surat ini akan otomatis menggantikan teks kop dan tertempel di bagian atas surat panggilan (Word & PDF).
+                            </p>
+                            <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+                                <input type="file" id="suratKopFileInput" accept="image/*" class="form-control-clean" style="font-size: 0.82rem; padding: 5px; flex: 1; min-width: 200px;" onchange="Forms.handleSuratKopUpload(event)">
+                                <button type="button" id="btnRemoveSuratKop" class="btn btn-outline btn-sm" style="color: var(--danger); display: none;" onclick="Forms.handleRemoveSuratKop()">
+                                    🗑️ Hapus Gambar Kop (Gunakan Teks)
+                                </button>
                             </div>
-                            <div class="form-group-clean" style="flex: 2;">
+                            <div id="previewSuratKopContainer" style="display: none; margin-top: 0.75rem; padding: 0.5rem; background: #fff; border: 1px solid var(--border); border-radius: 4px; text-align: center;">
+                                <img id="previewSuratKopImg" src="" alt="Pratinjau Kop Surat" style="max-height: 90px; max-width: 100%; object-fit: contain;">
+                            </div>
+                        </div>
+
+                        <!-- 2. TEKS INSTANSI KOP (FALLBACK JIKA TANPA GAMBAR) & NOMOR SURAT -->
+                        <div style="display: flex; gap: 0.75rem; margin-bottom: 0.5rem; flex-wrap: wrap;">
+                            <div class="form-group-clean" style="flex: 2; min-width: 250px;">
+                                <label>Instansi Pemerintah / Teks Kop Atas (Kop Teks) *</label>
+                                <textarea id="setSuratKopInstansi" class="form-control-clean" rows="2" placeholder="PEMERINTAH PROVINSI JAWA TENGAH..." required style="font-size: 0.85rem;"></textarea>
+                            </div>
+                            <div class="form-group-clean" style="flex: 2; min-width: 250px;">
                                 <label>Format Nomor Surat *</label>
-                                <input type="text" id="setSuratNomorFormat" class="form-control-clean" placeholder="Contoh: 421.3 / {NOMOR} / KESISWAAN / {TAHUN}" required>
+                                <input type="text" id="setSuratNomorFormat" class="form-control-clean" placeholder="421.3 / {NOMOR} / SMKN1.MGL / {TAHUN}" required>
                                 <span style="font-size: 0.75rem; color: var(--text-muted);">{NOMOR} dan {TAHUN} otomatis terisi dinamis</span>
                             </div>
                         </div>
 
-                        <div style="display: flex; gap: 0.75rem; margin-bottom: 0.5rem;">
-                            <div class="form-group-clean" style="flex: 2;">
-                                <label>Judul / Perihal Surat *</label>
-                                <input type="text" id="setSuratPerihal" class="form-control-clean" placeholder="Contoh: PANGGILAN ORANG TUA / WALI SISWA" required>
-                            </div>
-                            <div class="form-group-clean" style="flex: 1;">
-                                <label>Selang Hari Panggilan *</label>
-                                <input type="number" id="setSuratHariKerjaOffset" class="form-control-clean" min="1" max="14" value="2" required>
-                                <span style="font-size: 0.75rem; color: var(--text-muted);">Hari kerja dari tanggal terbit</span>
-                            </div>
-                        </div>
-
-                        <div style="display: flex; gap: 0.75rem; margin-bottom: 0.5rem;">
-                            <div class="form-group-clean" style="flex: 1;">
+                        <!-- 3. WAKTU, TEMPAT, & INFORMASI HARI TANGGAL H+1 -->
+                        <div style="display: flex; gap: 0.75rem; margin-bottom: 0.5rem; flex-wrap: wrap;">
+                            <div class="form-group-clean" style="flex: 1; min-width: 200px;">
                                 <label>Waktu / Jam Kehadiran *</label>
                                 <input type="text" id="setSuratWaktu" class="form-control-clean" placeholder="Contoh: Pukul 08.30 WIB s.d Selesai" required>
                             </div>
-                            <div class="form-group-clean" style="flex: 1;">
+                            <div class="form-group-clean" style="flex: 1; min-width: 200px;">
                                 <label>Tempat / Ruangan Kehadiran *</label>
-                                <input type="text" id="setSuratTempat" class="form-control-clean" placeholder="Contoh: Ruang Bimbingan Konseling (BK) / Ruang Kesiswaan" required>
+                                <input type="text" id="setSuratTempat" class="form-control-clean" placeholder="Contoh: Ruang Bimbingan Konseling (BK) SMKN 1 Magelang" required>
                             </div>
                         </div>
 
-                        <div class="form-group-clean">
-                            <label>Teks / Paragraf Pembuka Surat *</label>
-                            <textarea id="setSuratPembuka" class="form-control-clean" rows="3" placeholder="Teks pembuka sebelum identitas siswa..." required></textarea>
+                        <div style="background: #eff6ff; border-left: 4px solid var(--primary); padding: 0.65rem 0.85rem; border-radius: 4px; margin-bottom: 1rem; font-size: 0.82rem; color: #1e40af;">
+                            📅 <strong>Hari & Tanggal Kehadiran Panggilan:</strong> Otomatis diatur <strong>H+1 hari kerja</strong> sejak guru mendownload SP. Jika diunduh pada hari <strong>Jumat</strong>, otomatis hari dan tanggalnya adalah <strong>Senin berikutnya</strong> (hari Sabtu & Minggu dilewati).
                         </div>
 
-                        <div class="form-group-clean">
-                            <label>Teks / Paragraf Penutup Surat *</label>
-                            <textarea id="setSuratPenutup" class="form-control-clean" rows="3" placeholder="Teks penutup setelah jadwal kehadiran..." required></textarea>
+                        <!-- 4. SUB-TAB PEMILIH TEMPLATE SP 1 s/d SP 4 (BEDA ISINYA) -->
+                        <div style="border: 1px solid var(--border); border-radius: 8px; padding: 0.85rem; margin-bottom: 1rem; background: #fff;">
+                            <strong style="display: block; font-size: 0.9rem; margin-bottom: 0.5rem;">
+                                📝 Redaksi Teks Isi Surat (Beda Isi untuk SP 1 s/d SP 4):
+                            </strong>
+                            <div class="simple-tabs-nav" style="margin-bottom: 0.75rem;">
+                                <button type="button" id="tabSpBtn1" class="simple-tab-btn active" onclick="Forms.switchSpEditorTab('sp1')">
+                                    📄 SP 1 (Panggilan I)
+                                </button>
+                                <button type="button" id="tabSpBtn2" class="simple-tab-btn" onclick="Forms.switchSpEditorTab('sp2')">
+                                    📑 SP 2 (Panggilan II)
+                                </button>
+                                <button type="button" id="tabSpBtn3" class="simple-tab-btn" onclick="Forms.switchSpEditorTab('sp3')">
+                                    ⚠️ SP 3 (Skorsing/Panggilan III)
+                                </button>
+                                <button type="button" id="tabSpBtn4" class="simple-tab-btn" onclick="Forms.switchSpEditorTab('sp4')">
+                                    🚨 SP 4 (Konferensi Kasus)
+                                </button>
+                            </div>
+
+                            <!-- PANE SP 1 -->
+                            <div id="spEditorPane1">
+                                <div class="form-group-clean">
+                                    <label>Judul / Perihal SP 1:</label>
+                                    <input type="text" id="setSuratSp1Judul" class="form-control-clean" style="font-weight: 600;">
+                                </div>
+                                <div class="form-group-clean">
+                                    <label>Teks / Paragraf Pembuka SP 1:</label>
+                                    <textarea id="setSuratSp1Pembuka" class="form-control-clean" rows="3"></textarea>
+                                </div>
+                                <div class="form-group-clean" style="margin-bottom: 0;">
+                                    <label>Teks / Paragraf Penutup SP 1:</label>
+                                    <textarea id="setSuratSp1Penutup" class="form-control-clean" rows="2"></textarea>
+                                </div>
+                            </div>
+
+                            <!-- PANE SP 2 -->
+                            <div id="spEditorPane2" style="display: none;">
+                                <div class="form-group-clean">
+                                    <label>Judul / Perihal SP 2:</label>
+                                    <input type="text" id="setSuratSp2Judul" class="form-control-clean" style="font-weight: 600;">
+                                </div>
+                                <div class="form-group-clean">
+                                    <label>Teks / Paragraf Pembuka SP 2:</label>
+                                    <textarea id="setSuratSp2Pembuka" class="form-control-clean" rows="3"></textarea>
+                                </div>
+                                <div class="form-group-clean" style="margin-bottom: 0;">
+                                    <label>Teks / Paragraf Penutup SP 2:</label>
+                                    <textarea id="setSuratSp2Penutup" class="form-control-clean" rows="2"></textarea>
+                                </div>
+                            </div>
+
+                            <!-- PANE SP 3 -->
+                            <div id="spEditorPane3" style="display: none;">
+                                <div class="form-group-clean">
+                                    <label>Judul / Perihal SP 3:</label>
+                                    <input type="text" id="setSuratSp3Judul" class="form-control-clean" style="font-weight: 600;">
+                                </div>
+                                <div class="form-group-clean">
+                                    <label>Teks / Paragraf Pembuka SP 3:</label>
+                                    <textarea id="setSuratSp3Pembuka" class="form-control-clean" rows="3"></textarea>
+                                </div>
+                                <div class="form-group-clean" style="margin-bottom: 0;">
+                                    <label>Teks / Paragraf Penutup SP 3:</label>
+                                    <textarea id="setSuratSp3Penutup" class="form-control-clean" rows="2"></textarea>
+                                </div>
+                            </div>
+
+                            <!-- PANE SP 4 -->
+                            <div id="spEditorPane4" style="display: none;">
+                                <div class="form-group-clean">
+                                    <label>Judul / Perihal SP 4 (Konferensi Kasus):</label>
+                                    <input type="text" id="setSuratSp4Judul" class="form-control-clean" style="font-weight: 600;">
+                                </div>
+                                <div class="form-group-clean">
+                                    <label>Teks / Paragraf Pembuka SP 4:</label>
+                                    <textarea id="setSuratSp4Pembuka" class="form-control-clean" rows="3"></textarea>
+                                </div>
+                                <div class="form-group-clean" style="margin-bottom: 0;">
+                                    <label>Teks / Paragraf Penutup SP 4:</label>
+                                    <textarea id="setSuratSp4Penutup" class="form-control-clean" rows="2"></textarea>
+                                </div>
+                            </div>
                         </div>
 
-                        <div style="display: flex; gap: 0.75rem; margin-bottom: 0.5rem;">
-                            <div class="form-group-clean" style="flex: 1;">
-                                <label>Pejabat Kiri (Jabatan & Nama) *</label>
-                                <input type="text" id="setSuratPejabatKiriJabatan" class="form-control-clean" placeholder="Jabatan (contoh: Koordinator Guru BK)" required style="margin-bottom: 4px;">
-                                <input type="text" id="setSuratPejabatKiriNama" class="form-control-clean" placeholder="Nama Lengkap Pejabat" required>
+                        <!-- 5. PEJABAT PENANDATANGAN TUNGGAL & UPLOAD FILE TTD -->
+                        <div style="background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
+                            <strong style="display: block; font-size: 0.9rem; margin-bottom: 0.65rem; color: var(--text-main);">
+                                ✍️ Pejabat Penandatangan Tunggal: Waka Kesiswaan SMKN 1 Magelang
+                            </strong>
+                            <div style="display: flex; gap: 0.75rem; margin-bottom: 0.75rem; flex-wrap: wrap;">
+                                <div class="form-group-clean" style="flex: 1; min-width: 200px;">
+                                    <label>Jabatan Penandatangan *</label>
+                                    <input type="text" id="setSuratPejabatJabatan" class="form-control-clean" value="Waka Kesiswaan SMKN 1 Magelang" required>
+                                </div>
+                                <div class="form-group-clean" style="flex: 1; min-width: 200px;">
+                                    <label>Nama Pejabat *</label>
+                                    <input type="text" id="setSuratPejabatNama" class="form-control-clean" value="Morlan Purba Sibarani, S.Pd., M.Si." required>
+                                </div>
+                                <div class="form-group-clean" style="flex: 1; min-width: 160px;">
+                                    <label>NIP Pejabat</label>
+                                    <input type="text" id="setSuratPejabatNip" class="form-control-clean" value="NIP. 19740315 200501 1 004">
+                                </div>
                             </div>
-                            <div class="form-group-clean" style="flex: 1;">
-                                <label>Pejabat Kanan (Jabatan & Nama) *</label>
-                                <input type="text" id="setSuratPejabatKananJabatan" class="form-control-clean" placeholder="Jabatan (contoh: Wakasek Bidang Kesiswaan)" required style="margin-bottom: 4px;">
-                                <input type="text" id="setSuratPejabatKananNama" class="form-control-clean" placeholder="Nama Lengkap Pejabat" required>
+
+                            <!-- UPLOAD TANDA TANGAN -->
+                            <div style="border-top: 1px dashed var(--border); padding-top: 0.75rem;">
+                                <label style="font-weight: 600; display: block; margin-bottom: 0.35rem; font-size: 0.85rem;">
+                                    File Tanda Tangan Waka Kesiswaan (PNG Transparan / JPG):
+                                </label>
+                                <p style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0.5rem;">
+                                    Upload scan/foto tanda tangan digital. Tanda tangan ini otomatis tertempel tepat di atas nama pejabat pada dokumen cetak PDF maupun Word (.doc).
+                                </p>
+                                <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+                                    <input type="file" id="suratTtdFileInput" accept="image/*" class="form-control-clean" style="font-size: 0.82rem; padding: 5px; flex: 1; min-width: 200px;" onchange="Forms.handleSuratTtdUpload(event)">
+                                    <button type="button" id="btnRemoveSuratTtd" class="btn btn-outline btn-sm" style="color: var(--danger); display: none;" onclick="Forms.handleRemoveSuratTtd()">
+                                        🗑️ Hapus Gambar TTD
+                                    </button>
+                                </div>
+                                <div id="previewSuratTtdContainer" style="display: none; margin-top: 0.6rem; padding: 0.5rem; background: #fff; border: 1px solid var(--border); border-radius: 4px; text-align: center; max-width: 250px;">
+                                    <img id="previewSuratTtdImg" src="" alt="Pratinjau Tanda Tangan" style="max-height: 70px; max-width: 100%; object-fit: contain;">
+                                </div>
                             </div>
+                        </div>
+
+                        <!-- 6. TEMBUSAN OTOMATIS INFO -->
+                        <div style="background: #f1f5f9; border-radius: 6px; padding: 0.75rem 1rem; margin-bottom: 1rem; font-size: 0.82rem; color: var(--text-main);">
+                            <strong>📌 Tembusan Otomatis yang Terpasang di Surat:</strong>
+                            <ol style="margin: 4px 0 0 16px; padding: 0; line-height: 1.6;">
+                                <li>Kepala SMK Negeri 1 Magelang (sebagai laporan)</li>
+                                <li>Wali Kelas sesuai kelas siswa (otomatis terisi nama wali kelas bersangkutan)</li>
+                                <li>Guru Bimbingan dan Konseling (BK) SMKN 1 Magelang</li>
+                                <li>Arsip Kesiswaan</li>
+                            </ol>
                         </div>
 
                         <div style="display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1rem;">
@@ -2251,9 +2377,14 @@
             <div class="modal-card-body" style="background: #f8fafc; padding: 1.25rem;">
                 <!-- ACTION BAR ATAS: DOWNLOAD DOC & CETAK PDF -->
                 <div style="display: flex; justify-content: space-between; align-items: center; background: #ffffff; padding: 0.85rem 1.25rem; border: 1px solid var(--border); border-radius: var(--radius-md); margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
-                    <div>
-                        <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-main);">Pilihan Ekspor Dokumen:</span>
-                        <div style="font-size: 0.75rem; color: var(--text-muted);">Unduh Word (.doc) untuk diedit di laptop, atau Cetak langsung jadi PDF</div>
+                    <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                        <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-main);">Tingkat SP:</span>
+                        <select id="selectSuratSpLevel" class="form-control-clean" onchange="Forms.handleChangeSpLevel(this.value)" style="font-size: 0.85rem; font-weight: 600; padding: 4px 10px; width: auto; border: 2px solid var(--primary);">
+                            <option value="SP 1">📄 Surat Peringatan 1 (SP 1)</option>
+                            <option value="SP 2">📑 Surat Peringatan 2 (SP 2)</option>
+                            <option value="SP 3">⚠️ Surat Peringatan 3 (SP 3)</option>
+                            <option value="SP 4">🚨 Surat Peringatan 4 / Konferensi Kasus (SP 4)</option>
+                        </select>
                     </div>
                     <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
                         <button id="btnDownloadSuratDocTop" class="btn btn-primary" onclick="Forms.downloadCurrentSuratDoc()">

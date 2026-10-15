@@ -8,6 +8,9 @@ const Forms = {
     uploadedDashboardBgUrl: null,
     uploadedPrestasiFotoUrl: null,
     uploadedPrestasiPiagamUrl: null,
+    uploadedSuratKopUrl: null,
+    uploadedSuratTtdUrl: null,
+    currentSuratSpLevel: "SP 1",
 
     init() {
         this.bindEvents();
@@ -2718,6 +2721,92 @@ const Forms = {
     },
 
     // 8. TEMPLATE SURAT PANGGILAN ORANG TUA (SUPER ADMIN)
+    getNextBusinessDay(baseDate = new Date()) {
+        const d = new Date(baseDate);
+        const day = d.getDay(); // 0: Minggu, 1: Senin, ..., 5: Jumat, 6: Sabtu
+        let addDays = 1;
+        if (day === 5) {
+            // Jumat -> Lompat ke Senin (+3 hari)
+            addDays = 3;
+        } else if (day === 6) {
+            // Sabtu -> Lompat ke Senin (+2 hari)
+            addDays = 2;
+        } else if (day === 0) {
+            // Minggu -> Lompat ke Senin (+1 hari)
+            addDays = 1;
+        } else {
+            // Senin s/d Kamis -> H+1 (+1 hari)
+            addDays = 1;
+        }
+        d.setDate(d.getDate() + addDays);
+        return d;
+    },
+
+    handleSuratKopUpload(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        this.resizeImageFile(file, 1200, 260, 0.9, (base64) => {
+            this.uploadedSuratKopUrl = base64;
+            const prevCont = document.getElementById("previewSuratKopContainer");
+            const prevImg = document.getElementById("previewSuratKopImg");
+            const btnRemove = document.getElementById("btnRemoveSuratKop");
+            if (prevCont && prevImg) {
+                prevImg.src = base64;
+                prevCont.style.display = "block";
+            }
+            if (btnRemove) btnRemove.style.display = "inline-block";
+            App.showToast("File Kop Surat berhasil dimuat. Klik 'Simpan Format' untuk menyimpan permanen.");
+        });
+    },
+
+    handleRemoveSuratKop() {
+        this.uploadedSuratKopUrl = "";
+        const input = document.getElementById("suratKopFileInput");
+        if (input) input.value = "";
+        const prevCont = document.getElementById("previewSuratKopContainer");
+        const btnRemove = document.getElementById("btnRemoveSuratKop");
+        if (prevCont) prevCont.style.display = "none";
+        if (btnRemove) btnRemove.style.display = "none";
+        App.showToast("Gambar kop surat dihapus (akan menggunakan format teks).");
+    },
+
+    handleSuratTtdUpload(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        this.resizeImageFile(file, 500, 250, 0.92, (base64) => {
+            this.uploadedSuratTtdUrl = base64;
+            const prevCont = document.getElementById("previewSuratTtdContainer");
+            const prevImg = document.getElementById("previewSuratTtdImg");
+            const btnRemove = document.getElementById("btnRemoveSuratTtd");
+            if (prevCont && prevImg) {
+                prevImg.src = base64;
+                prevCont.style.display = "block";
+            }
+            if (btnRemove) btnRemove.style.display = "inline-block";
+            App.showToast("File Tanda Tangan Waka Kesiswaan berhasil dimuat. Klik 'Simpan Format' untuk menyimpan permanen.");
+        });
+    },
+
+    handleRemoveSuratTtd() {
+        this.uploadedSuratTtdUrl = "";
+        const input = document.getElementById("suratTtdFileInput");
+        if (input) input.value = "";
+        const prevCont = document.getElementById("previewSuratTtdContainer");
+        const btnRemove = document.getElementById("btnRemoveSuratTtd");
+        if (prevCont) prevCont.style.display = "none";
+        if (btnRemove) btnRemove.style.display = "none";
+        App.showToast("Gambar tanda tangan dihapus.");
+    },
+
+    switchSpEditorTab(tabKey) {
+        ["sp1", "sp2", "sp3", "sp4"].forEach((k, idx) => {
+            const btn = document.getElementById(`tabSpBtn${idx + 1}`);
+            const pane = document.getElementById(`spEditorPane${idx + 1}`);
+            if (btn) btn.classList.toggle("active", k === tabKey);
+            if (pane) pane.style.display = k === tabKey ? "block" : "none";
+        });
+    },
+
     renderSuratTemplateForm() {
         const t = StorageManager.getSuratTemplate();
         const setVal = (id, val) => {
@@ -2725,18 +2814,61 @@ const Forms = {
             if (el) el.value = val !== undefined ? val : "";
         };
 
-        setVal("setSuratKopInstansi", t.kopInstansi);
-        setVal("setSuratNomorFormat", t.nomorFormat);
-        setVal("setSuratPerihal", t.perihal);
-        setVal("setSuratHariKerjaOffset", t.hariKerjaOffset);
-        setVal("setSuratWaktu", t.waktu);
-        setVal("setSuratTempat", t.tempat);
-        setVal("setSuratPembuka", t.pembuka);
-        setVal("setSuratPenutup", t.penutup);
-        setVal("setSuratPejabatKiriJabatan", t.pejabatKiriJabatan);
-        setVal("setSuratPejabatKiriNama", t.pejabatKiriNama);
-        setVal("setSuratPejabatKananJabatan", t.pejabatKananJabatan);
-        setVal("setSuratPejabatKananNama", t.pejabatKananNama);
+        // Kop & Format Dasar
+        setVal("setSuratKopInstansi", t.kopInstansi || "PEMERINTAH PROVINSI JAWA TENGAH\nDINAS PENDIDIKAN DAN KEBUDAYAAN\nSMK NEGERI 1 MAGELANG");
+        setVal("setSuratNomorFormat", t.nomorFormat || "421.3 / {NOMOR} / SMKN1.MGL / {TAHUN}");
+        setVal("setSuratWaktu", t.waktu || "Pukul 08.30 WIB s.d Selesai");
+        setVal("setSuratTempat", t.tempat || "Ruang Bimbingan Konseling (BK) SMKN 1 Magelang");
+
+        // Redaksi SP 1 s/d SP 4
+        setVal("setSuratSp1Judul", t.sp1_judul || "SURAT PANGGILAN ORANG TUA / WALI SISWA (SP 1)");
+        setVal("setSuratSp1Pembuka", t.sp1_pembuka || t.pembuka || "");
+        setVal("setSuratSp1Penutup", t.sp1_penutup || t.penutup || "");
+
+        setVal("setSuratSp2Judul", t.sp2_judul || "SURAT PANGGILAN ORANG TUA / WALI SISWA (SP 2)");
+        setVal("setSuratSp2Pembuka", t.sp2_pembuka || "");
+        setVal("setSuratSp2Penutup", t.sp2_penutup || "");
+
+        setVal("setSuratSp3Judul", t.sp3_judul || "SURAT PANGGILAN ORANG TUA / WALI SISWA (SP 3)");
+        setVal("setSuratSp3Pembuka", t.sp3_pembuka || "");
+        setVal("setSuratSp3Penutup", t.sp3_penutup || "");
+
+        setVal("setSuratSp4Judul", t.sp4_judul || "SURAT PANGGILAN KONFERENSI KASUS / PENGEMBALIAN SISWA (SP 4)");
+        setVal("setSuratSp4Pembuka", t.sp4_pembuka || "");
+        setVal("setSuratSp4Penutup", t.sp4_penutup || "");
+
+        // Pejabat Tunggal: Waka Kesiswaan
+        setVal("setSuratPejabatJabatan", t.pejabatJabatan || "Waka Kesiswaan SMKN 1 Magelang");
+        setVal("setSuratPejabatNama", t.pejabatNama || "Morlan Purba Sibarani, S.Pd., M.Si.");
+        setVal("setSuratPejabatNip", t.pejabatNip || "NIP. 19740315 200501 1 004");
+
+        // Kop Image Preview
+        this.uploadedSuratKopUrl = t.kopImageUrl || null;
+        const kopPrevCont = document.getElementById("previewSuratKopContainer");
+        const kopPrevImg = document.getElementById("previewSuratKopImg");
+        const btnRemoveKop = document.getElementById("btnRemoveSuratKop");
+        if (t.kopImageUrl && kopPrevCont && kopPrevImg) {
+            kopPrevImg.src = t.kopImageUrl;
+            kopPrevCont.style.display = "block";
+            if (btnRemoveKop) btnRemoveKop.style.display = "inline-block";
+        } else {
+            if (kopPrevCont) kopPrevCont.style.display = "none";
+            if (btnRemoveKop) btnRemoveKop.style.display = "none";
+        }
+
+        // TTD Image Preview
+        this.uploadedSuratTtdUrl = t.ttdImageUrl || null;
+        const ttdPrevCont = document.getElementById("previewSuratTtdContainer");
+        const ttdPrevImg = document.getElementById("previewSuratTtdImg");
+        const btnRemoveTtd = document.getElementById("btnRemoveSuratTtd");
+        if (t.ttdImageUrl && ttdPrevCont && ttdPrevImg) {
+            ttdPrevImg.src = t.ttdImageUrl;
+            ttdPrevCont.style.display = "block";
+            if (btnRemoveTtd) btnRemoveTtd.style.display = "inline-block";
+        } else {
+            if (ttdPrevCont) ttdPrevCont.style.display = "none";
+            if (btnRemoveTtd) btnRemoveTtd.style.display = "none";
+        }
     },
 
     handleSaveSuratTemplate(e) {
@@ -2745,32 +2877,65 @@ const Forms = {
 
         const updated = {
             kopInstansi: getVal("setSuratKopInstansi"),
+            kopImageUrl: this.uploadedSuratKopUrl !== null ? this.uploadedSuratKopUrl : (StorageManager.getSuratTemplate().kopImageUrl || ""),
+            ttdImageUrl: this.uploadedSuratTtdUrl !== null ? this.uploadedSuratTtdUrl : (StorageManager.getSuratTemplate().ttdImageUrl || ""),
             nomorFormat: getVal("setSuratNomorFormat"),
-            perihal: getVal("setSuratPerihal"),
-            hariKerjaOffset: Number(document.getElementById("setSuratHariKerjaOffset")?.value) || 2,
             waktu: getVal("setSuratWaktu"),
             tempat: getVal("setSuratTempat"),
-            pembuka: getVal("setSuratPembuka"),
-            penutup: getVal("setSuratPenutup"),
-            pejabatKiriJabatan: getVal("setSuratPejabatKiriJabatan"),
-            pejabatKiriNama: getVal("setSuratPejabatKiriNama"),
-            pejabatKananJabatan: getVal("setSuratPejabatKananJabatan"),
-            pejabatKananNama: getVal("setSuratPejabatKananNama")
+
+            sp1_judul: getVal("setSuratSp1Judul"),
+            sp1_pembuka: getVal("setSuratSp1Pembuka"),
+            sp1_penutup: getVal("setSuratSp1Penutup"),
+
+            sp2_judul: getVal("setSuratSp2Judul"),
+            sp2_pembuka: getVal("setSuratSp2Pembuka"),
+            sp2_penutup: getVal("setSuratSp2Penutup"),
+
+            sp3_judul: getVal("setSuratSp3Judul"),
+            sp3_pembuka: getVal("setSuratSp3Pembuka"),
+            sp3_penutup: getVal("setSuratSp3Penutup"),
+
+            sp4_judul: getVal("setSuratSp4Judul"),
+            sp4_pembuka: getVal("setSuratSp4Pembuka"),
+            sp4_penutup: getVal("setSuratSp4Penutup"),
+
+            pembuka: getVal("setSuratSp1Pembuka"),
+            penutup: getVal("setSuratSp1Penutup"),
+
+            pejabatJabatan: getVal("setSuratPejabatJabatan") || "Waka Kesiswaan SMKN 1 Magelang",
+            pejabatNama: getVal("setSuratPejabatNama") || "Morlan Purba Sibarani, S.Pd., M.Si.",
+            pejabatNip: getVal("setSuratPejabatNip") || "NIP. 19740315 200501 1 004",
+
+            pejabatKananJabatan: getVal("setSuratPejabatJabatan") || "Waka Kesiswaan SMKN 1 Magelang",
+            pejabatKananNama: getVal("setSuratPejabatNama") || "Morlan Purba Sibarani, S.Pd., M.Si."
         };
 
         StorageManager.updateSuratTemplate(updated);
-        App.showToast("Format Surat Panggilan Ortu berhasil disimpan oleh Super Admin!");
+        App.showToast("Format Surat Panggilan SP 1 s/d SP 4 dan Kop/TTD berhasil disimpan!");
     },
 
     resetSuratTemplateToDefault() {
         if (!confirm("Kembalikan format surat panggilan orang tua ke konfigurasi standar sekolah?")) return;
         StorageManager.updateSuratTemplate(DEFAULT_SURAT_TEMPLATE);
+        this.uploadedSuratKopUrl = null;
+        this.uploadedSuratTtdUrl = null;
         this.renderSuratTemplateForm();
         App.showToast("Format surat panggilan berhasil dikembalikan ke standar.");
     },
 
     // 9. MODAL & PRATINJAU SURAT PANGGILAN ORANG TUA (DOC / PDF)
     currentSuratStudentId: null,
+
+    handleChangeSpLevel(spLevel) {
+        this.currentSuratSpLevel = spLevel;
+        if (!this.currentSuratStudentId) return;
+        const student = StorageManager.getStudentById(this.currentSuratStudentId);
+        if (!student) return;
+        const preview = document.getElementById("previewSuratContainer");
+        if (preview) {
+            preview.innerHTML = this.generateSuratPanggilanHtml(student, false, spLevel);
+        }
+    },
 
     openSuratPanggilanModal(studentId) {
         const student = StorageManager.getStudentById(studentId);
@@ -2787,95 +2952,133 @@ const Forms = {
         this.currentSuratStudentId = student.id;
         const status = StorageManager.calculateStudentStatus(student);
 
+        // Auto-detect tingkat SP
+        let detectedSp = "SP 1";
+        if (status.totalPoinPelanggaran >= 100 || (status.statusText && status.statusText.includes("SP 3 / Dikeluarkan")) || (status.statusText && status.statusText.includes("SP 4"))) {
+            detectedSp = "SP 4";
+        } else if (status.totalPoinPelanggaran >= 76 || (status.statusText && status.statusText.includes("SP 2"))) {
+            detectedSp = "SP 3";
+        } else if (status.totalPoinPelanggaran >= 51 || (status.statusText && status.statusText.includes("SP 1"))) {
+            detectedSp = "SP 2";
+        } else {
+            detectedSp = "SP 1";
+        }
+        this.currentSuratSpLevel = detectedSp;
+
+        const spSelect = document.getElementById("selectSuratSpLevel");
+        if (spSelect) spSelect.value = detectedSp;
+
         const subTitle = document.getElementById("modalSuratPanggilanSub");
         if (subTitle) {
-            subTitle.textContent = `Panggilan Orang Tua untuk: ${student.nama} • Status: ${status.statusText} (${status.totalPoinPelanggaran} Poin Pelanggaran)`;
+            subTitle.textContent = `Panggilan Orang Tua untuk: ${student.nama} (${student.kelas}) • Akumulasi: ${status.totalPoinPelanggaran} Poin (${detectedSp})`;
         }
 
         const preview = document.getElementById("previewSuratContainer");
         if (preview) {
-            preview.innerHTML = this.generateSuratPanggilanHtml(student, false);
+            preview.innerHTML = this.generateSuratPanggilanHtml(student, false, detectedSp);
         }
 
         this.openModal("modalSuratPanggilan");
     },
 
-    generateSuratPanggilanHtml(student, isForDoc = false) {
+    generateSuratPanggilanHtml(student, isForDoc = false, spLevel = null) {
         const template = StorageManager.getSuratTemplate();
         const config = StorageManager.getConfig();
         const status = StorageManager.calculateStudentStatus(student);
 
-        const nomorSurat = (template.nomorFormat || "421.3 / {NOMOR} / KESISWAAN / {TAHUN}")
+        const currentSp = spLevel || this.currentSuratSpLevel || "SP 1";
+        const spKey = currentSp.toLowerCase().replace(/\s+/g, ''); // sp1, sp2, sp3, sp4
+
+        const nomorSurat = (template.nomorFormat || "421.3 / {NOMOR} / SMKN1.MGL / {TAHUN}")
             .replace("{NOMOR}", String(Math.floor(100 + Math.random() * 900)))
             .replace("{TAHUN}", new Date().getFullYear());
 
-        const tanggalSurat = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+        const tglSekarang = new Date();
+        const tanggalSurat = tglSekarang.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
 
-        const tglPanggilan = new Date();
-        const offsetDays = Number(template.hariKerjaOffset) || 2;
-        tglPanggilan.setDate(tglPanggilan.getDate() + offsetDays);
+        // H+1 hari kerja (Kecuali Sabtu & Minggu: Jumat -> Senin)
+        const tglPanggilan = this.getNextBusinessDay(tglSekarang);
         const formatTglPanggilan = tglPanggilan.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 
+        // Teks Spesifik sesuai SP 1 s/d SP 4
+        let spJudul = template[`${spKey}_judul`] || `PANGGILAN ORANG TUA / WALI SISWA (${currentSp})`;
+        let spPembuka = template[`${spKey}_pembuka`] || template.pembuka || "";
+        let spPenutup = template[`${spKey}_penutup`] || template.penutup || "";
+
+        // Dapatkan nama wali kelas otomatis sesuai kelas siswa
+        let namaWaliKelas = student.waliKelas && student.waliKelas !== "-" ? student.waliKelas : "";
+        if (!namaWaliKelas && typeof DAFTAR_WALI_KELAS_MASTER !== 'undefined') {
+            const foundWali = DAFTAR_WALI_KELAS_MASTER.find(w => w.kode === student.kelas || w.label.includes(student.kelas));
+            if (foundWali) namaWaliKelas = foundWali.nama;
+        }
+        if (!namaWaliKelas) namaWaliKelas = "Wali Kelas";
+
+        const namaGuruBk = config.bkCoordinator || "Bambang Wijaya, S.Pd, M.Kons";
         const violationsList = student.pelanggaran || [];
 
         return `
-            <!-- KOP SURAT RESMI -->
-            <div style="border-bottom: 3px double #000000; padding-bottom: 12px; margin-bottom: 20px; text-align: center; display: flex; align-items: center; justify-content: center; gap: 15px;">
-                ${config.logo && config.logo.startsWith("data:image") ? `
-                    <img src="${config.logo}" alt="Logo" style="width: 70px; height: 70px; object-fit: contain;">
-                ` : `
-                    <div style="font-size: 2.8rem; line-height: 1;">${config.logo || '🏫'}</div>
-                `}
-                <div style="text-align: center; flex: 1;">
-                    <h3 style="font-size: 13pt; margin: 0; font-weight: bold; text-transform: uppercase; color: #000;">${template.kopInstansi}</h3>
-                    <h1 style="font-size: 17pt; margin: 3px 0; font-weight: 800; text-transform: uppercase; color: #000;">${config.schoolName}</h1>
-                    <p style="font-size: 9pt; margin: 0; color: #333;">${config.schoolAddress}</p>
+            <!-- KOP SURAT RESMI (GAMBAR ATAU TEKS) -->
+            ${template.kopImageUrl ? `
+                <div style="border-bottom: 3px double #000000; padding-bottom: 8px; margin-bottom: 18px; text-align: center;">
+                    <img src="${template.kopImageUrl}" alt="Kop Surat Resmi" style="width: 100%; max-height: 130px; object-fit: contain;">
                 </div>
-            </div>
+            ` : `
+                <div style="border-bottom: 3px double #000000; padding-bottom: 12px; margin-bottom: 20px; text-align: center; display: flex; align-items: center; justify-content: center; gap: 15px;">
+                    ${config.logo && config.logo.startsWith("data:image") ? `
+                        <img src="${config.logo}" alt="Logo" style="width: 70px; height: 70px; object-fit: contain;">
+                    ` : `
+                        <div style="font-size: 2.8rem; line-height: 1;">${config.logo || '🏫'}</div>
+                    `}
+                    <div style="text-align: center; flex: 1;">
+                        <h3 style="font-size: 11pt; margin: 0; font-weight: bold; text-transform: uppercase; color: #000; white-space: pre-line;">${template.kopInstansi || 'PEMERINTAH PROVINSI JAWA TENGAH\nDINAS PENDIDIKAN DAN KEBUDAYAAN\nSMK NEGERI 1 MAGELANG'}</h3>
+                        <p style="font-size: 8.5pt; margin: 3px 0 0 0; color: #333;">Jl. Cawang No. 2, Magelang - Telp. (0293) 362249 • Website: smkn1magelang.sch.id</p>
+                    </div>
+                </div>
+            `}
 
             <!-- NOMOR, LAMPIRAN, PERIHAL & TANGGAL -->
-            <table style="width: 100%; margin-bottom: 20px; font-size: 11pt; border-collapse: collapse;">
+            <table style="width: 100%; margin-bottom: 18px; font-size: 11pt; border-collapse: collapse;">
                 <tr>
                     <td style="width: 60%; vertical-align: top;">
                         <table style="border-collapse: collapse;">
                             <tr><td style="padding: 2px 0; width: 85px;">Nomor</td><td style="width: 15px;">:</td><td>${nomorSurat}</td></tr>
                             <tr><td style="padding: 2px 0;">Lampiran</td><td>:</td><td>1 (Satu) Berkas Lembar Rekap</td></tr>
-                            <tr><td style="padding: 2px 0;">Perihal</td><td>:</td><td><strong style="text-decoration: underline;">${template.perihal} (${status.statusText})</strong></td></tr>
+                            <tr><td style="padding: 2px 0;">Perihal</td><td>:</td><td><strong style="text-decoration: underline;">${spJudul}</strong></td></tr>
                         </table>
                     </td>
                     <td style="width: 40%; vertical-align: top; text-align: right;">
-                        Kota Pendidikan, ${tanggalSurat}
+                        Magelang, ${tanggalSurat}
                     </td>
                 </tr>
             </table>
 
             <!-- KEPADA YTH -->
-            <div style="font-size: 11pt; margin-bottom: 18px; line-height: 1.4;">
+            <div style="font-size: 11pt; margin-bottom: 16px; line-height: 1.4;">
                 Kepada Yth.<br>
                 <strong>Bapak / Ibu Orang Tua / Wali Siswa dari: ${student.nama}</strong><br>
                 di Tempat
             </div>
 
-            <!-- PARAGRAF PEMBUKA -->
+            <!-- PARAGRAF PEMBUKA (SPESIFIK SP 1 s/d SP 4) -->
             <p style="font-size: 11pt; text-align: justify; margin-bottom: 12px; line-height: 1.5;">
-                ${template.pembuka}
+                ${spPembuka}
             </p>
 
             <!-- BIODATA SISWA -->
             <table style="width: 95%; margin: 0 auto 16px auto; font-size: 10.5pt; border-collapse: collapse; background: #fafafa; border: 1px solid #e2e8f0;">
                 <tr><td style="padding: 5px 10px; width: 28%;">Nama Lengkap Siswa</td><td style="width: 3%;">:</td><td style="padding: 5px 10px;"><strong>${student.nama}</strong></td></tr>
-                <tr><td style="padding: 5px 10px;">NISN</td><td>:</td><td style="padding: 5px 10px;">${student.nisn}</td></tr>
-                <tr><td style="padding: 5px 10px;">Kelas / Jurusan</td><td>:</td><td style="padding: 5px 10px;">${student.kelas} (${student.jurusan})</td></tr>
-                <tr><td style="padding: 5px 10px;">Wali Kelas</td><td>:</td><td style="padding: 5px 10px;">${student.waliKelas}</td></tr>
+                <tr><td style="padding: 5px 10px;">NISN</td><td>:</td><td style="padding: 5px 10px;">${student.nisn || '-'}</td></tr>
+                <tr><td style="padding: 5px 10px;">Kelas / Jurusan</td><td>:</td><td style="padding: 5px 10px;">${student.kelas} (${student.jurusan || '-'})</td></tr>
+                <tr><td style="padding: 5px 10px;">Wali Kelas</td><td>:</td><td style="padding: 5px 10px;"><strong>${namaWaliKelas}</strong></td></tr>
                 <tr><td style="padding: 5px 10px;">Total Akumulasi Poin</td><td>:</td><td style="padding: 5px 10px;"><strong style="color: #b91c1c; font-size: 11pt;">${status.totalPoinPelanggaran} Poin</strong></td></tr>
-                <tr><td style="padding: 5px 10px;">Kadar Sanksi / Tindakan</td><td>:</td><td style="padding: 5px 10px;"><strong style="color: #1e3a8a;">${status.statusText}</strong> (${status.actionText})</td></tr>
+                <tr><td style="padding: 5px 10px;">Status Tindakan</td><td>:</td><td style="padding: 5px 10px;"><strong style="color: #1e3a8a;">${currentSp}</strong> (${status.actionText || status.statusText})</td></tr>
             </table>
 
             <!-- TABEL DAFTAR KASUS PELANGGARAN SISWA -->
             <div style="font-size: 10.5pt; font-weight: bold; margin-bottom: 6px;">
                 Rincian Riwayat Pelanggaran Siswa:
             </div>
-            <table style="width: 100%; border-collapse: collapse; margin-bottom: 18px; font-size: 10pt;">
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 10pt;">
                 <thead>
                     <tr style="background-color: #f1f5f9;">
                         <th style="border: 1px solid #000; padding: 6px; text-align: center; width: 5%;">No</th>
@@ -2895,51 +3098,60 @@ const Forms = {
                             <td style="border: 1px solid #000; padding: 6px;">${pl.sanksi || '-'}</td>
                         </tr>
                     `).join('') : `
-                        <tr><td colspan="5" style="border: 1px solid #000; padding: 8px; text-align: center;">Tidak ada data pelanggaran</td></tr>
+                        <tr><td colspan="5" style="border: 1px solid #000; padding: 8px; text-align: center;">Tidak ada data pelanggaran tercatat.</td></tr>
                     `}
                 </tbody>
             </table>
 
-            <!-- JADWAL KEHADIRAN ORTU -->
-            <p style="font-size: 11pt; margin-bottom: 10px; line-height: 1.5;">
+            <!-- JADWAL KEHADIRAN ORTU (H+1 HARI KERJA) -->
+            <p style="font-size: 11pt; margin-bottom: 8px; line-height: 1.5;">
                 Sehubungan dengan hal tersebut di atas, kami mengharapkan kehadiran Bapak/Ibu orang tua/wali siswa ke sekolah untuk berkoordinasi langsung dengan pihak sekolah pada:
             </p>
-            <div style="margin-left: 20px; margin-bottom: 18px; font-size: 10.5pt; line-height: 1.8;">
+            <div style="margin-left: 20px; margin-bottom: 16px; font-size: 10.5pt; line-height: 1.8;">
                 <table style="border-collapse: collapse;">
-                    <tr><td style="width: 120px;"><strong>Hari / Tanggal</strong></td><td style="width: 15px;">:</td><td><strong>${formatTglPanggilan}</strong></td></tr>
-                    <tr><td><strong>Waktu</strong></td><td>:</td><td><strong>${template.waktu}</strong></td></tr>
-                    <tr><td><strong>Tempat</strong></td><td>:</td><td><strong>${template.tempat}</strong></td></tr>
-                    <tr><td><strong>Menghadap</strong></td><td>:</td><td>Tim Bimbingan Konseling (BK) & Tim Kesiswaan</td></tr>
+                    <tr><td style="width: 130px;"><strong>Hari / Tanggal</strong></td><td style="width: 15px;">:</td><td><strong style="color: #1e3a8a;">${formatTglPanggilan}</strong></td></tr>
+                    <tr><td><strong>Waktu</strong></td><td>:</td><td><strong>${template.waktu || 'Pukul 08.30 WIB s.d Selesai'}</strong></td></tr>
+                    <tr><td><strong>Tempat</strong></td><td>:</td><td><strong>${template.tempat || 'Ruang Bimbingan Konseling (BK) SMKN 1 Magelang'}</strong></td></tr>
+                    <tr><td><strong>Menghadap</strong></td><td>:</td><td>Waka Kesiswaan, Guru BK & Wali Kelas</td></tr>
                 </table>
             </div>
 
-            <!-- PARAGRAF PENUTUP -->
-            <p style="font-size: 11pt; text-align: justify; margin-bottom: 25px; line-height: 1.5;">
-                ${template.penutup}
+            <!-- PARAGRAF PENUTUP (SPESIFIK SP 1 s/d SP 4) -->
+            <p style="font-size: 11pt; text-align: justify; margin-bottom: 22px; line-height: 1.5;">
+                ${spPenutup}
             </p>
 
-            <!-- TANDA TANGAN 2 PEJABAT -->
-            <table style="width: 100%; border-collapse: collapse; margin-top: 35px; font-size: 11pt; page-break-inside: avoid;">
+            <!-- TANDA TANGAN TUNGGAL: WAKA KESISWAAN SMKN 1 MAGELANG -->
+            <table style="width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 11pt; page-break-inside: avoid;">
                 <tr>
-                    <td style="width: 50%; text-align: center; vertical-align: top;">
-                        <p style="margin: 0 0 65px 0;">
-                            Mengetahui,<br>
-                            ${template.pejabatKiriJabatan || 'Koordinator Guru BK'}
-                        </p>
-                        <p style="margin: 0; font-weight: bold; text-decoration: underline;">
-                            ${template.pejabatKiriNama || config.bkCoordinator}
-                        </p>
-                        <span style="font-size: 9pt; color: #444;">NIP. 19780512 200312 1 005</span>
+                    <td style="width: 50%; vertical-align: top;">
+                        <!-- Kiri: Area Tembusan Surat -->
+                        <div style="font-size: 10pt; line-height: 1.5;">
+                            <strong>Tembusan Yth:</strong>
+                            <ol style="margin: 3px 0 0 16px; padding: 0;">
+                                <li>Kepala SMK Negeri 1 Magelang (sebagai laporan)</li>
+                                <li>Wali Kelas ${student.kelas} (<strong>${namaWaliKelas}</strong>)</li>
+                                <li>Guru Bimbingan dan Konseling (BK) (<strong>${namaGuruBk}</strong>)</li>
+                                <li>Arsip Kesiswaan</li>
+                            </ol>
+                        </div>
                     </td>
                     <td style="width: 50%; text-align: center; vertical-align: top;">
-                        <p style="margin: 0 0 65px 0;">
-                            Wakil Kepala Sekolah<br>
-                            ${template.pejabatKananJabatan || 'Bidang Kesiswaan'}
+                        <p style="margin: 0 0 4px 0; font-size: 11pt;">
+                            Magelang, ${tanggalSurat}<br>
+                            <strong>${template.pejabatJabatan || 'Waka Kesiswaan SMKN 1 Magelang'}</strong>
                         </p>
-                        <p style="margin: 0; font-weight: bold; text-decoration: underline;">
-                            ${template.pejabatKananNama || config.headOfStudentAffairs}
+                        <div style="height: 75px; display: flex; align-items: center; justify-content: center; margin: 4px 0;">
+                            ${template.ttdImageUrl ? `
+                                <img src="${template.ttdImageUrl}" alt="Tanda Tangan" style="max-height: 70px; max-width: 180px; object-fit: contain;">
+                            ` : `
+                                <div style="height: 60px;"></div>
+                            `}
+                        </div>
+                        <p style="margin: 0; font-weight: bold; text-decoration: underline; font-size: 11pt;">
+                            ${template.pejabatNama || 'Morlan Purba Sibarani, S.Pd., M.Si.'}
                         </p>
-                        <span style="font-size: 9pt; color: #444;">NIP. 19720315 199802 2 001</span>
+                        <span style="font-size: 9.5pt; color: #222;">${template.pejabatNip || 'NIP. 19740315 200501 1 004'}</span>
                     </td>
                 </tr>
             </table>
@@ -2955,14 +3167,14 @@ const Forms = {
         const student = StorageManager.getStudentById(this.currentSuratStudentId);
         if (!student) return;
 
-        const status = StorageManager.calculateStudentStatus(student);
-        const innerHtml = this.generateSuratPanggilanHtml(student, true);
+        const currentSp = this.currentSuratSpLevel || "SP 1";
+        const innerHtml = this.generateSuratPanggilanHtml(student, true, currentSp);
 
         const wordDocContent = `
             <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
             <head>
                 <meta charset='utf-8'>
-                <title>Surat Panggilan Orang Tua - ${student.nama}</title>
+                <title>Surat Panggilan Orang Tua - ${student.nama} (${currentSp})</title>
                 <!--[if gte mso 9]>
                 <xml>
                     <w:WordDocument>
@@ -2998,7 +3210,7 @@ const Forms = {
 
         const blob = new Blob(['\ufeff' + wordDocContent], { type: 'application/msword;charset=utf-8' });
         const cleanName = student.nama.replace(/[^a-zA-Z0-9]/g, '_');
-        const cleanSp = status.statusText.replace(/[^a-zA-Z0-9]/g, '_');
+        const cleanSp = currentSp.replace(/[^a-zA-Z0-9]/g, '_');
         const filename = `Surat_Panggilan_Ortu_${cleanName}_${cleanSp}.doc`;
 
         const link = document.createElement("a");
@@ -3024,7 +3236,7 @@ const Forms = {
         const printContainer = document.getElementById("printSuratContainer");
         if (!printContainer) return;
 
-        printContainer.innerHTML = this.generateSuratPanggilanHtml(student, false);
+        printContainer.innerHTML = this.generateSuratPanggilanHtml(student, false, this.currentSuratSpLevel);
         window.print();
     },
 
