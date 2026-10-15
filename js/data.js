@@ -149,6 +149,75 @@ const DEFAULT_TEACHERS = [
     }
 ];
 
+// DAFTAR MASTER 60 WALI KELAS SMK NEGERI 1 MAGELANG (TAHUN AJARAN 2026/2027)
+const DAFTAR_WALI_KELAS_MASTER = [
+    // === KELAS X ===
+    { tingkat: "X", kode: "X TKP", label: "X TKP", nama: "Hafida Kholifatul Janah, S.Pd", username: "hafida", password: "hafida123" },
+    { tingkat: "X", kode: "X DPIB", label: "X DPIB", nama: "Alvi Audina Sari, S.Pd", username: "alvi", password: "alvi123" },
+    { tingkat: "X", kode: "X TPM A", label: "X TPM A", nama: "Arif Wicaksono, S.Pd", username: "arif", password: "arif123" },
+    { tingkat: "X", kode: "X TPM B", label: "X TPM B", nama: "Tripramudita Dewimurti, M.Pd", username: "tripramudita", password: "tripramudita123" },
+    { tingkat: "X", kode: "X TPM C", label: "X TPM C", nama: "Linda Nuriawati, S.Pd", username: "linda", password: "linda123" },
+    { tingkat: "X", kode: "X TKR A", label: "X TKR A", nama: "Dany Ikha Wijayati, SPd.Si", username: "dany", password: "dany123" },
+    { tingkat: "X", kode: "X TKR B", label: "X TKR B", nama: "Sri Pujiani, S.Pd", username: "sri", password: "sri123" },
+    { tingkat: "X", kode: "X TKR C", label: "X TKR C", nama: "Arum Puji Rahayu, S.Pd.", username: "arum", password: "arum123" },
+    { tingkat: "X", kode: "X TPL", label: "X TPL", nama: "Asriati Dwi Nur Setyaningrum, S.Pd.", username: "asriati", password: "asriati123" },
+    { tingkat: "X", kode: "X TAV", label: "X TAV", nama: "Erna Yunita Wijayanti, S.Pd., M.Pd.", username: "erna", password: "erna123" },
+    { tingkat: "X", kode: "X TEI A", label: "X TEI A", nama: "Th. Widi Hartatik, S.Pd", username: "widi", password: "widi123" },
+    { tingkat: "X", kode: "X TEI B", label: "X TEI B", nama: "Noor Utomo, S.Pd.", username: "noor", password: "noor123" },
+    { tingkat: "X", kode: "X TITL A", label: "X TITL A", nama: "Wigati Hati Nurani, S.Pd", username: "wigati", password: "wigati123" },
+    { tingkat: "X", kode: "X TITL B", label: "X TITL B", nama: "Dimas Adam S., S.Pd.I", username: "dimas", password: "dimas123" },
+    { tingkat: "X", kode: "X TITL C", label: "X TITL C", nama: "Shofia Farida, S.Pd", username: "shofia", password: "shofia123" },
+    { tingkat: "X", kode: "X TPTUP", label: "X TPTUP", nama: "Miftakhus Sholikhah, S.Pd., M.Pd", username: "miftakhus", password: "miftakhus123" },
+    { tingkat: "X", kode: "X TKJ A", label: "X TKJ A", nama: "Fika Sari Fibri Hastuti ,S.Si", username: "fika", password: "fika123" },
+    { tingkat: "X", kode: "X TKJ B", label: "X TKJ B", nama: "Sri Puji Hastuti, SST, M.Si", username: "sripuji", password: "sripuji123" },
+    { tingkat: "X", kode: "X DKV A", label: "X DKV A", nama: "Heri Setiyanto, S.Pd.", username: "heri", password: "heri123" },
+    { tingkat: "X", kode: "X DKV B", label: "X DKV B", nama: "Inayati Makrifah, S.Pd", username: "inayati", password: "inayati123" },
+
+    // === KELAS XI ===
+    { tingkat: "XI", kode: "XI BA", label: "XI BA (XI TKP)", nama: "Framasta Helen Yuliana, S.Pd", username: "framasta", password: "framasta123" },
+    { tingkat: "XI", kode: "XI BB", label: "XI BB (XI DPIB)", nama: "Supriyati, S.Kom", username: "supriyati", password: "supriyati123" },
+    { tingkat: "XI", kode: "XI EA", label: "XI EA", nama: "Nur Cholis, S.ST", username: "nur", password: "nur123" },
+    { tingkat: "XI", kode: "XI EB", label: "XI EB", nama: "Uswatun Khasanah, S.Pd", username: "uswatun", password: "uswatun123" },
+    { tingkat: "XI", kode: "XI EC", label: "XI EC", nama: "Khoirul Putro Romadhon, S.Pd", username: "khoirul", password: "khoirul123" },
+    { tingkat: "XI", kode: "XI LA", label: "XI LA", nama: "Fahrudin Yusuf, S.Pd", username: "fahrudin", password: "fahrudin123" },
+    { tingkat: "XI", kode: "XI LB", label: "XI LB", nama: "Jumadiyanto, S.Pd", username: "jumadiyanto", password: "jumadiyanto123" },
+    { tingkat: "XI", kode: "XI LC", label: "XI LC", nama: "Abdul Azis, S.Pd", username: "abdul", password: "abdul123" },
+    { tingkat: "XI", kode: "XI LD", label: "XI LD", nama: "Faisal Anggi Tofani, S.Pd", username: "faisal", password: "faisal123" },
+    { tingkat: "XI", kode: "XI MA", label: "XI MA", nama: "Pria Kardianto, S.Pd", username: "pria", password: "pria123" },
+    { tingkat: "XI", kode: "XI MB", label: "XI MB", nama: "Hery Sumarjono, S.Pd., M.Si", username: "hery", password: "hery123" },
+    { tingkat: "XI", kode: "XI MC", label: "XI MC", nama: "Pungky Anjas, S.Pd", username: "pungky", password: "pungky123" },
+    { tingkat: "XI", kode: "XI FL", label: "XI FL", nama: "Ekmah Suharta, S.Pd.", username: "ekmah", password: "ekmah123" },
+    { tingkat: "XI", kode: "XI OA", label: "XI OA", nama: "Andang Priantoro, S.Pd", username: "andang", password: "andang123" },
+    { tingkat: "XI", kode: "XI OB", label: "XI OB", nama: "Tri Nurgiyanto, S.Pd.", username: "tri", password: "tri123" },
+    { tingkat: "XI", kode: "XI OC", label: "XI OC", nama: "Shobirin, S.Pd", username: "shobirin", password: "shobirin123" },
+    { tingkat: "XI", kode: "XI TKJ A", label: "XI TKJ A", nama: "Muhamad Yaskur, S.Pd", username: "muhamad", password: "muhamad123" },
+    { tingkat: "XI", kode: "XI TKJ B", label: "XI TKJ B", nama: "Toto Riptono, S.Pd.Kor", username: "toto", password: "toto123" },
+    { tingkat: "XI", kode: "XI DKV A", label: "XI DKV A", nama: "Abdur Rofi' Zihni, S.Pd", username: "abdur", password: "abdur123" },
+    { tingkat: "XI", kode: "XI DKAV B", label: "XI DKAV B (XI DKV B)", nama: "Zakalina Natalia Puspitasari, S. Pd", username: "zakalina", password: "zakalina123" },
+
+    // === KELAS XII ===
+    { tingkat: "XII", kode: "XII BA", label: "XII BA (XII TKP)", nama: "Tatiek Setiyati, S.Si", username: "tatiek", password: "tatiek123" },
+    { tingkat: "XII", kode: "XII BB", label: "XII BB (XII DPIB)", nama: "Novia Arum Firsti C, S.Pd.T", username: "novia", password: "novia123" },
+    { tingkat: "XII", kode: "XII EA", label: "XII EA", nama: "Heni Triwiningsih, S.Pd.T.", username: "heni", password: "heni123" },
+    { tingkat: "XII", kode: "XII EB", label: "XII EB", nama: "Yoga Budi Santosa, SST", username: "yoga", password: "yoga123" },
+    { tingkat: "XII", kode: "XII EC", label: "XII EC", nama: "Dani Kartika Hapsari, S.Pd", username: "dani", password: "dani123" },
+    { tingkat: "XII", kode: "XII LA", label: "XII LA", nama: "Tiyas Dwi Setiawan, S.Pd", username: "tiyas", password: "tiyas123" },
+    { tingkat: "XII", kode: "XII LB", label: "XII LB", nama: "Wulan Ramadani, S.Pd", username: "wulan", password: "wulan123" },
+    { tingkat: "XII", kode: "XII LC", label: "XII LC", nama: "Ari Sapto Nugroho, S.Pd.T.", username: "ari", password: "ari123" },
+    { tingkat: "XII", kode: "XII LD", label: "XII LD", nama: "Eko Panji Pangestu, S.Pd", username: "eko", password: "eko123" },
+    { tingkat: "XII", kode: "XII MA", label: "XII MA", nama: "Agustina Dyah Palupi, ST", username: "agustina", password: "agustina123" },
+    { tingkat: "XII", kode: "XII MB", label: "XII MB", nama: "Kasim, S.Pd", username: "kasim", password: "kasim123" },
+    { tingkat: "XII", kode: "XII MC", label: "XII MC", nama: "I Nyoman Sudarma, S.Pd., M.Pd", username: "nyoman", password: "nyoman123" },
+    { tingkat: "XII", kode: "XII FL", label: "XII FL", nama: "Nining Pristiwahyuni, S.Ag", username: "nining", password: "nining123" },
+    { tingkat: "XII", kode: "XII OA", label: "XII OA", nama: "Sulistyoko, S.Pd", username: "sulistyoko", password: "sulistyoko123" },
+    { tingkat: "XII", kode: "XII OB", label: "XII OB", nama: "Ajeng Kurnia Lestari, S.Pd", username: "ajeng", password: "ajeng123" },
+    { tingkat: "XII", kode: "XII OC", label: "XII OC", nama: "Anang Waskito, S.Pd.", username: "anang", password: "anang123" },
+    { tingkat: "XII", kode: "XII TKJ A", label: "XII TKJ A", nama: "Subchan, S.Kom, M.Si", username: "subchan", password: "subchan123" },
+    { tingkat: "XII", kode: "XII TKJ B", label: "XII TKJ B", nama: "Agung Budi Riyanto, S.Pd.", username: "agung", password: "agung123" },
+    { tingkat: "XII", kode: "XII DKV A", label: "XII DKV A", nama: "Nensi Safita Nirmala Dewi, S.Pd", username: "nensi", password: "nensi123" },
+    { tingkat: "XII", kode: "XII DKAV B", label: "XII DKAV B (XII DKV B)", nama: "Awang Arief Setiawan, S.Kom", username: "awang", password: "awang123" }
+];
+
 const DAFTAR_KEGIATAN = [
     {
         id: "ACT-01",

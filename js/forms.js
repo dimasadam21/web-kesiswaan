@@ -1677,7 +1677,137 @@ const Forms = {
     openManageTeachersModal() {
         this.initPembinaSelector('new', []);
         this.renderTeachersList();
+        const roleSelect = document.getElementById("newTeacherRoleSelect");
+        if (roleSelect) roleSelect.value = "Waka Kesiswaan";
+        this.handleNewTeacherJabatanChange();
         this.openModal("modalManageTeachers");
+    },
+
+    handleNewTeacherJabatanChange() {
+        const roleSelect = document.getElementById("newTeacherRoleSelect");
+        const sekbidRow = document.getElementById("newTeacherSekbidPembinaRow");
+        const waliWrap = document.getElementById("newTeacherWaliKelasWrap");
+
+        if (!roleSelect) return;
+        const isWali = roleSelect.value === "Wali Kelas";
+
+        if (sekbidRow) sekbidRow.style.display = isWali ? "none" : "grid";
+        if (waliWrap) {
+            waliWrap.style.display = isWali ? "block" : "none";
+            if (isWali) {
+                const currentTingkat = document.getElementById("newTeacherWaliTingkat")?.value;
+                this.selectWaliTingkat('new', currentTingkat || 'X');
+            }
+        }
+    },
+
+    selectWaliTingkat(mode, tingkat) {
+        const prefix = mode === 'edit' ? 'editTeacher' : 'newTeacher';
+        const tingkats = ['X', 'XI', 'XII'];
+        tingkats.forEach(t => {
+            const btn = document.getElementById(`btnTingkat${t}_${mode}`);
+            if (btn) {
+                if (t === tingkat) {
+                    btn.style.background = 'var(--primary)';
+                    btn.style.color = '#ffffff';
+                    btn.style.borderColor = 'var(--primary)';
+                } else {
+                    btn.style.background = mode === 'edit' ? '#ffffff' : '#f8fafc';
+                    btn.style.color = 'var(--text-main)';
+                    btn.style.borderColor = 'var(--border)';
+                }
+            }
+        });
+
+        const hiddenTingkat = document.getElementById(`${prefix}WaliTingkat`);
+        if (hiddenTingkat) hiddenTingkat.value = tingkat;
+
+        const selectKelas = document.getElementById(`${prefix}WaliKelasSelect`);
+        if (selectKelas && typeof DAFTAR_WALI_KELAS_MASTER !== 'undefined') {
+            const filtered = DAFTAR_WALI_KELAS_MASTER.filter(w => w.tingkat === tingkat);
+            selectKelas.innerHTML = `
+                <option value="">-- Pilih Kelas ${tingkat} (${filtered.length} Kelas) --</option>
+                ${filtered.map(w => `
+                    <option value="${w.kode}" data-nama="${w.nama}" data-username="${w.username}" data-password="${w.password}" data-label="${w.label}">
+                        ${w.label || w.kode} — ${w.nama}
+                    </option>
+                `).join('')}
+            `;
+        }
+    },
+
+    handleWaliKelasSelect(mode) {
+        const prefix = mode === 'edit' ? 'editTeacher' : 'newTeacher';
+        const select = document.getElementById(`${prefix}WaliKelasSelect`);
+        if (!select) return;
+        const selectedOption = select.options[select.selectedIndex];
+        if (!selectedOption || !selectedOption.value) return;
+
+        const nama = selectedOption.getAttribute('data-nama');
+        const username = selectedOption.getAttribute('data-username');
+        const password = selectedOption.getAttribute('data-password');
+
+        // Auto-fill nama guru sesuai kelas
+        const nameInput = document.getElementById(mode === 'edit' ? 'editTeacherName' : 'newTeacherName');
+        if (nameInput && nama) nameInput.value = nama;
+
+        // Auto-fill username (kata pertama, huruf kecil)
+        const userInput = document.getElementById(mode === 'edit' ? 'editTeacherUsernameDisplay' : 'newTeacherUsername');
+        if (userInput && username) userInput.value = username;
+
+        // Auto-fill password (kata pertama + 123)
+        const passInput = document.getElementById(mode === 'edit' ? 'editTeacherPassword' : 'newTeacherPassword');
+        if (passInput && password) passInput.value = password;
+    },
+
+    seedAllOfficialWaliKelas() {
+        if (typeof DAFTAR_WALI_KELAS_MASTER === 'undefined' || !DAFTAR_WALI_KELAS_MASTER.length) {
+            App.showToast("Data master wali kelas tidak ditemukan!");
+            return;
+        }
+
+        if (!confirm("Daftarkan sekaligus seluruh 60 akun Wali Kelas resmi SMK Negeri 1 Magelang (Tahun Ajaran 2026/2027)?\n\n- Username: kata pertama nama guru (huruf kecil)\n- Password: kata pertama nama + 123\n- Kelas: X, XI, XII")) {
+            return;
+        }
+
+        try {
+            let addedCount = 0;
+            let updatedCount = 0;
+            const existingTeachers = StorageManager.getTeachers();
+
+            DAFTAR_WALI_KELAS_MASTER.forEach(w => {
+                const foundIndex = existingTeachers.findIndex(t => 
+                    t.username.toLowerCase() === w.username.toLowerCase() || 
+                    (t.roleLabel && t.roleLabel === `Wali Kelas ${w.kode}`)
+                );
+
+                const teacherPayload = {
+                    name: w.nama,
+                    username: w.username,
+                    password: w.password,
+                    role: "guru",
+                    roleLabel: `Wali Kelas ${w.kode}`,
+                    sekbid: "-",
+                    pembina: "-",
+                    pokja: `Wali Kelas ${w.kode}`,
+                    kelas: w.kode,
+                    icon: "🧑‍🏫"
+                };
+
+                if (foundIndex === -1) {
+                    StorageManager.addTeacher(teacherPayload);
+                    addedCount++;
+                } else {
+                    StorageManager.updateTeacher(existingTeachers[foundIndex].username, teacherPayload);
+                    updatedCount++;
+                }
+            });
+
+            this.renderTeachersList();
+            App.showToast(`Sukses! ${addedCount} Wali Kelas baru ditambahkan, ${updatedCount} diperbarui.`);
+        } catch (err) {
+            App.showToast(err.message);
+        }
     },
 
     renderTeachersList() {
@@ -1726,10 +1856,13 @@ const Forms = {
     handleAddTeacher(e) {
         e.preventDefault();
         const name = document.getElementById("newTeacherName").value.trim();
-        const roleLabel = document.getElementById("newTeacherRoleSelect").value;
+        const rolePreset = document.getElementById("newTeacherRoleSelect").value;
+        const selectedKelas = document.getElementById("newTeacherWaliKelasSelect")?.value;
+        const isWali = rolePreset === "Wali Kelas";
+        const roleLabel = (isWali && selectedKelas) ? `Wali Kelas ${selectedKelas}` : rolePreset;
         const role = (roleLabel.includes("Super Admin") || roleLabel.toLowerCase() === "admin") ? "superadmin" : "guru";
-        const sekbid = document.getElementById("newTeacherSekbid").value;
-        const pembina = this.pembinaSelectedNew.join(", ") || "-";
+        const sekbid = isWali ? "-" : document.getElementById("newTeacherSekbid").value;
+        const pembina = isWali ? "-" : (this.pembinaSelectedNew.join(", ") || "-");
         const username = document.getElementById("newTeacherUsername").value.trim();
         const password = document.getElementById("newTeacherPassword").value.trim();
 
@@ -1745,14 +1878,16 @@ const Forms = {
                 roleLabel,
                 sekbid,
                 pembina,
-                pokja: pembina,
+                pokja: isWali && selectedKelas ? `Wali Kelas ${selectedKelas}` : pembina,
+                kelas: isWali ? selectedKelas : "-",
                 username,
                 password,
-                icon: role === "superadmin" ? "👑" : (roleLabel.includes("Konseling") || roleLabel.includes("BK") ? "👨‍🏫" : (roleLabel.includes("Waka") ? "👩‍💼" : "🧑‍🏫"))
+                icon: role === "superadmin" ? "👑" : (isWali ? "🧑‍🏫" : (roleLabel.includes("Konseling") || roleLabel.includes("BK") ? "👨‍🏫" : (roleLabel.includes("Waka") ? "👩‍💼" : "🧑‍🏫")))
             });
 
             document.getElementById("addTeacherForm").reset();
             this.initPembinaSelector('new', []);
+            this.handleNewTeacherJabatanChange();
             this.renderTeachersList();
             App.showToast(`Guru ${name} berhasil didaftarkan.`);
         } catch (err) {
@@ -1790,13 +1925,13 @@ const Forms = {
         document.getElementById("editTeacherPassword").value = teacher.password || "";
         document.getElementById("editTeacherRole").value = teacher.role || "guru";
 
-        // Jabatan Preset / Custom
+        // Jabatan Preset / Custom / Wali Kelas
         const jabatanSelect = document.getElementById("editTeacherJabatanPreset");
         const customJabatanInput = document.getElementById("editTeacherCustomJabatan");
         let matched = false;
         if (jabatanSelect) {
             for (let opt of jabatanSelect.options) {
-                if (opt.value === teacher.roleLabel) {
+                if (opt.value === teacher.roleLabel || (teacher.roleLabel && teacher.roleLabel.startsWith("Wali Kelas") && opt.value === "Wali Kelas")) {
                     jabatanSelect.value = opt.value;
                     matched = true;
                     break;
@@ -1814,6 +1949,20 @@ const Forms = {
                     customJabatanInput.style.display = "none";
                 }
             }
+        }
+
+        this.handleEditTeacherJabatanChange();
+
+        // Jika wali kelas, pilih tingkat dan kelasnya
+        if (teacher.roleLabel && teacher.roleLabel.startsWith("Wali Kelas")) {
+            const rawKelas = teacher.kelas || teacher.roleLabel.replace("Wali Kelas", "").trim();
+            let matchedTingkat = "X";
+            if (rawKelas.startsWith("XII")) matchedTingkat = "XII";
+            else if (rawKelas.startsWith("XI")) matchedTingkat = "XI";
+
+            this.selectWaliTingkat('edit', matchedTingkat);
+            const selectKelas = document.getElementById("editTeacherWaliKelasSelect");
+            if (selectKelas) selectKelas.value = rawKelas;
         }
 
         // Sekbid
@@ -1836,6 +1985,8 @@ const Forms = {
         const select = document.getElementById("editTeacherJabatanPreset");
         const customInput = document.getElementById("editTeacherCustomJabatan");
         const roleSelect = document.getElementById("editTeacherRole");
+        const sekbidRow = document.getElementById("editTeacherSekbidPembinaRow");
+        const waliWrap = document.getElementById("editTeacherWaliKelasWrap");
 
         if (select && customInput) {
             if (select.value === "custom") {
@@ -1849,6 +2000,16 @@ const Forms = {
                 roleSelect.value = "superadmin";
             }
         }
+
+        const isWali = select && select.value === "Wali Kelas";
+        if (sekbidRow) sekbidRow.style.display = isWali ? "none" : "block";
+        if (waliWrap) {
+            waliWrap.style.display = isWali ? "block" : "none";
+            if (isWali) {
+                const currentTingkat = document.getElementById("editTeacherWaliTingkat")?.value;
+                this.selectWaliTingkat('edit', currentTingkat || 'X');
+            }
+        }
     },
 
     handleSaveEditTeacher(e) {
@@ -1858,10 +2019,21 @@ const Forms = {
         const name = document.getElementById("editTeacherName").value.trim();
         const presetJabatan = document.getElementById("editTeacherJabatanPreset").value;
         const customJabatan = document.getElementById("editTeacherCustomJabatan").value.trim();
-        const roleLabel = (presetJabatan === "custom" && customJabatan) ? customJabatan : (presetJabatan === "custom" ? "Staf Kesiswaan" : presetJabatan);
+        const selectedKelas = document.getElementById("editTeacherWaliKelasSelect")?.value;
+        const isWali = presetJabatan === "Wali Kelas";
+
+        let roleLabel;
+        if (isWali) {
+            roleLabel = selectedKelas ? `Wali Kelas ${selectedKelas}` : "Wali Kelas";
+        } else if (presetJabatan === "custom" && customJabatan) {
+            roleLabel = customJabatan;
+        } else {
+            roleLabel = presetJabatan === "custom" ? "Staf Kesiswaan" : presetJabatan;
+        }
+
         const role = document.getElementById("editTeacherRole").value;
-        const sekbid = document.getElementById("editTeacherSekbid").value;
-        const pembina = this.pembinaSelectedEdit.join(", ") || "-";
+        const sekbid = isWali ? "-" : document.getElementById("editTeacherSekbid").value;
+        const pembina = isWali ? "-" : (this.pembinaSelectedEdit.join(", ") || "-");
         const password = document.getElementById("editTeacherPassword").value.trim();
 
         if (!newUsername || !name || !password) {
@@ -1877,9 +2049,10 @@ const Forms = {
                 roleLabel,
                 sekbid,
                 pembina,
-                pokja: pembina,
+                pokja: isWali && selectedKelas ? `Wali Kelas ${selectedKelas}` : pembina,
+                kelas: isWali ? selectedKelas : "-",
                 password,
-                icon: role === "superadmin" ? "👑" : (roleLabel.includes("Konseling") || roleLabel.includes("BK") ? "👨‍🏫" : (roleLabel.includes("Waka") ? "👩‍💼" : "🧑‍🏫"))
+                icon: role === "superadmin" ? "👑" : (isWali ? "🧑‍🏫" : (roleLabel.includes("Konseling") || roleLabel.includes("BK") ? "👨‍🏫" : (roleLabel.includes("Waka") ? "👩‍💼" : "🧑‍🏫")))
             });
 
             // Sinkronkan sesi jika yang diedit adalah akun yang sedang aktif login

@@ -1597,8 +1597,13 @@
             <div class="modal-card-body" style="max-height: 80vh; overflow-y: auto;">
                 <!-- FORM TAMBAH GURU BARU -->
                 <div style="background: #f8fafc; border: 1px solid var(--border); border-radius: 10px; padding: 1.15rem; margin-bottom: 1.25rem;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-                        <strong style="color: var(--text-main); font-size: 0.95rem;">➕ Tambah Anggota / Guru Baru:</strong>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <strong style="color: var(--text-main); font-size: 0.95rem;">➕ Tambah Anggota / Guru Baru:</strong>
+                            <button type="button" class="btn btn-sm btn-outline" onclick="Forms.seedAllOfficialWaliKelas()" style="font-size: 0.74rem; padding: 2px 8px; font-weight: 600; color: #0369a1; border-color: #7dd3fc; background: #f0f9ff;" title="Daftarkan sekaligus seluruh 60 wali kelas resmi SMK Negeri 1 Magelang 2026/2027">
+                                ⚡ Daftarkan 60 Wali Kelas Resmi
+                            </button>
+                        </div>
                         <span style="font-size: 0.75rem; color: var(--text-muted);">Data dapat diedit kembali kapan saja</span>
                     </div>
                     <form id="addTeacherForm" onsubmit="Forms.handleAddTeacher(event)">
@@ -1610,7 +1615,7 @@
                             </div>
                             <div>
                                 <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 2px;">Jabatan Utama *</label>
-                                <select id="newTeacherRoleSelect" class="form-control-clean">
+                                <select id="newTeacherRoleSelect" class="form-control-clean" onchange="Forms.handleNewTeacherJabatanChange()">
                                     <option value="Waka Kesiswaan" selected>Waka Kesiswaan</option>
                                     <option value="Sekretaris">Sekretaris</option>
                                     <option value="Bendahara">Bendahara</option>
@@ -1633,8 +1638,35 @@
                             </div>
                         </div>
 
+                        <!-- Baris Khusus Wali Kelas: Pilih Tingkat & Dropdown Kelas -->
+                        <div id="newTeacherWaliKelasWrap" style="display: none; background: #ffffff; border: 1.5px dashed var(--primary); border-radius: 10px; padding: 0.85rem 1rem; margin-bottom: 0.75rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.35rem;">
+                                <label style="font-size: 0.82rem; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 5px; margin: 0;">
+                                    🏫 Pilih Tingkat & Kelas Perwalian
+                                </label>
+                                <span style="font-size: 0.72rem; color: var(--text-muted);">Nama guru, username & password terisi otomatis</span>
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 0.65rem;">
+                                <div>
+                                    <label style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 3px;">Tingkatan:</label>
+                                    <div style="display: flex; gap: 4px;">
+                                        <button type="button" class="btn btn-sm btn-tingkat-pills" id="btnTingkatX_new" onclick="Forms.selectWaliTingkat('new', 'X')" style="flex: 1; padding: 4px 6px; font-size: 0.76rem; border: 1px solid var(--border); border-radius: 6px; background: #f8fafc; font-weight: 600;">Kelas X</button>
+                                        <button type="button" class="btn btn-sm btn-tingkat-pills" id="btnTingkatXI_new" onclick="Forms.selectWaliTingkat('new', 'XI')" style="flex: 1; padding: 4px 6px; font-size: 0.76rem; border: 1px solid var(--border); border-radius: 6px; background: #f8fafc; font-weight: 600;">Kelas XI</button>
+                                        <button type="button" class="btn btn-sm btn-tingkat-pills" id="btnTingkatXII_new" onclick="Forms.selectWaliTingkat('new', 'XII')" style="flex: 1; padding: 4px 6px; font-size: 0.76rem; border: 1px solid var(--border); border-radius: 6px; background: #f8fafc; font-weight: 600;">Kelas XII</button>
+                                    </div>
+                                    <input type="hidden" id="newTeacherWaliTingkat" value="">
+                                </div>
+                                <div>
+                                    <label style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 3px;">Pilih Kelas:</label>
+                                    <select id="newTeacherWaliKelasSelect" class="form-control-clean" onchange="Forms.handleWaliKelasSelect('new')" style="font-weight: 600;">
+                                        <option value="">-- Pilih Tingkat Dahulu --</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Baris 2: Sekbid & Pembina (Bisa pilih lebih dari 1) -->
-                        <div style="display: grid; grid-template-columns: 1fr 1.6fr; gap: 0.65rem; margin-bottom: 0.65rem;">
+                        <div id="newTeacherSekbidPembinaRow" style="display: grid; grid-template-columns: 1fr 1.6fr; gap: 0.65rem; margin-bottom: 0.65rem;">
                             <div>
                                 <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 2px;">Seksi Bidang (Sekbid)</label>
                                 <select id="newTeacherSekbid" class="form-control-clean">
@@ -1754,33 +1786,62 @@
                         </div>
                     </div>
 
-                    <div class="form-group-clean">
-                        <label>Seksi Bidang (Sekbid) Pembinaan Kesiswaan</label>
-                        <select id="editTeacherSekbid" class="form-control-clean">
-                            <option value="-">- Tidak Ada (Pembina Umum / Pengarah) -</option>
-                            <option value="Sekbid 1: Keimanan & Ketaqwaan">Sekbid 1: Keimanan & Ketaqwaan terhadap Tuhan YME</option>
-                            <option value="Sekbid 2: Budi Pekerti Luhur">Sekbid 2: Budi Pekerti Luhur & Akhlak Mulia</option>
-                            <option value="Sekbid 3: Kepribadian Unggul & Wawasan Kebangsaan">Sekbid 3: Kepribadian Unggul, Kebangsaan & Bela Negara</option>
-                            <option value="Sekbid 4: Prestasi Akademik, Seni & Olahraga">Sekbid 4: Prestasi Akademik, Seni & Olahraga</option>
-                            <option value="Sekbid 5: Demokrasi, HAM & Lingkungan Hidup">Sekbid 5: Demokrasi, HAM & Lingkungan Hidup</option>
-                            <option value="Sekbid 6: Kreativitas, Keterampilan & Kewirausahaan">Sekbid 6: Kreativitas, Keterampilan & Kewirausahaan</option>
-                            <option value="Sekbid 7: Kualitas Jasmani, Kesehatan & Gizi">Sekbid 7: Kualitas Jasmani, Kesehatan & Gizi</option>
-                            <option value="Sekbid 8: Sastra, Bahasa & Budaya">Sekbid 8: Sastra, Bahasa & Budaya</option>
-                            <option value="Sekbid 9: Teknologi Informasi & Komunikasi (TIK)">Sekbid 9: Teknologi Informasi & Komunikasi (TIK)</option>
-                            <option value="Sekbid 10: Komunikasi Bahasa Asing">Sekbid 10: Komunikasi dalam Bahasa Asing</option>
-                            <option value="Semua Sekbid (Koordinator Utama)">Semua Sekbid (Koordinator Utama)</option>
-                        </select>
+                    <!-- Baris Khusus Wali Kelas: Pilih Tingkat & Dropdown Kelas (Edit) -->
+                    <div id="editTeacherWaliKelasWrap" style="display: none; background: #f8fafc; border: 1.5px dashed var(--primary); border-radius: 10px; padding: 0.85rem 1rem; margin-bottom: 0.75rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.35rem;">
+                            <label style="font-size: 0.82rem; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 5px; margin: 0;">
+                                🏫 Pilih Tingkat & Kelas Perwalian
+                            </label>
+                            <span style="font-size: 0.72rem; color: var(--text-muted);">Nama guru, username & password terisi otomatis</span>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 0.65rem;">
+                            <div>
+                                <label style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 3px;">Tingkatan:</label>
+                                <div style="display: flex; gap: 4px;">
+                                    <button type="button" class="btn btn-sm btn-tingkat-pills" id="btnTingkatX_edit" onclick="Forms.selectWaliTingkat('edit', 'X')" style="flex: 1; padding: 4px 6px; font-size: 0.76rem; border: 1px solid var(--border); border-radius: 6px; background: #ffffff; font-weight: 600;">Kelas X</button>
+                                    <button type="button" class="btn btn-sm btn-tingkat-pills" id="btnTingkatXI_edit" onclick="Forms.selectWaliTingkat('edit', 'XI')" style="flex: 1; padding: 4px 6px; font-size: 0.76rem; border: 1px solid var(--border); border-radius: 6px; background: #ffffff; font-weight: 600;">Kelas XI</button>
+                                    <button type="button" class="btn btn-sm btn-tingkat-pills" id="btnTingkatXII_edit" onclick="Forms.selectWaliTingkat('edit', 'XII')" style="flex: 1; padding: 4px 6px; font-size: 0.76rem; border: 1px solid var(--border); border-radius: 6px; background: #ffffff; font-weight: 600;">Kelas XII</button>
+                                </div>
+                                <input type="hidden" id="editTeacherWaliTingkat" value="">
+                            </div>
+                            <div>
+                                <label style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 3px;">Pilih Kelas:</label>
+                                <select id="editTeacherWaliKelasSelect" class="form-control-clean" onchange="Forms.handleWaliKelasSelect('edit')" style="font-weight: 600;">
+                                    <option value="">-- Pilih Tingkat Dahulu --</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="form-group-clean">
-                        <label>Pembina : <span style="font-weight: 400; color: var(--primary);">(Bisa pilih lebih dari 1)</span></label>
-                        <div class="pembina-selector-wrap">
-                            <div class="pembina-chips-grid" id="editTeacherPembinaChipsGrid"></div>
-                            <div class="pembina-custom-row">
-                                <input type="text" id="editTeacherCustomPembinaInput" class="form-control-clean" style="height: 30px; font-size: 0.76rem; padding: 2px 8px;" placeholder="+ Tulis ekskul / pembina lainnya..." onkeydown="if(event.key==='Enter'){event.preventDefault(); Forms.addCustomPembinaChip('edit');}">
-                                <button type="button" class="btn btn-outline btn-sm" onclick="Forms.addCustomPembinaChip('edit')" style="padding: 2px 8px; font-size: 0.76rem; white-space: nowrap;">+ Tambah</button>
+                    <div id="editTeacherSekbidPembinaRow">
+                        <div class="form-group-clean">
+                            <label>Seksi Bidang (Sekbid) Pembinaan Kesiswaan</label>
+                            <select id="editTeacherSekbid" class="form-control-clean">
+                                <option value="-">- Tidak Ada (Pembina Umum / Pengarah) -</option>
+                                <option value="Sekbid 1: Keimanan & Ketaqwaan">Sekbid 1: Keimanan & Ketaqwaan terhadap Tuhan YME</option>
+                                <option value="Sekbid 2: Budi Pekerti Luhur">Sekbid 2: Budi Pekerti Luhur & Akhlak Mulia</option>
+                                <option value="Sekbid 3: Kepribadian Unggul & Wawasan Kebangsaan">Sekbid 3: Kepribadian Unggul, Kebangsaan & Bela Negara</option>
+                                <option value="Sekbid 4: Prestasi Akademik, Seni & Olahraga">Sekbid 4: Prestasi Akademik, Seni & Olahraga</option>
+                                <option value="Sekbid 5: Demokrasi, HAM & Lingkungan Hidup">Sekbid 5: Demokrasi, HAM & Lingkungan Hidup</option>
+                                <option value="Sekbid 6: Kreativitas, Keterampilan & Kewirausahaan">Sekbid 6: Kreativitas, Keterampilan & Kewirausahaan</option>
+                                <option value="Sekbid 7: Kualitas Jasmani, Kesehatan & Gizi">Sekbid 7: Kualitas Jasmani, Kesehatan & Gizi</option>
+                                <option value="Sekbid 8: Sastra, Bahasa & Budaya">Sekbid 8: Sastra, Bahasa & Budaya</option>
+                                <option value="Sekbid 9: Teknologi Informasi & Komunikasi (TIK)">Sekbid 9: Teknologi Informasi & Komunikasi (TIK)</option>
+                                <option value="Sekbid 10: Komunikasi Bahasa Asing">Sekbid 10: Komunikasi dalam Bahasa Asing</option>
+                                <option value="Semua Sekbid (Koordinator Utama)">Semua Sekbid (Koordinator Utama)</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group-clean">
+                            <label>Pembina : <span style="font-weight: 400; color: var(--primary);">(Bisa pilih lebih dari 1)</span></label>
+                            <div class="pembina-selector-wrap">
+                                <div class="pembina-chips-grid" id="editTeacherPembinaChipsGrid"></div>
+                                <div class="pembina-custom-row">
+                                    <input type="text" id="editTeacherCustomPembinaInput" class="form-control-clean" style="height: 30px; font-size: 0.76rem; padding: 2px 8px;" placeholder="+ Tulis ekskul / pembina lainnya..." onkeydown="if(event.key==='Enter'){event.preventDefault(); Forms.addCustomPembinaChip('edit');}">
+                                    <button type="button" class="btn btn-outline btn-sm" onclick="Forms.addCustomPembinaChip('edit')" style="padding: 2px 8px; font-size: 0.76rem; white-space: nowrap;">+ Tambah</button>
+                                </div>
+                                <input type="hidden" id="editTeacherPokja" value="">
                             </div>
-                            <input type="hidden" id="editTeacherPokja" value="">
                         </div>
                     </div>
 

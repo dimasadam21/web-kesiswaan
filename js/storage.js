@@ -124,6 +124,8 @@ const StorageManager = {
             roleLabel: teacherData.roleLabel || "Staf Kesiswaan",
             sekbid: teacherData.sekbid || "-",
             pokja: teacherData.pokja || "-",
+            pembina: teacherData.pembina || teacherData.pokja || "-",
+            kelas: teacherData.kelas || "-",
             icon: teacherData.icon || (teacherData.role === "superadmin" ? "👑" : "👨‍🏫")
         });
         this.saveData(data);
@@ -174,6 +176,7 @@ const StorageManager = {
             sekbid: updatedData.sekbid !== undefined ? updatedData.sekbid.trim() : (current.sekbid || "-"),
             pokja: updatedData.pokja !== undefined ? updatedData.pokja.trim() : (current.pokja || "-"),
             pembina: updatedData.pembina !== undefined ? updatedData.pembina.trim() : (current.pembina || current.pokja || "-"),
+            kelas: updatedData.kelas !== undefined ? updatedData.kelas.trim() : (current.kelas || "-"),
             password: updatedData.password ? updatedData.password.trim() : current.password,
             icon: updatedData.icon || (newRole === "superadmin" ? "👑" : (current.icon || "👨‍🏫"))
         };
