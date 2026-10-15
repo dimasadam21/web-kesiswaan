@@ -283,6 +283,28 @@ const Forms = {
         }
     },
 
+    closeModal(modalId) {
+        if (modalId) {
+            const m = document.getElementById(modalId);
+            if (m) {
+                m.classList.remove("show");
+            }
+            // Jika modal yang ditutup adalah modalEditTeacher, kembali buka modalManageTeachers
+            if (modalId === "modalEditTeacher") {
+                this.openManageTeachersModal();
+                return;
+            }
+        } else {
+            this.closeAllModals();
+            return;
+        }
+
+        const remaining = document.querySelectorAll(".modal-backdrop.show");
+        if (!remaining || remaining.length === 0) {
+            document.body.style.overflow = "auto";
+        }
+    },
+
     closeAllModals() {
         document.querySelectorAll(".modal-backdrop").forEach(m => m.classList.remove("show"));
         document.body.style.overflow = "auto";

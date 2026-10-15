@@ -934,6 +934,18 @@ const App = {
         }
     },
 
+    closeModal(modalId) {
+        if (window.Forms && typeof Forms.closeModal === "function") {
+            Forms.closeModal(modalId);
+        }
+    },
+
+    closeAllModals() {
+        if (window.Forms && typeof Forms.closeAllModals === "function") {
+            Forms.closeAllModals();
+        }
+    },
+
     showToast(message) {
         const container = document.getElementById("toastContainer");
         if (!container) return;
