@@ -623,21 +623,27 @@ const StorageManager = {
                     ? "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=300&q=80" 
                     : "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=300&q=80"),
                 nis: s.nis || "",
-                nisn: s.nisn,
+                nisn: s.nisn || s.nis || ("NIS-" + (idx + 1)),
                 nama: s.nama,
                 gender: s.gender || "L",
-                kelas: s.kelas,
+                kelas: s.kelas || "-",
                 jurusan: s.jurusan || "-",
-                nomorHp: s.nomorHp || "",
+                tempatLahir: s.tempatLahir || "",
+                tanggalLahir: s.tanggalLahir || "",
+                agama: s.agama || "",
+                tempatTinggal: s.tempatTinggal || "",
                 alamat: s.alamat || "",
                 mapsAlamat: s.mapsAlamat || "",
+                nomorHp: s.nomorHp || "",
                 namaOrtuBapak: s.namaOrtuBapak || "",
+                pekerjaanBapak: s.pekerjaanBapak || "",
+                noHpBapak: s.noHpBapak || "-",
                 namaOrtuIbu: s.namaOrtuIbu || "",
-                noHpBapak: s.noHpBapak || "",
-                noHpIbu: s.noHpIbu || "",
+                pekerjaanIbu: s.pekerjaanIbu || "",
+                noHpIbu: s.noHpIbu || "-",
                 inputSpmb: s.inputSpmb || "",
                 waliKelas: s.waliKelas || "-",
-                kontakOrtu: s.kontakOrtu || s.noHpBapak || s.noHpIbu || "-",
+                kontakOrtu: (s.noHpBapak && s.noHpBapak !== "-") ? s.noHpBapak : (s.noHpIbu || "-"),
                 prestasi: [],
                 pelanggaran: []
             }));
@@ -646,9 +652,13 @@ const StorageManager = {
         }
 
         studentsList.forEach((newS, idx) => {
-            if (!newS.nisn || !newS.nama) return;
+            const identifier = String(newS.nis || newS.nisn || "").trim();
+            if (!identifier || !newS.nama) return;
 
-            const existingIdx = data.students.findIndex(s => String(s.nisn).trim() === String(newS.nisn).trim());
+            const existingIdx = data.students.findIndex(s => 
+                (newS.nis && String(s.nis).trim() === String(newS.nis).trim()) ||
+                (newS.nisn && String(s.nisn).trim() === String(newS.nisn).trim())
+            );
 
             if (existingIdx !== -1) {
                 // Siswa sudah ada
@@ -659,27 +669,33 @@ const StorageManager = {
                         no: newS.no || current.no || (existingIdx + 1),
                         foto: newS.foto || current.foto,
                         nis: newS.nis || current.nis || "",
+                        nisn: newS.nisn || current.nisn || newS.nis || "",
                         nama: newS.nama || current.nama,
                         gender: newS.gender || current.gender || "L",
                         kelas: newS.kelas || current.kelas,
                         jurusan: newS.jurusan || current.jurusan || "-",
-                        nomorHp: newS.nomorHp || current.nomorHp || "",
+                        tempatLahir: newS.tempatLahir || current.tempatLahir || "",
+                        tanggalLahir: newS.tanggalLahir || current.tanggalLahir || "",
+                        agama: newS.agama || current.agama || "",
+                        tempatTinggal: newS.tempatTinggal || current.tempatTinggal || "",
                         alamat: newS.alamat || current.alamat || "",
                         mapsAlamat: newS.mapsAlamat || current.mapsAlamat || "",
+                        nomorHp: newS.nomorHp || current.nomorHp || "",
                         namaOrtuBapak: newS.namaOrtuBapak || current.namaOrtuBapak || "",
+                        pekerjaanBapak: newS.pekerjaanBapak || current.pekerjaanBapak || "",
+                        noHpBapak: newS.noHpBapak || current.noHpBapak || "-",
                         namaOrtuIbu: newS.namaOrtuIbu || current.namaOrtuIbu || "",
-                        noHpBapak: newS.noHpBapak || current.noHpBapak || "",
-                        noHpIbu: newS.noHpIbu || current.noHpIbu || "",
+                        pekerjaanIbu: newS.pekerjaanIbu || current.pekerjaanIbu || "",
+                        noHpIbu: newS.noHpIbu || current.noHpIbu || "-",
                         inputSpmb: newS.inputSpmb || current.inputSpmb || "",
                         waliKelas: newS.waliKelas || current.waliKelas || "-",
-                        kontakOrtu: newS.kontakOrtu || newS.noHpBapak || newS.noHpIbu || current.kontakOrtu || "-",
+                        kontakOrtu: (newS.noHpBapak && newS.noHpBapak !== "-") ? newS.noHpBapak : (newS.noHpIbu || current.kontakOrtu || "-"),
                         // Jaga riwayat poin, prestasi & pelanggaran
                         prestasi: current.prestasi || [],
                         pelanggaran: current.pelanggaran || []
                     };
                     updatedCount++;
                 }
-                // Jika mode 'append', lewati siswa yang sudah ada
             } else {
                 // Siswa baru
                 const student = {
@@ -689,21 +705,27 @@ const StorageManager = {
                         ? "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=300&q=80" 
                         : "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=300&q=80"),
                     nis: newS.nis || "",
-                    nisn: String(newS.nisn).trim(),
+                    nisn: String(newS.nisn || newS.nis || ("NIS-" + (data.students.length + 1))).trim(),
                     nama: newS.nama,
                     gender: newS.gender || "L",
                     kelas: newS.kelas || "-",
                     jurusan: newS.jurusan || "-",
-                    nomorHp: newS.nomorHp || "",
+                    tempatLahir: newS.tempatLahir || "",
+                    tanggalLahir: newS.tanggalLahir || "",
+                    agama: newS.agama || "",
+                    tempatTinggal: newS.tempatTinggal || "",
                     alamat: newS.alamat || "",
                     mapsAlamat: newS.mapsAlamat || "",
+                    nomorHp: newS.nomorHp || "",
                     namaOrtuBapak: newS.namaOrtuBapak || "",
+                    pekerjaanBapak: newS.pekerjaanBapak || "",
+                    noHpBapak: newS.noHpBapak || "-",
                     namaOrtuIbu: newS.namaOrtuIbu || "",
-                    noHpBapak: newS.noHpBapak || "",
-                    noHpIbu: newS.noHpIbu || "",
+                    pekerjaanIbu: newS.pekerjaanIbu || "",
+                    noHpIbu: newS.noHpIbu || "-",
                     inputSpmb: newS.inputSpmb || "",
                     waliKelas: newS.waliKelas || "-",
-                    kontakOrtu: newS.kontakOrtu || newS.noHpBapak || newS.noHpIbu || "-",
+                    kontakOrtu: (newS.noHpBapak && newS.noHpBapak !== "-") ? newS.noHpBapak : (newS.noHpIbu || "-"),
                     prestasi: [],
                     pelanggaran: []
                 };

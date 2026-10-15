@@ -44,10 +44,14 @@ const AuthManager = {
         if (!nisnOrQuery) throw new Error("Masukkan NISN atau Nama Siswa Anda!");
         const q = nisnOrQuery.trim().toLowerCase();
         const students = StorageManager.getStudents();
-        const found = students.find(s => s.nisn === nisnOrQuery.trim() || s.nama.toLowerCase().includes(q));
+        const found = students.find(s => 
+            (s.nisn && String(s.nisn).trim() === nisnOrQuery.trim()) || 
+            (s.nis && String(s.nis).trim() === nisnOrQuery.trim()) || 
+            s.nama.toLowerCase().includes(q)
+        );
 
         if (!found) {
-            throw new Error("Siswa tidak ditemukan! Pastikan NISN atau Nama sudah terdaftar.");
+            throw new Error("Siswa tidak ditemukan! Pastikan NIS, NISN, atau Nama sudah terdaftar.");
         }
 
         this.currentUser = {

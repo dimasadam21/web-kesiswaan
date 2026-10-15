@@ -99,7 +99,7 @@
 
                     <form id="studentLoginForm" class="auth-form-clean" onsubmit="App.handleStudentLogin(event)">
                         <div>
-                            <input type="text" id="loginStudentQuery" class="form-control-clean" placeholder="Ketik NISN atau Nama Siswa Anda..." required>
+                            <input type="text" id="loginStudentQuery" class="form-control-clean" placeholder="Ketik NIS / NISN atau Nama Siswa Anda..." required>
                         </div>
                         <button type="submit" class="btn btn-primary" style="width: 100%;">
                             Masuk & Cek Riwayat Saya
@@ -1328,9 +1328,9 @@
                 <div class="import-template-box">
                     <div class="import-template-info">
                         <h4>📄 Template Excel Resmi</h4>
-                        <p>
-                            Gunakan template standar agar urutan kolom cocok sempurna: 
-                            <strong>No, Foto, NIS, NISN, Nama, Kelas, Jurusan, Nomor HP, Alamat, Maps Alamat, Nama Ortu Bapak, Nama Ortu Ibu, No HP Bapak, No HP Ibu, Input SPMB</strong>.
+                        <p style="font-size: 0.8rem; line-height: 1.5; margin-top: 4px;">
+                            Format kolom template resmi sesuai ketentuan kesiswaan: <br>
+                            <strong>Nama Lengkap (jangan disingkat), Kelas, NIS (Nomor Induk Siswa), Pas Foto pakai seragam (background biru), Tempat Lahir, Tanggal Lahir, Agama, Tempat tinggal saat ini, Alamat lengkap sesuai KK terbaru, Link maps tempat tinggal saat ini, Nomor WA, Nama Bapak Kandung, Pekerjaan Bapak, No WA Bapak, Nama Ibu Kandung, Pekerjaan Ibu, No WA Ibu</strong>.
                         </p>
                     </div>
                     <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
@@ -1379,11 +1379,11 @@
                     <strong style="font-size: 0.82rem; color: var(--text-main);">Pilihan Metode Impor:</strong>
                     <label class="import-mode-label">
                         <input type="radio" name="radioImportMode" value="upsert" checked>
-                        <span><strong>Sinkronisasi Cerdas (Rekomendasi):</strong> Perbarui biodata siswa jika NISN sudah terdaftar, dan tambahkan jika NISN baru. (Riwayat poin, prestasi, dan pelanggaran yang sudah ada TIDAK akan terhapus).</span>
+                        <span><strong>Sinkronisasi Cerdas (Rekomendasi):</strong> Perbarui biodata siswa jika NIS/NISN sudah terdaftar, dan tambahkan jika baru. (Riwayat poin, prestasi, dan pelanggaran yang sudah ada TIDAK akan terhapus).</span>
                     </label>
                     <label class="import-mode-label">
                         <input type="radio" name="radioImportMode" value="append">
-                        <span><strong>Tambah Baru Saja:</strong> Hanya menambahkan siswa yang belum ada (melewati jika NISN sudah terdaftar).</span>
+                        <span><strong>Tambah Baru Saja:</strong> Hanya menambahkan siswa yang belum ada (melewati jika NIS/NISN sudah terdaftar).</span>
                     </label>
                     <label class="import-mode-label">
                         <input type="radio" name="radioImportMode" value="replace">
@@ -1403,24 +1403,21 @@
                             <thead>
                                 <tr>
                                     <th>No</th>
-                                    <th>NIS</th>
-                                    <th>NISN</th>
-                                    <th>Nama Siswa</th>
-                                    <th>L/P</th>
+                                    <th>Nama Lengkap</th>
                                     <th>Kelas</th>
-                                    <th>Jurusan</th>
-                                    <th>No. HP</th>
-                                    <th>Alamat</th>
-                                    <th>Bapak</th>
-                                    <th>Ibu</th>
-                                    <th>No. HP Bapak</th>
-                                    <th>No. HP Ibu</th>
-                                    <th>SPMB</th>
+                                    <th>NIS</th>
+                                    <th>Tempat & Tgl Lahir</th>
+                                    <th>Agama</th>
+                                    <th>Alamat KK & Domisili</th>
+                                    <th>Link Maps</th>
+                                    <th>No. WA</th>
+                                    <th>Data Bapak</th>
+                                    <th>Data Ibu</th>
                                 </tr>
                             </thead>
                             <tbody id="importPreviewTableBody">
                                 <tr>
-                                    <td colspan="14" style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                                    <td colspan="11" style="text-align: center; padding: 2rem; color: var(--text-muted);">
                                         Belum ada berkas yang diunggah. Silakan pilih berkas Excel atau tempel baris data di atas.
                                     </td>
                                 </tr>

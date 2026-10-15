@@ -878,38 +878,42 @@ const Forms = {
     downloadStudentExcelTemplate() {
         const sampleData = [
             {
-                "No": 1,
-                "Foto": "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=300&q=80",
-                "NIS": "230101",
-                "NISN": "0061234501",
-                "Nama": "Ahmad Fauzan Syahputra",
+                "Nama Lengkap (jangan disingkat)": "Ahmad Fauzan Syahputra",
                 "Kelas": "XII RPL 1",
-                "Jurusan": "Rekayasa Perangkat Lunak",
-                "Nomor HP": "0812-9876-5401",
-                "Alamat": "Jl. Cendrawasih No. 12, RT 02/RW 04, Kel. Sukamaju",
-                "Maps Alamat": "https://maps.google.com/?q=-6.2088,106.8456",
-                "Nama Ortu Bapak": "H. Syahputra, S.E",
-                "Nama Ortu Ibu": "Hj. Ratna Juwita",
-                "No HP Bapak": "0812-3456-7890",
-                "No HP Ibu": "0813-9876-5432",
-                "Input SPMB": "SPMB-2023-PRESTASI-001"
+                "NIS (Nomor Induk Siswa)\nBukan NISN/NIK": "230101",
+                "Pas Foto pakai seragam (backround biru)\nMaksimal 1 MB": "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=300&q=80",
+                "Tempat Lahir": "Magelang",
+                "Tanggal Lahir": "2007-04-12",
+                "Agama": "Islam",
+                "Tempat tinggal saat ini": "Mertoyudan, Kabupaten Magelang",
+                "Alamat lengkap sesuai KK terbaru\n(Contoh: Dsn. Makmur RT 01/02, Sentosa, Mertoyudan, Kabupaten Magelang)": "Dsn. Makmur RT 01/02, Sentosa, Mertoyudan, Kabupaten Magelang",
+                "Link maps tempat tinggal saat ini, bukan koordinat\n(jika tinggal di pondok pesantren/panti asuhan link berupa rumah asli sesuai KK)": "https://maps.google.com/?q=-7.4912,110.2201",
+                "Nomor WA": "081298765401",
+                "Nama Bapak Kandung": "H. Syahputra, S.E",
+                "Pekerjaan Bapak": "Wiraswasta",
+                "No WA Bapak (jika tidak ada tulis -)": "081234567890",
+                "Nama Ibu Kandung": "Hj. Ratna Juwita",
+                "Pekerjaan Ibu": "PNS",
+                "No WA Ibu (jika tidak ada tulis -)": "081398765432"
             },
             {
-                "No": 2,
-                "Foto": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80",
-                "NIS": "240201",
-                "NISN": "0061234502",
-                "Nama": "Nabila Aurelia Putri",
+                "Nama Lengkap (jangan disingkat)": "Nabila Aurelia Putri",
                 "Kelas": "XI MIPA 2",
-                "Jurusan": "MIPA",
-                "Nomor HP": "0813-8899-5402",
-                "Alamat": "Komplek Taman Asri Blok B3 No. 7, Kel. Melati Indah",
-                "Maps Alamat": "https://maps.google.com/?q=-6.2150,106.8520",
-                "Nama Ortu Bapak": "Ir. Hendra Gunawan",
-                "Nama Ortu Ibu": "Dewi Handayani, S.Pd",
-                "No HP Bapak": "0813-8899-1122",
-                "No HP Ibu": "0812-7766-5544",
-                "Input SPMB": "SPMB-2024-ZONASI-042"
+                "NIS (Nomor Induk Siswa)\nBukan NISN/NIK": "240201",
+                "Pas Foto pakai seragam (backround biru)\nMaksimal 1 MB": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80",
+                "Tempat Lahir": "Semarang",
+                "Tanggal Lahir": "2008-08-25",
+                "Agama": "Islam",
+                "Tempat tinggal saat ini": "Pondok Pesantren Al-Hidayah Magelang",
+                "Alamat lengkap sesuai KK terbaru\n(Contoh: Dsn. Makmur RT 01/02, Sentosa, Mertoyudan, Kabupaten Magelang)": "Jl. Melati Indah No. 15, RT 03/RW 05, Kel. Banyumanik, Semarang",
+                "Link maps tempat tinggal saat ini, bukan koordinat\n(jika tinggal di pondok pesantren/panti asuhan link berupa rumah asli sesuai KK)": "https://maps.google.com/?q=-7.0583,110.4287",
+                "Nomor WA": "081388995402",
+                "Nama Bapak Kandung": "Ir. Hendra Gunawan",
+                "Pekerjaan Bapak": "Karyawan Swasta",
+                "No WA Bapak (jika tidak ada tulis -)": "081388991122",
+                "Nama Ibu Kandung": "Dewi Handayani, S.Pd",
+                "Pekerjaan Ibu": "Guru",
+                "No WA Ibu (jika tidak ada tulis -)": "081277665544"
             }
         ];
 
@@ -919,7 +923,7 @@ const Forms = {
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, ws, "Data Siswa");
                 XLSX.writeFile(wb, "Template_Impor_Siswa_Kesiswaan.xlsx");
-                App.showToast("Template Excel (.xlsx) berhasil diunduh.");
+                App.showToast("Template Excel (.xlsx) 17 kolom berhasil diunduh.");
                 return;
             } catch (e) {
                 console.warn("Gagal ekspor XLSX, beralih ke CSV:", e);
@@ -932,25 +936,63 @@ const Forms = {
 
     downloadStudentCsvTemplate() {
         const headers = [
-            "No", "Foto", "NIS", "NISN", "Nama", "Kelas", "Jurusan", 
-            "Nomor HP", "Alamat", "Maps Alamat", "Nama Ortu Bapak", "Nama Ortu Ibu", 
-            "No HP Bapak", "No HP Ibu", "Input SPMB"
+            "Nama Lengkap (jangan disingkat)",
+            "Kelas",
+            "NIS (Nomor Induk Siswa)\nBukan NISN/NIK",
+            "Pas Foto pakai seragam (backround biru)\nMaksimal 1 MB",
+            "Tempat Lahir",
+            "Tanggal Lahir",
+            "Agama",
+            "Tempat tinggal saat ini",
+            "Alamat lengkap sesuai KK terbaru\n(Contoh: Dsn. Makmur RT 01/02, Sentosa, Mertoyudan, Kabupaten Magelang)",
+            "Link maps tempat tinggal saat ini, bukan koordinat\n(jika tinggal di pondok pesantren/panti asuhan link berupa rumah asli sesuai KK)",
+            "Nomor WA",
+            "Nama Bapak Kandung",
+            "Pekerjaan Bapak",
+            "No WA Bapak (jika tidak ada tulis -)",
+            "Nama Ibu Kandung",
+            "Pekerjaan Ibu",
+            "No WA Ibu (jika tidak ada tulis -)"
         ];
 
         const rows = [
             [
-                "1", "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=300&q=80",
-                "230101", "0061234501", "Ahmad Fauzan Syahputra", "XII RPL 1", "Rekayasa Perangkat Lunak",
-                "0812-9876-5401", "Jl. Cendrawasih No. 12, RT 02/RW 04, Kel. Sukamaju",
-                "https://maps.google.com/?q=-6.2088,106.8456", "H. Syahputra, S.E", "Hj. Ratna Juwita",
-                "0812-3456-7890", "0813-9876-5432", "SPMB-2023-PRESTASI-001"
+                "Ahmad Fauzan Syahputra",
+                "XII RPL 1",
+                "230101",
+                "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=300&q=80",
+                "Magelang",
+                "2007-04-12",
+                "Islam",
+                "Mertoyudan, Kabupaten Magelang",
+                "Dsn. Makmur RT 01/02, Sentosa, Mertoyudan, Kabupaten Magelang",
+                "https://maps.google.com/?q=-7.4912,110.2201",
+                "081298765401",
+                "H. Syahputra, S.E",
+                "Wiraswasta",
+                "081234567890",
+                "Hj. Ratna Juwita",
+                "PNS",
+                "081398765432"
             ],
             [
-                "2", "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80",
-                "240201", "0061234502", "Nabila Aurelia Putri", "XI MIPA 2", "MIPA",
-                "0813-8899-5402", "Komplek Taman Asri Blok B3 No. 7, Kel. Melati Indah",
-                "https://maps.google.com/?q=-6.2150,106.8520", "Ir. Hendra Gunawan", "Dewi Handayani, S.Pd",
-                "0813-8899-1122", "0812-7766-5544", "SPMB-2024-ZONASI-042"
+                "Nabila Aurelia Putri",
+                "XI MIPA 2",
+                "240201",
+                "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80",
+                "Semarang",
+                "2008-08-25",
+                "Islam",
+                "Pondok Pesantren Al-Hidayah Magelang",
+                "Jl. Melati Indah No. 15, RT 03/RW 05, Kel. Banyumanik, Semarang",
+                "https://maps.google.com/?q=-7.0583,110.4287",
+                "081388995402",
+                "Ir. Hendra Gunawan",
+                "Karyawan Swasta",
+                "081388991122",
+                "Dewi Handayani, S.Pd",
+                "Guru",
+                "081277665544"
             ]
         ];
 
@@ -973,7 +1015,7 @@ const Forms = {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        App.showToast("Template CSV (.csv) berhasil diunduh.");
+        App.showToast("Template CSV (.csv) 17 kolom berhasil diunduh.");
     },
 
     handleDragOver(e) {
@@ -1051,82 +1093,222 @@ const Forms = {
     },
 
     parseCsvText(text) {
-        const lines = text.trim().split(/\r\n|\n|\r/);
-        if (lines.length < 2) return [];
+        if (!text || !text.trim()) return [];
 
-        // Deteksi delimiter (tab atau koma atau titik-koma)
-        const firstLine = lines[0];
+        const cleanText = text.trim();
         let delimiter = ",";
-        if (firstLine.includes("\t")) delimiter = "\t";
-        else if (firstLine.includes(";") && !firstLine.includes(",")) delimiter = ";";
+        const firstLineBreak = cleanText.search(/\r\n|\n|\r/);
+        const headerSample = firstLineBreak !== -1 ? cleanText.slice(0, firstLineBreak) : cleanText;
+        if (headerSample.includes("\t")) delimiter = "\t";
+        else if (headerSample.includes(";") && !headerSample.includes(",")) delimiter = ";";
 
-        const parseLine = (line) => {
-            const row = [];
-            let inQuotes = false;
-            let current = "";
-            for (let i = 0; i < line.length; i++) {
-                const char = line[i];
-                if (char === '"' || char === "'") {
-                    inQuotes = !inQuotes;
-                } else if (char === delimiter && !inQuotes) {
-                    row.push(current.trim());
-                    current = "";
+        const rows = [];
+        let currentRow = [];
+        let currentCell = "";
+        let inQuotes = false;
+
+        for (let i = 0; i < cleanText.length; i++) {
+            const char = cleanText[i];
+            const nextChar = cleanText[i + 1];
+
+            if (char === '"') {
+                if (inQuotes && nextChar === '"') {
+                    currentCell += '"';
+                    i++;
                 } else {
-                    current += char;
+                    inQuotes = !inQuotes;
                 }
+            } else if (char === delimiter && !inQuotes) {
+                currentRow.push(currentCell.trim());
+                currentCell = "";
+            } else if ((char === '\r' || char === '\n') && !inQuotes) {
+                if (char === '\r' && nextChar === '\n') i++;
+                currentRow.push(currentCell.trim());
+                if (currentRow.some(c => c !== "")) {
+                    rows.push(currentRow);
+                }
+                currentRow = [];
+                currentCell = "";
+            } else {
+                currentCell += char;
             }
-            row.push(current.trim());
-            return row;
-        };
+        }
+        if (currentCell !== "" || currentRow.length > 0) {
+            currentRow.push(currentCell.trim());
+            if (currentRow.some(c => c !== "")) {
+                rows.push(currentRow);
+            }
+        }
 
-        const headers = parseLine(lines[0]);
+        if (rows.length < 2) return [];
+
+        const headers = rows[0];
         const result = [];
-
-        for (let i = 1; i < lines.length; i++) {
-            if (!lines[i].trim()) continue;
-            const values = parseLine(lines[i]);
+        for (let i = 1; i < rows.length; i++) {
+            const rowValues = rows[i];
             const rowObj = {};
             headers.forEach((h, idx) => {
-                rowObj[h] = values[idx] || "";
+                rowObj[h] = rowValues[idx] !== undefined ? rowValues[idx] : "";
             });
             result.push(rowObj);
         }
-
         return result;
     },
 
-    mapExcelRow(row) {
+    mapExcelRow(row, idx = 0) {
         const keys = Object.keys(row);
-        const getVal = (patterns) => {
+
+        const findVal = (condition) => {
             for (const k of keys) {
                 const cleanKey = k.toLowerCase().replace(/[^a-z0-9]/g, '');
-                for (const p of patterns) {
-                    if (cleanKey === p || cleanKey.includes(p)) {
-                        return row[k] !== undefined && row[k] !== null ? String(row[k]).trim() : '';
+                if (condition(cleanKey, k)) {
+                    const val = row[k];
+                    if (val !== undefined && val !== null) {
+                        const str = String(val).trim();
+                        if (str !== '') return str;
                     }
                 }
             }
             return '';
         };
 
+        // 1. Nama Lengkap (jangan disingkat)
+        const nama = findVal((c) => {
+            if (c.includes('bapak') || c.includes('ibu') || c.includes('ayah') || c.includes('ortu')) return false;
+            return c.includes('namalengkap') || c.includes('namasiswa') || c.includes('nama') || c === 'student';
+        });
+
+        // 2. Kelas
+        const kelas = findVal((c) => {
+            if (c.includes('wali')) return false;
+            return c === 'kelas' || c.startsWith('kelas') || c === 'rombel' || c === 'tingkat' || c === 'class';
+        });
+
+        // 3. NIS (Nomor Induk Siswa) - Bukan NISN/NIK
+        let nis = findVal((c) => {
+            if (c.includes('bukannisn')) return true;
+            if (c === 'nis' || c === 'nomorinduksiswa' || c === 'noinduk' || c === 'induk') return true;
+            if (c.startsWith('nis') && !c.includes('nisn')) return true;
+            return false;
+        });
+
+        // NISN (jika berkas lama menyediakan NISN)
+        let nisn = findVal((c) => {
+            if (c.includes('bukannisn')) return false;
+            return c === 'nisn' || (c.includes('nisn') && !c.includes('bukan'));
+        });
+
+        // Saling melengkapi NIS dan NISN agar sistem kompatibel penuh
+        if (!nisn && nis) nisn = nis;
+        if (!nis && nisn) nis = nisn;
+
+        // 4. Pas Foto pakai seragam (backround biru) Maksimal 1 MB
+        const foto = findVal((c) => {
+            return c.includes('pasfoto') || c.includes('foto') || c.includes('photo') || c.includes('gambar');
+        });
+
+        // 5. Tempat Lahir
+        const tempatLahir = findVal((c) => {
+            return c.includes('tempatlahir') || c.includes('tmplahir') || c.includes('kotalahir');
+        });
+
+        // 6. Tanggal Lahir
+        const tanggalLahir = findVal((c) => {
+            return c.includes('tanggallahir') || c.includes('tgllahir') || c.includes('tgllhr') || c.includes('dob') || c.includes('dateofbirth');
+        });
+
+        // 7. Agama
+        const agama = findVal((c) => {
+            return c === 'agama' || c.includes('agama') || c.includes('religion');
+        });
+
+        // 8. Tempat tinggal saat ini (domisili/pondok)
+        const tempatTinggal = findVal((c) => {
+            if (c.includes('linkmaps') || c.includes('maps')) return false;
+            return c.includes('tempattinggalsaatini') || c.includes('tempattinggal') || c.includes('domisili') || c.includes('tinggalsaatini');
+        });
+
+        // 9. Alamat lengkap sesuai KK terbaru
+        const alamat = findVal((c) => {
+            if (c.includes('linkmaps') || c.includes('maps')) return false;
+            return c.includes('alamatlengkapsesuaikk') || c.includes('alamatkk') || c.includes('sesuaikk') || c.includes('alamat');
+        });
+
+        // 10. Link maps tempat tinggal saat ini, bukan koordinat
+        const mapsAlamat = findVal((c) => {
+            return c.includes('linkmaps') || c.includes('maps') || c.includes('googlemaps') || c.includes('titikmaps') || c.includes('lokasi');
+        });
+
+        // 11. Nomor WA Siswa
+        const nomorHp = findVal((c) => {
+            if (c.includes('bapak') || c.includes('ibu') || c.includes('ayah') || c.includes('ortu')) return false;
+            return c === 'nomorwa' || c === 'nowa' || c.includes('nomorwa') || c.includes('nowasiswa') || c.includes('nomorhp') || c.includes('nohpsiswa') || c.includes('hpsiswa') || c.includes('whatsapp') || c === 'wa';
+        });
+
+        // 12. Nama Bapak Kandung
+        const namaOrtuBapak = findVal((c) => {
+            if (c.includes('maps') || c.includes('tinggal') || c.includes('pekerjaan') || c.includes('wa') || c.includes('hp') || c.includes('telepon')) return false;
+            return c.includes('namabapakkandung') || c.includes('namabapak') || c.includes('namaayahkandung') || c.includes('namaayah') || c.includes('namaortubapak') || c.includes('bapakkandung') || c === 'bapak' || c === 'ayah';
+        });
+
+        // 13. Pekerjaan Bapak
+        const pekerjaanBapak = findVal((c) => {
+            return (c.includes('pekerjaan') && (c.includes('bapak') || c.includes('ayah'))) || c.includes('profesibapak') || c.includes('profesiayah');
+        });
+
+        // 14. No WA Bapak
+        const noHpBapak = findVal((c) => {
+            return (c.includes('wa') || c.includes('hp') || c.includes('telepon')) && (c.includes('bapak') || c.includes('ayah'));
+        }) || "-";
+
+        // 15. Nama Ibu Kandung
+        const namaOrtuIbu = findVal((c) => {
+            if (c.includes('maps') || c.includes('koordinat') || c.includes('tinggal') || c.includes('pekerjaan') || c.includes('wa') || c.includes('hp') || c.includes('telepon')) return false;
+            return c.includes('namaibukandung') || c.includes('namaibu') || c.includes('namaortuibu') || c.includes('ibukandung') || c === 'ibu';
+        });
+
+        // 16. Pekerjaan Ibu
+        const pekerjaanIbu = findVal((c) => {
+            if (c.includes('maps') || c.includes('bapak')) return false;
+            return (c.includes('pekerjaan') && c.includes('ibu')) || c.includes('profesiibu');
+        });
+
+        // 17. No WA Ibu
+        const noHpIbu = findVal((c) => {
+            if (c.includes('maps') || c.includes('bapak')) return false;
+            return (c.includes('wa') || c.includes('hp') || c.includes('telepon')) && c.includes('ibu');
+        }) || "-";
+
+        // Bidang pelengkap sistem
+        const no = findVal((c) => c === 'no' || c === 'nomor') || (idx + 1);
+        const jurusan = findVal((c) => c === 'jurusan' || c.includes('kejuruan') || c.includes('kompetensi')) || '-';
+        const inputSpmb = findVal((c) => c.includes('spmb') || c.includes('ppdb')) || '';
+        const waliKelas = findVal((c) => c.includes('walikelas') || c === 'wali') || '-';
+
         return {
-            no: getVal(['no', 'nomor']),
-            foto: getVal(['foto', 'photo', 'gambar']),
-            nis: getVal(['nis', 'nomorinduksiswa', 'induk']),
-            nisn: getVal(['nisn', 'nomornis']),
-            nama: getVal(['nama', 'namalengkap', 'namasiswa', 'student']),
-            gender: getVal(['gender', 'jk', 'jeniskelamin', 'lp']) || 'L',
-            kelas: getVal(['kelas', 'tingkat', 'class']),
-            jurusan: getVal(['jurusan', 'peminatan', 'kejuruan', 'kompetensikeahlian']),
-            nomorHp: getVal(['nomorhp', 'nohpsiswa', 'hpsiswa', 'telepon', 'whatsapp', 'wa']),
-            alamat: getVal(['alamat', 'domisili', 'tempattinggal', 'address']),
-            mapsAlamat: getVal(['mapsalamat', 'maps', 'googlemaps', 'linkmaps', 'titikmaps', 'lokasi']),
-            namaOrtuBapak: getVal(['namaortubapak', 'namaayah', 'namabapak', 'bapak', 'ayah']),
-            namaOrtuIbu: getVal(['namaortuibu', 'namaibu', 'ibu']),
-            noHpBapak: getVal(['nohpbapak', 'hpbapak', 'teleponbapak', 'hpayah', 'nohpayah', 'wabapak']),
-            noHpIbu: getVal(['nohpibu', 'hpibu', 'teleponibu', 'waibu']),
-            inputSpmb: getVal(['inputspmb', 'spmb', 'jalurspmb', 'nopendaftaran', 'ppdb']),
-            waliKelas: getVal(['walikelas', 'wali', 'guruwali']) || '-'
+            no,
+            foto,
+            nis,
+            nisn,
+            nama,
+            gender: 'L',
+            kelas,
+            jurusan,
+            tempatLahir,
+            tanggalLahir,
+            agama,
+            tempatTinggal,
+            alamat,
+            mapsAlamat,
+            nomorHp,
+            namaOrtuBapak,
+            pekerjaanBapak,
+            noHpBapak,
+            namaOrtuIbu,
+            pekerjaanIbu,
+            noHpIbu,
+            inputSpmb,
+            waliKelas
         };
     },
 
@@ -1138,8 +1320,8 @@ const Forms = {
         }
 
         const mapped = rawRows
-            .map(r => this.mapExcelRow(r))
-            .filter(r => r.nisn || r.nama);
+            .map((r, idx) => this.mapExcelRow(r, idx))
+            .filter(r => r.nis || r.nisn || r.nama);
 
         this.parsedImportRows = mapped;
         this.renderImportPreview(mapped);
@@ -1169,8 +1351,8 @@ const Forms = {
         if (rows.length === 0) {
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="14" style="text-align: center; padding: 2rem; color: var(--text-muted);">
-                        Belum ada data siswa yang terbaca atau kolom NISN/Nama kosong.
+                    <td colspan="11" style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                        Belum ada data siswa yang terbaca atau kolom NIS/Nama kosong.
                     </td>
                 </tr>
             `;
@@ -1180,19 +1362,29 @@ const Forms = {
         tbody.innerHTML = rows.map((r, idx) => `
             <tr>
                 <td>${r.no || (idx + 1)}</td>
-                <td><span style="font-weight: 600;">${r.nis || '-'}</span></td>
-                <td><strong style="color: var(--primary);">${r.nisn || '-'}</strong></td>
                 <td><strong style="color: var(--text-main);">${r.nama || '-'}</strong></td>
-                <td><span class="status-pill pill-gray">${r.gender || 'L'}</span></td>
                 <td><span class="status-pill pill-gray">${r.kelas || '-'}</span></td>
-                <td>${r.jurusan || '-'}</td>
+                <td><span style="font-weight: 700; color: var(--primary);">${r.nis || r.nisn || '-'}</span></td>
+                <td>${(r.tempatLahir ? r.tempatLahir + ', ' : '') + (r.tanggalLahir || '-')}</td>
+                <td>${r.agama || '-'}</td>
+                <td style="max-width: 220px; font-size: 0.8rem; line-height: 1.4;">
+                    <div><strong>KK:</strong> ${r.alamat || '-'}</div>
+                    ${r.tempatTinggal ? `<div style="color: var(--text-muted); margin-top: 2px;"><strong>Domisili:</strong> ${r.tempatTinggal}</div>` : ''}
+                </td>
+                <td>
+                    ${r.mapsAlamat ? `<a href="${r.mapsAlamat}" target="_blank" rel="noopener" style="color: var(--primary); font-weight: 600; text-decoration: underline; font-size: 0.8rem;">📍 Buka Maps</a>` : '<span style="color: var(--text-muted);">-</span>'}
+                </td>
                 <td>${r.nomorHp || '-'}</td>
-                <td style="max-width: 180px; overflow: hidden; text-overflow: ellipsis;">${r.alamat || '-'}</td>
-                <td>${r.namaOrtuBapak || '-'}</td>
-                <td>${r.namaOrtuIbu || '-'}</td>
-                <td>${r.noHpBapak || '-'}</td>
-                <td>${r.noHpIbu || '-'}</td>
-                <td><span class="badge-spmb-pill">${r.inputSpmb || '-'}</span></td>
+                <td style="font-size: 0.8rem; line-height: 1.4;">
+                    <strong>${r.namaOrtuBapak || '-'}</strong>
+                    ${r.pekerjaanBapak ? `<br><small style="color: var(--text-muted);">${r.pekerjaanBapak}</small>` : ''}
+                    ${r.noHpBapak && r.noHpBapak !== '-' ? `<br><small style="color: var(--primary);">WA: ${r.noHpBapak}</small>` : ''}
+                </td>
+                <td style="font-size: 0.8rem; line-height: 1.4;">
+                    <strong>${r.namaOrtuIbu || '-'}</strong>
+                    ${r.pekerjaanIbu ? `<br><small style="color: var(--text-muted);">${r.pekerjaanIbu}</small>` : ''}
+                    ${r.noHpIbu && r.noHpIbu !== '-' ? `<br><small style="color: var(--primary);">WA: ${r.noHpIbu}</small>` : ''}
+                </td>
             </tr>
         `).join('');
     },
