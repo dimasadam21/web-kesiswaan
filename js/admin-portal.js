@@ -1129,18 +1129,18 @@ const AdminPortal = {
                 <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 10pt;">
                     <thead>
                         <tr>
-                            <th rowspan="2" style="border: 1px solid #000; width: 35px; padding: 6px;">No</th>
-                            <th rowspan="2" style="border: 1px solid #000; text-align: left; padding: 6px 8px;">Nama Siswa</th>
+                            <th rowspan="2" style="border: 1px solid #000; width: 35px; padding: 6px; vertical-align: middle;">No</th>
+                            <th rowspan="2" style="border: 1px solid #000; text-align: left; padding: 6px 8px; vertical-align: middle;">Nama Siswa</th>
+                            <th colspan="5" style="border: 1px solid #000; padding: 6px; font-weight: bold; background: #eee; text-transform: uppercase;">
+                                ${bannerText}
+                            </th>
+                        </tr>
+                        <tr>
                             <th style="border: 1px solid #000; width: 90px; padding: 6px;">Kehadiran</th>
                             <th style="border: 1px solid #000; width: 60px; padding: 6px;">Rambut</th>
                             <th style="border: 1px solid #000; width: 60px; padding: 6px;">Atribut</th>
                             <th style="border: 1px solid #000; width: 60px; padding: 6px; font-style: italic;">Make up</th>
                             <th style="border: 1px solid #000; width: 60px; padding: 6px;">Seragam</th>
-                        </tr>
-                        <tr>
-                            <th colspan="5" style="border: 1px solid #000; padding: 4px; font-weight: bold; background: #eee; text-transform: uppercase;">
-                                ${bannerText}
-                            </th>
                         </tr>
                     </thead>
                     <tbody>
