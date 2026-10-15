@@ -3676,10 +3676,11 @@ const Forms = {
         e.preventDefault();
         const getVal = (id) => document.getElementById(id)?.value?.trim() || "";
 
+        const currentTemplate = StorageManager.getSuratTemplate();
         const updated = {
-            kopInstansi: getVal("setSuratKopInstansi"),
-            kopImageUrl: this.uploadedSuratKopUrl !== null ? this.uploadedSuratKopUrl : (StorageManager.getSuratTemplate().kopImageUrl || ""),
-            ttdImageUrl: this.uploadedSuratTtdUrl !== null ? this.uploadedSuratTtdUrl : (StorageManager.getSuratTemplate().ttdImageUrl || ""),
+            kopInstansi: getVal("setSuratKopInstansi") || currentTemplate.kopInstansi || "PEMERINTAH PROVINSI JAWA TENGAH\nDINAS PENDIDIKAN DAN KEBUDAYAAN\nSMK NEGERI 1 MAGELANG",
+            kopImageUrl: this.uploadedSuratKopUrl !== null ? this.uploadedSuratKopUrl : (currentTemplate.kopImageUrl || ""),
+            ttdImageUrl: this.uploadedSuratTtdUrl !== null ? this.uploadedSuratTtdUrl : (currentTemplate.ttdImageUrl || ""),
             nomorFormat: getVal("setSuratNomorFormat"),
             waktu: getVal("setSuratWaktu"),
             tempat: getVal("setSuratTempat"),
