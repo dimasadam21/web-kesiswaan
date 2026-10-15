@@ -653,13 +653,43 @@ const StorageManager = {
         }
 
         studentsList.forEach((newS, idx) => {
-            const identifier = String(newS.nis || newS.nisn || "").trim();
-            if (!identifier || !newS.nama) return;
+            // Abaikan hanya jika baris benar-benar kosong tanpa nama dan nomor induk
+            if (!newS.nama && !newS.nis && !newS.nisn) return;
 
-            const existingIdx = data.students.findIndex(s => 
-                (newS.nis && String(s.nis).trim() === String(newS.nis).trim()) ||
-                (newS.nisn && String(s.nisn).trim() === String(newS.nisn).trim())
-            );
+            // Pastikan nama terisi
+            const studentName = String(newS.nama || '').trim();
+            if (!studentName) {
+                newS.nama = `Siswa ${idx + 1}`;
+            } else {
+                newS.nama = studentName;
+            }
+
+            // Pastikan NIS dan NISN terisi
+            if (!newS.nis && !newS.nisn) {
+                newS.nis = `NIS-${String(idx + 1).padStart(4, '0')}`;
+                newS.nisn = newS.nis;
+            } else if (!newS.nis) {
+                newS.nis = newS.nisn;
+            } else if (!newS.nisn) {
+                newS.nis = newS.nis;
+            }
+
+            const cleanNewNis = String(newS.nis).trim().toLowerCase();
+            const cleanNewNisn = String(newS.nisn).trim().toLowerCase();
+            const cleanNewNama = String(newS.nama).trim().toLowerCase();
+            const cleanNewKelas = String(newS.kelas || '').trim().toLowerCase();
+
+            const existingIdx = data.students.findIndex(s => {
+                const sNis = String(s.nis || '').trim().toLowerCase();
+                const sNisn = String(s.nisn || '').trim().toLowerCase();
+                const sNama = String(s.nama || '').trim().toLowerCase();
+                const sKelas = String(s.kelas || '').trim().toLowerCase();
+
+                if (cleanNewNis && sNis && cleanNewNis === sNis) return true;
+                if (cleanNewNisn && sNisn && cleanNewNisn === sNisn) return true;
+                if (cleanNewNama && sNama && cleanNewNama === sNama && (!cleanNewKelas || !sKelas || cleanNewKelas === sKelas)) return true;
+                return false;
+            });
 
             if (existingIdx !== -1) {
                 // Siswa sudah ada

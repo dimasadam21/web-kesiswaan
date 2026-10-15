@@ -1054,7 +1054,41 @@ const Forms = {
                         const workbook = XLSX.read(data, { type: 'array' });
                         const firstSheetName = workbook.SheetNames[0];
                         const worksheet = workbook.Sheets[firstSheetName];
-                        const json = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+                        
+                        // Ekstraksi 2D array baris untuk mendeteksi baris header secara cerdas (apabila ada judul di baris 1-4)
+                        const rawArray = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "" });
+                        let json = [];
+                        
+                        if (rawArray.length > 0) {
+                            let headerRowIdx = 0;
+                            for (let r = 0; r < Math.min(rawArray.length, 10); r++) {
+                                const rowValues = rawArray[r].map(v => String(v).toLowerCase().replace(/[^a-z0-9]/g, ''));
+                                const hasNama = rowValues.some(v => v.includes('nama') || v.includes('siswa') || v.includes('peserta') || v === 'name');
+                                const hasNis = rowValues.some(v => v.includes('nis') || v.includes('induk') || v.includes('nipd') || v.includes('nomor'));
+                                const hasKelas = rowValues.some(v => v.includes('kelas') || v.includes('rombel') || v.includes('tingkat'));
+                                if ((hasNama && hasNis) || (hasNama && hasKelas) || (hasNis && hasKelas)) {
+                                    headerRowIdx = r;
+                                    break;
+                                }
+                            }
+
+                            if (headerRowIdx > 0) {
+                                const headers = rawArray[headerRowIdx].map(h => String(h).trim());
+                                for (let r = headerRowIdx + 1; r < rawArray.length; r++) {
+                                    const vals = rawArray[r];
+                                    if (!vals || vals.length === 0 || vals.every(v => String(v).trim() === "")) continue;
+                                    const obj = {};
+                                    headers.forEach((h, colIdx) => {
+                                        const headerKey = h || `col_${colIdx}`;
+                                        obj[headerKey] = vals[colIdx] !== undefined ? vals[colIdx] : "";
+                                    });
+                                    json.push(obj);
+                                }
+                            } else {
+                                json = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+                            }
+                        }
+
                         this.processImportData(json);
                         if (statusText) statusText.textContent = `✅ Berhasil membaca: ${file.name} (${json.length} baris data)`;
                     } catch (err) {
@@ -1142,13 +1176,26 @@ const Forms = {
 
         if (rows.length < 2) return [];
 
-        const headers = rows[0];
+        // Deteksi baris header secara cerdas jika baris 0 adalah judul
+        let headerRowIdx = 0;
+        for (let r = 0; r < Math.min(rows.length, 10); r++) {
+            const rowValues = rows[r].map(v => String(v).toLowerCase().replace(/[^a-z0-9]/g, ''));
+            const hasNama = rowValues.some(v => v.includes('nama') || v.includes('siswa') || v.includes('peserta') || v === 'name');
+            const hasNis = rowValues.some(v => v.includes('nis') || v.includes('induk') || v.includes('nipd') || v.includes('nomor'));
+            const hasKelas = rowValues.some(v => v.includes('kelas') || v.includes('rombel') || v.includes('tingkat'));
+            if ((hasNama && hasNis) || (hasNama && hasKelas) || (hasNis && hasKelas)) {
+                headerRowIdx = r;
+                break;
+            }
+        }
+
+        const headers = rows[headerRowIdx];
         const result = [];
-        for (let i = 1; i < rows.length; i++) {
+        for (let i = headerRowIdx + 1; i < rows.length; i++) {
             const rowValues = rows[i];
             const rowObj = {};
             headers.forEach((h, idx) => {
-                rowObj[h] = rowValues[idx] !== undefined ? rowValues[idx] : "";
+                rowObj[h || `col_${idx}`] = rowValues[idx] !== undefined ? rowValues[idx] : "";
             });
             result.push(rowObj);
         }
@@ -1173,9 +1220,11 @@ const Forms = {
         };
 
         // 1. Nama Lengkap (jangan disingkat)
-        const nama = findVal((c) => {
-            if (c.includes('bapak') || c.includes('ibu') || c.includes('ayah') || c.includes('ortu')) return false;
-            return c.includes('namalengkap') || c.includes('namasiswa') || c.includes('nama') || c === 'student';
+        let nama = findVal((c) => {
+            if (c.includes('bapak') || c.includes('ibu') || c.includes('ayah') || c.includes('ortu') || c.includes('wali')) return false;
+            return c.includes('namalengkap') || c.includes('namasiswa') || c.includes('namapesertadidik') || 
+                   c.includes('pesertadidik') || c.includes('siswa') || c.includes('murid') || 
+                   c.includes('nama') || c === 'student' || c === 'name' || c === 'fullname';
         });
 
         // 2. Kelas
@@ -1187,20 +1236,56 @@ const Forms = {
         // 3. NIS (Nomor Induk Siswa) - Bukan NISN/NIK
         let nis = findVal((c) => {
             if (c.includes('bukannisn')) return true;
-            if (c === 'nis' || c === 'nomorinduksiswa' || c === 'noinduk' || c === 'induk') return true;
+            if (c === 'nis' || c === 'nomorinduksiswa' || c === 'noinduk' || c === 'induk' || c === 'nomorinduk' || c === 'noinduksiswa' || c === 'nipd') return true;
+            if (c.includes('nomorinduk') || c.includes('noinduk') || c.includes('nipd')) return true;
             if (c.startsWith('nis') && !c.includes('nisn')) return true;
+            if (c.endsWith('nis') && !c.includes('nisn')) return true;
             return false;
         });
 
-        // NISN (jika berkas lama menyediakan NISN)
+        // NISN (jika berkas menyediakan NISN)
         let nisn = findVal((c) => {
             if (c.includes('bukannisn')) return false;
             return c === 'nisn' || (c.includes('nisn') && !c.includes('bukan'));
         });
 
+        // Fallback pencarian nama jika header tabel tidak standar
+        if (!nama) {
+            for (const k of keys) {
+                const val = String(row[k] || '').trim();
+                const cleanK = k.toLowerCase().replace(/[^a-z0-9]/g, '');
+                if (cleanK.includes('bapak') || cleanK.includes('ibu') || cleanK.includes('ayah') || cleanK.includes('ortu')) continue;
+                if (val && val.length >= 3 && !/^\d+$/.test(val) && !val.startsWith('http') && 
+                    !cleanK.includes('kelas') && !cleanK.includes('alamat') && !cleanK.includes('tempat') && !cleanK.includes('agama')) {
+                    nama = val;
+                    break;
+                }
+            }
+        }
+
         // Saling melengkapi NIS dan NISN agar sistem kompatibel penuh
         if (!nisn && nis) nisn = nis;
         if (!nis && nisn) nis = nisn;
+
+        // Fallback pencarian NIS jika kolom bernomor induk tidak terdeteksi via nama kolom
+        if (!nis) {
+            for (const k of keys) {
+                const val = String(row[k] || '').trim();
+                const cleanK = k.toLowerCase().replace(/[^a-z0-9]/g, '');
+                if (cleanK.includes('hp') || cleanK.includes('wa') || cleanK.includes('telepon')) continue;
+                if (/^\d{4,12}$/.test(val)) {
+                    nis = val;
+                    nisn = val;
+                    break;
+                }
+            }
+        }
+
+        // JIKA TETAP KOSONG tapi nama ada, otomatis buatkan NIS agar data TIDAK PERNAH DILEWATI!
+        if (!nis && nama) {
+            nis = `NIS-${String(idx + 1).padStart(4, '0')}`;
+            nisn = nis;
+        }
 
         // 4. Pas Foto pakai seragam (backround biru) Maksimal 1 MB
         const foto = findVal((c) => {
