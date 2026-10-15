@@ -1344,7 +1344,7 @@ const Forms = {
         // 14. No WA Bapak
         const noHpBapak = findVal((c) => {
             return (c.includes('wa') || c.includes('hp') || c.includes('telepon')) && (c.includes('bapak') || c.includes('ayah'));
-        }) || "-";
+        }) || "";
 
         // 15. Nama Ibu Kandung
         const namaOrtuIbu = findVal((c) => {
@@ -1362,7 +1362,7 @@ const Forms = {
         const noHpIbu = findVal((c) => {
             if (c.includes('maps') || c.includes('bapak')) return false;
             return (c.includes('wa') || c.includes('hp') || c.includes('telepon')) && c.includes('ibu');
-        }) || "-";
+        }) || "";
 
         // Bidang pelengkap sistem
         const no = findVal((c) => c === 'no' || c === 'nomor') || (idx + 1);
@@ -1493,15 +1493,19 @@ const Forms = {
             const res = StorageManager.importStudents(this.parsedImportRows, mode);
             this.closeAllModals();
 
-            if (AuthManager.isTeacher()) {
+            this.populateExportStudentClassFilter();
+            this.populateDropdowns();
+
+            if (window.AdminPortal) {
                 AdminPortal.renderTeacherAllStudents();
+                AdminPortal.renderClassAttendance();
                 const students = StorageManager.getStudents();
                 if (students.length > 0) {
                     AdminPortal.selectTargetStudent(students[0].id);
                 }
             }
 
-            App.showToast(`🎉 Sukses! ${res.total} data siswa diproses (${res.added} siswa baru, ${res.updated} diperbarui).`);
+            App.showToast(`🎉 Sukses! ${res.total} data siswa diproses (${res.added} siswa baru, ${res.updated} diperbarui). Buka menu 'Kelola Siswa' untuk melihat data.`);
         } catch (err) {
             App.showToast("Gagal melakukan impor: " + err.message);
         }
@@ -1515,6 +1519,8 @@ const Forms = {
     openExportStudentsModal() {
         this.exportStudentSearchQuery = "";
         this.exportStudentClassFilter = "";
+        this.exportStudentCurrentPage = 1;
+        this.exportStudentPageSize = 50;
 
         const searchInput = document.getElementById("exportStudentSearchInput");
         if (searchInput) searchInput.value = "";
@@ -1586,21 +1592,64 @@ const Forms = {
 
         const allStudents = StorageManager.getStudents() || [];
         const filtered = this.getFilteredExportStudents();
+        const total = filtered.length;
 
-        // Update Badge & Status
+        // Hitung paginasi halaman
+        const pageSize = this.exportStudentPageSize || 50;
+        const totalPages = Math.max(1, Math.ceil(total / pageSize));
+        if (this.exportStudentCurrentPage > totalPages) this.exportStudentCurrentPage = totalPages;
+        if (this.exportStudentCurrentPage < 1) this.exportStudentCurrentPage = 1;
+        const currentPage = this.exportStudentCurrentPage;
+
+        const startIdx = (currentPage - 1) * pageSize;
+        const endIdx = Math.min(startIdx + pageSize, total);
+        const pagedStudents = filtered.slice(startIdx, endIdx);
+
+        // Update Badge Total
         const totalBadge = document.getElementById("exportModalTotalBadge");
         if (totalBadge) {
-            totalBadge.textContent = `${filtered.length} Siswa`;
-            totalBadge.style.background = filtered.length > 0 ? "#e0f2fe" : "#fee2e2";
-            totalBadge.style.color = filtered.length > 0 ? "#0369a1" : "#991b1b";
+            totalBadge.textContent = `${total} Siswa`;
+            totalBadge.style.background = total > 0 ? "#e0f2fe" : "#fee2e2";
+            totalBadge.style.color = total > 0 ? "#0369a1" : "#991b1b";
         }
 
+        // Update Info Status Filter & Record Range
         const statusText = document.getElementById("exportStudentFilterStatus");
         if (statusText) {
-            if (this.exportStudentSearchQuery || this.exportStudentClassFilter) {
-                statusText.innerHTML = `Menampilkan <strong>${filtered.length}</strong> dari total ${allStudents.length} siswa terdaftar.`;
+            if (total === 0) {
+                statusText.innerHTML = `Tidak ada siswa yang ditemukan dari total ${allStudents.length} siswa terdaftar.`;
+            } else if (this.exportStudentSearchQuery || this.exportStudentClassFilter) {
+                statusText.innerHTML = `Menampilkan data ke-<strong>${startIdx + 1} - ${endIdx}</strong> dari <strong>${total}</strong> siswa tersaring (total keseluruhan: ${allStudents.length} siswa).`;
             } else {
-                statusText.innerHTML = `Menampilkan seluruh <strong>${allStudents.length}</strong> siswa terdaftar di sistem.`;
+                statusText.innerHTML = `Menampilkan data ke-<strong>${startIdx + 1} - ${endIdx}</strong> dari total <strong>${total}</strong> siswa terdaftar di sistem.`;
+            }
+        }
+
+        // Render Tombol Kontrol Paginasi
+        const paginationContainer = document.getElementById("exportStudentPaginationControls");
+        if (paginationContainer) {
+            if (totalPages <= 1) {
+                paginationContainer.innerHTML = '';
+            } else {
+                paginationContainer.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap;">
+                        <button type="button" class="btn btn-outline btn-sm" onclick="Forms.changeExportStudentPage(1)" ${currentPage === 1 ? 'disabled style="opacity: 0.45; cursor: not-allowed;"' : 'style="cursor: pointer;"'} title="Halaman Pertama">
+                            ⏮️
+                        </button>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="Forms.changeExportStudentPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled style="opacity: 0.45; cursor: not-allowed;"' : 'style="cursor: pointer;"'} title="Halaman Sebelumnya">
+                            ◀️ Sebelumnya
+                        </button>
+                        <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-main); padding: 0 0.5rem; background: #f1f5f9; border-radius: 6px; padding: 3px 8px; border: 1px solid var(--border);">
+                            Hal ${currentPage} / ${totalPages}
+                        </span>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="Forms.changeExportStudentPage(${currentPage + 1})" ${currentPage >= totalPages ? 'disabled style="opacity: 0.45; cursor: not-allowed;"' : 'style="cursor: pointer;"'} title="Halaman Berikutnya">
+                            Berikutnya ▶️
+                        </button>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="Forms.changeExportStudentPage(${totalPages})" ${currentPage >= totalPages ? 'disabled style="opacity: 0.45; cursor: not-allowed;"' : 'style="cursor: pointer;"'} title="Halaman Terakhir">
+                            ⏭️
+                        </button>
+                    </div>
+                `;
             }
         }
 
@@ -1617,15 +1666,18 @@ const Forms = {
             return;
         }
 
-        tbody.innerHTML = filtered.map((s, idx) => {
+        tbody.innerHTML = pagedStudents.map((s, idx) => {
             const st = StorageManager.calculateStudentStatus(s);
-            const fallbackAvatar = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80";
+            const fallbackAvatar = s.gender === 'P'
+                ? "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=120&q=80"
+                : "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80";
             const fotoUrl = s.foto || fallbackAvatar;
+            const globalNumber = startIdx + idx + 1;
 
             return `
                 <tr style="border-bottom: 1px solid var(--border); transition: background 0.15s;" onmouseenter="this.style.background='#f8fafc'" onmouseleave="this.style.background='transparent'">
                     <td style="padding: 10px 8px; text-align: center; color: var(--text-muted); font-weight: 600;">
-                        ${idx + 1}
+                        ${globalNumber}
                     </td>
                     <td style="padding: 8px 12px;">
                         <div style="display: flex; align-items: center; gap: 0.65rem;">
@@ -1687,13 +1739,20 @@ const Forms = {
         }).join('');
     },
 
+    changeExportStudentPage(page) {
+        this.exportStudentCurrentPage = Number(page) || 1;
+        this.renderExportStudentsTable();
+    },
+
     handleSearchExportStudents(query) {
         this.exportStudentSearchQuery = query || "";
+        this.exportStudentCurrentPage = 1;
         this.renderExportStudentsTable();
     },
 
     handleFilterExportStudentsKelas(kelas) {
         this.exportStudentClassFilter = kelas || "";
+        this.exportStudentCurrentPage = 1;
         this.renderExportStudentsTable();
     },
 

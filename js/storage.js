@@ -5,8 +5,14 @@
  */
 
 const STORAGE_KEY = "kesiswaan_app_data_v2";
+const STUDENTS_META_KEY = "kesiswaan_students_meta_v1";
+const STUDENTS_CHUNK_PREFIX = "kesiswaan_students_c_";
+const IDB_NAME = "kesiswaan_idb";
+const IDB_STORE = "students";
 
 const StorageManager = {
+    _studentsCache: null,
+
     init() {
         const stored = localStorage.getItem(STORAGE_KEY);
         if (!stored) {
@@ -23,45 +29,103 @@ const StorageManager = {
                 activities: DAFTAR_KEGIATAN
             });
         }
+        // Pastikan cache siswa dimuat
+        this.getStudents();
+        // Inisialisasi IndexedDB sebagai backup tahan kuota
+        this.initIndexedDB();
+    },
+
+    initIndexedDB() {
+        if (!window.indexedDB) return;
+        try {
+            const req = window.indexedDB.open(IDB_NAME, 1);
+            req.onupgradeneeded = (e) => {
+                const db = e.target.result;
+                if (!db.objectStoreNames.contains(IDB_STORE)) {
+                    db.createObjectStore(IDB_STORE, { keyPath: "key" });
+                }
+            };
+            req.onsuccess = (e) => {
+                const db = e.target.result;
+                const tx = db.transaction(IDB_STORE, "readonly");
+                const store = tx.objectStore(IDB_STORE);
+                const getReq = store.get("all_students");
+                getReq.onsuccess = () => {
+                    if (getReq.result && Array.isArray(getReq.result.data) && getReq.result.data.length > 0) {
+                        // Jika localStorage kosong atau jumlah siswa di IDB lebih banyak, pulihkan dari IDB
+                        if (!this._studentsCache || this._studentsCache.length < getReq.result.data.length) {
+                            this._studentsCache = getReq.result.data;
+                            this.saveStudents(getReq.result.data, false);
+                        }
+                    }
+                };
+            };
+        } catch (e) {
+            console.warn("IndexedDB init notice:", e);
+        }
+    },
+
+    saveStudentsToIndexedDB(studentsList) {
+        if (!window.indexedDB || !Array.isArray(studentsList)) return;
+        try {
+            const req = window.indexedDB.open(IDB_NAME, 1);
+            req.onupgradeneeded = (e) => {
+                const db = e.target.result;
+                if (!db.objectStoreNames.contains(IDB_STORE)) {
+                    db.createObjectStore(IDB_STORE, { keyPath: "key" });
+                }
+            };
+            req.onsuccess = (e) => {
+                const db = e.target.result;
+                const tx = db.transaction(IDB_STORE, "readwrite");
+                const store = tx.objectStore(IDB_STORE);
+                store.put({ key: "all_students", data: studentsList, updatedAt: Date.now() });
+            };
+        } catch (e) {
+            console.warn("IndexedDB save notice:", e);
+        }
     },
 
     getData() {
         const data = localStorage.getItem(STORAGE_KEY);
+        let parsed = null;
         if (!data) {
             this.init();
-            return JSON.parse(localStorage.getItem(STORAGE_KEY));
-        }
-        try {
-            const parsed = JSON.parse(data);
-            if (parsed && Array.isArray(parsed.students)) {
-                let changed = false;
-                parsed.students.forEach(s => {
-                    if (Array.isArray(s.prestasi)) {
-                        s.prestasi.forEach(p => {
-                            if (p && p.poin !== 0) {
-                                p.poin = 0;
-                                changed = true;
-                            }
-                        });
-                    }
-                });
-                if (changed) {
-                    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed)); } catch (e) {}
-                }
+            try { parsed = JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch (e) {}
+        } else {
+            try {
+                parsed = JSON.parse(data);
+            } catch (e) {
+                this.resetToDefault();
+                try { parsed = JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch (e) {}
             }
-            return parsed;
-        } catch (e) {
-            this.resetToDefault();
-            return JSON.parse(localStorage.getItem(STORAGE_KEY));
         }
+        if (!parsed || typeof parsed !== 'object') parsed = {};
+
+        // Selalu hubungkan data siswa dari manajemen penyimpanan siswa
+        parsed.students = this.getStudents();
+        return parsed;
     },
 
     saveData(data) {
+        if (!data) return;
+
+        // Jika data mengandung array siswa, simpan via manajemen siswa ber-chunk
+        if (Array.isArray(data.students)) {
+            this.saveStudents(data.students);
+        }
+
+        // Simpan data konfigurasi & master ke STORAGE_KEY tanpa membengkakkan ukuran
+        const toSave = { ...data };
+        toSave.students = []; // kosongkan pada STORAGE_KEY agar ukuran tetap < 50KB
+
         try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
         } catch (e) {
             console.error("Gagal menyimpan ke localStorage (kemungkinan kuota penuh):", e);
-            App.showToast("Penyimpanan lokal penuh. Harap gunakan gambar berukuran lebih kecil.");
+            if (window.App && typeof App.showToast === "function") {
+                App.showToast("Penyimpanan lokal penuh. Harap gunakan gambar berukuran lebih kecil.");
+            }
         }
     },
 
@@ -436,17 +500,110 @@ const StorageManager = {
 
     // DATA SISWA
     getStudents() {
-        return this.getData().students || [];
+        if (this._studentsCache && Array.isArray(this._studentsCache) && this._studentsCache.length > 0) {
+            return this._studentsCache;
+        }
+
+        // 1. Baca dari chunked storage di localStorage
+        try {
+            const metaRaw = localStorage.getItem(STUDENTS_META_KEY);
+            if (metaRaw) {
+                const meta = JSON.parse(metaRaw);
+                if (meta && typeof meta.chunks === "number" && meta.chunks > 0) {
+                    let all = [];
+                    for (let i = 0; i < meta.chunks; i++) {
+                        const chunkRaw = localStorage.getItem(STUDENTS_CHUNK_PREFIX + i);
+                        if (chunkRaw) {
+                            const parsedChunk = JSON.parse(chunkRaw);
+                            if (Array.isArray(parsedChunk)) {
+                                all = all.concat(parsedChunk);
+                            }
+                        }
+                    }
+                    if (all.length > 0) {
+                        this._studentsCache = all;
+                        return all;
+                    }
+                }
+            }
+        } catch (e) {
+            console.warn("Gagal membaca chunked student storage:", e);
+        }
+
+        // 2. Fallback baca dari legacy STORAGE_KEY
+        try {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                if (parsed && Array.isArray(parsed.students) && parsed.students.length > 0) {
+                    this._studentsCache = parsed.students;
+                    setTimeout(() => {
+                        this.saveStudents(parsed.students);
+                    }, 50);
+                    return parsed.students;
+                }
+            }
+        } catch (e) {
+            console.warn("Gagal membaca legacy student storage:", e);
+        }
+
+        // 3. Fallback default INITIAL_STUDENTS
+        const initial = (typeof INITIAL_STUDENTS !== 'undefined' && Array.isArray(INITIAL_STUDENTS)) ? INITIAL_STUDENTS : [];
+        this._studentsCache = JSON.parse(JSON.stringify(initial));
+        return this._studentsCache;
+    },
+
+    saveStudents(studentsList, syncIdb = true) {
+        if (!Array.isArray(studentsList)) return;
+        this._studentsCache = studentsList;
+
+        const CHUNK_SIZE = 350;
+        const totalChunks = Math.ceil(studentsList.length / CHUNK_SIZE) || 1;
+
+        try {
+            let oldChunksCount = 0;
+            const oldMetaRaw = localStorage.getItem(STUDENTS_META_KEY);
+            if (oldMetaRaw) {
+                try {
+                    oldChunksCount = JSON.parse(oldMetaRaw).chunks || 0;
+                } catch (e) {}
+            }
+
+            for (let i = 0; i < totalChunks; i++) {
+                const slice = studentsList.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
+                localStorage.setItem(STUDENTS_CHUNK_PREFIX + i, JSON.stringify(slice));
+            }
+
+            for (let i = totalChunks; i < oldChunksCount; i++) {
+                localStorage.removeItem(STUDENTS_CHUNK_PREFIX + i);
+            }
+
+            const meta = {
+                total: studentsList.length,
+                chunks: totalChunks,
+                chunkSize: CHUNK_SIZE,
+                updatedAt: Date.now()
+            };
+            localStorage.setItem(STUDENTS_META_KEY, JSON.stringify(meta));
+        } catch (e) {
+            console.error("Gagal menyimpan chunk siswa ke localStorage:", e);
+        }
+
+        if (syncIdb) {
+            this.saveStudentsToIndexedDB(studentsList);
+        }
     },
 
     getStudentById(id) {
-        return this.getStudents().find(s => s.id === id) || null;
+        if (!id) return null;
+        const clean = String(id).trim();
+        return this.getStudents().find(s => s.id === clean || s.nisn === clean || s.nis === clean) || null;
     },
 
     getStudentByNisn(nisn) {
         if (!nisn) return null;
-        const clean = nisn.trim();
-        return this.getStudents().find(s => s.nisn === clean) || null;
+        const clean = String(nisn).trim();
+        return this.getStudents().find(s => s.nisn === clean || s.nis === clean || s.id === clean) || null;
     },
 
     calculateStudentStatus(student) {
@@ -612,132 +769,169 @@ const StorageManager = {
     },
 
     importStudents(studentsList, mode = 'upsert') {
-        const data = this.getData();
+        const existingStudents = [...this.getStudents()];
         let addedCount = 0;
         let updatedCount = 0;
 
+        const supplement = (oldVal, newVal) => {
+            if (newVal === undefined || newVal === null) return oldVal || "";
+            const strNew = String(newVal).trim();
+            if (strNew === "" || strNew === "-" || strNew === "--" || strNew === "null" || strNew === "undefined") {
+                return oldVal || "";
+            }
+            return strNew;
+        };
+
+        const normalizeName = (str) => String(str || "").toLowerCase().replace(/\s+/g, " ").trim();
+        const normalizeClass = (str) => String(str || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+
+        const isRealNis = (v) => {
+            if (!v) return false;
+            const s = String(v).trim().toUpperCase();
+            return !s.startsWith("NIS-") && !s.startsWith("SIS-") && s !== "-" && s.length >= 3;
+        };
+
+        const isSameStudent = (existing, incoming) => {
+            const eName = normalizeName(existing.nama);
+            const iName = normalizeName(incoming.nama);
+            const eKelas = normalizeClass(existing.kelas);
+            const iKelas = normalizeClass(incoming.kelas);
+
+            // 1. Syarat utama: Nama dan Kelas sama persis -> pasti siswa yang sama!
+            if (eName && iName && eName === iName) {
+                if (eKelas && iKelas) {
+                    if (eKelas === iKelas) return true;
+                } else {
+                    return true;
+                }
+            }
+
+            // 2. Cocokkan NIS nomor induk asli (bukan kode NIS-XXXX dummy)
+            const cleanENis = String(existing.nis || "").trim();
+            const cleanINis = String(incoming.nis || "").trim();
+            if (isRealNis(cleanENis) && isRealNis(cleanINis) && cleanENis.toLowerCase() === cleanINis.toLowerCase()) {
+                return true;
+            }
+
+            // 3. Cocokkan NISN asli
+            const cleanENisn = String(existing.nisn || "").trim();
+            const cleanINisn = String(incoming.nisn || "").trim();
+            if (isRealNis(cleanENisn) && isRealNis(cleanINisn) && cleanENisn.toLowerCase() === cleanINisn.toLowerCase()) {
+                return true;
+            }
+
+            return false;
+        };
+
         if (mode === 'replace') {
-            data.students = studentsList.map((s, idx) => ({
-                id: "SIS-" + Date.now() + "-" + idx,
-                no: s.no || (idx + 1),
-                foto: s.foto || (s.gender === "P" 
-                    ? "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=300&q=80" 
-                    : "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=300&q=80"),
-                nis: s.nis || "",
-                nisn: s.nisn || s.nis || ("NIS-" + (idx + 1)),
-                nama: s.nama,
-                gender: s.gender || "L",
-                kelas: s.kelas || "-",
-                jurusan: s.jurusan || "-",
-                tempatLahir: s.tempatLahir || "",
-                tanggalLahir: s.tanggalLahir || "",
-                agama: s.agama || "",
-                tempatTinggal: s.tempatTinggal || "",
-                alamat: s.alamat || "",
-                mapsAlamat: s.mapsAlamat || "",
-                nomorHp: s.nomorHp || "",
-                namaOrtuBapak: s.namaOrtuBapak || "",
-                pekerjaanBapak: s.pekerjaanBapak || "",
-                noHpBapak: s.noHpBapak || "-",
-                namaOrtuIbu: s.namaOrtuIbu || "",
-                pekerjaanIbu: s.pekerjaanIbu || "",
-                noHpIbu: s.noHpIbu || "-",
-                inputSpmb: s.inputSpmb || "",
-                waliKelas: s.waliKelas || "-",
-                kontakOrtu: (s.noHpBapak && s.noHpBapak !== "-") ? s.noHpBapak : (s.noHpIbu || "-"),
-                prestasi: [],
-                pelanggaran: []
-            }));
-            this.saveData(data);
-            return { total: studentsList.length, added: studentsList.length, updated: 0 };
+            const newStudents = studentsList.map((s, idx) => {
+                const autoNis = s.nis || s.nisn || `NIS-${String(idx + 1).padStart(4, '0')}`;
+                return {
+                    id: "SIS-" + Date.now() + "-" + idx,
+                    no: s.no || (idx + 1),
+                    foto: s.foto || "",
+                    nis: autoNis,
+                    nisn: s.nisn || autoNis,
+                    nama: String(s.nama || `Siswa ${idx + 1}`).trim(),
+                    gender: s.gender || "L",
+                    kelas: s.kelas || "-",
+                    jurusan: s.jurusan || "-",
+                    tempatLahir: s.tempatLahir || "",
+                    tanggalLahir: s.tanggalLahir || "",
+                    agama: s.agama || "",
+                    tempatTinggal: s.tempatTinggal || "",
+                    alamat: s.alamat || "",
+                    mapsAlamat: s.mapsAlamat || "",
+                    nomorHp: s.nomorHp || "",
+                    namaOrtuBapak: s.namaOrtuBapak || "",
+                    pekerjaanBapak: s.pekerjaanBapak || "",
+                    noHpBapak: s.noHpBapak || "-",
+                    namaOrtuIbu: s.namaOrtuIbu || "",
+                    pekerjaanIbu: s.pekerjaanIbu || "",
+                    noHpIbu: s.noHpIbu || "-",
+                    inputSpmb: s.inputSpmb || "",
+                    waliKelas: s.waliKelas || "-",
+                    kontakOrtu: (s.noHpBapak && s.noHpBapak !== "-") ? s.noHpBapak : (s.noHpIbu || "-"),
+                    prestasi: [],
+                    pelanggaran: []
+                };
+            });
+            this.saveStudents(newStudents);
+            return { total: newStudents.length, added: newStudents.length, updated: 0 };
         }
 
+        // Mode Upsert / Tambah Baru
         studentsList.forEach((newS, idx) => {
-            // Abaikan hanya jika baris benar-benar kosong tanpa nama dan nomor induk
-            if (!newS.nama && !newS.nis && !newS.nisn) return;
-
-            // Pastikan nama terisi
             const studentName = String(newS.nama || '').trim();
-            if (!studentName) {
-                newS.nama = `Siswa ${idx + 1}`;
-            } else {
-                newS.nama = studentName;
-            }
+            // Valid jika setidaknya ada nama atau NIS
+            if (!studentName && !newS.nis && !newS.nisn) return;
 
-            // Pastikan NIS dan NISN terisi
-            if (!newS.nis && !newS.nisn) {
-                newS.nis = `NIS-${String(idx + 1).padStart(4, '0')}`;
-                newS.nisn = newS.nis;
-            } else if (!newS.nis) {
-                newS.nis = newS.nisn;
-            } else if (!newS.nisn) {
-                newS.nis = newS.nis;
-            }
-
-            const cleanNewNis = String(newS.nis).trim().toLowerCase();
-            const cleanNewNisn = String(newS.nisn).trim().toLowerCase();
-            const cleanNewNama = String(newS.nama).trim().toLowerCase();
-            const cleanNewKelas = String(newS.kelas || '').trim().toLowerCase();
-
-            const existingIdx = data.students.findIndex(s => {
-                const sNis = String(s.nis || '').trim().toLowerCase();
-                const sNisn = String(s.nisn || '').trim().toLowerCase();
-                const sNama = String(s.nama || '').trim().toLowerCase();
-                const sKelas = String(s.kelas || '').trim().toLowerCase();
-
-                if (cleanNewNis && sNis && cleanNewNis === sNis) return true;
-                if (cleanNewNisn && sNisn && cleanNewNisn === sNisn) return true;
-                if (cleanNewNama && sNama && cleanNewNama === sNama && (!cleanNewKelas || !sKelas || cleanNewKelas === sKelas)) return true;
-                return false;
-            });
+            const existingIdx = existingStudents.findIndex(s => isSameStudent(s, newS));
 
             if (existingIdx !== -1) {
-                // Siswa sudah ada
+                // Siswa sudah terdaftar: Lakukan susulan data TANPA mengubah/menghapus data lama jika kolom baru kosong
                 if (mode === 'upsert') {
-                    const current = data.students[existingIdx];
-                    data.students[existingIdx] = {
+                    const current = existingStudents[existingIdx];
+
+                    // Upgrade NIS: jika data lama adalah dummy tapi data baru punya NIS asli, gunakan yang asli
+                    let finalNis = current.nis;
+                    if (!isRealNis(current.nis) && isRealNis(newS.nis)) {
+                        finalNis = newS.nis;
+                    } else if (!current.nis && newS.nis) {
+                        finalNis = newS.nis;
+                    }
+
+                    let finalNisn = current.nisn;
+                    if (!isRealNis(current.nisn) && isRealNis(newS.nisn)) {
+                        finalNisn = newS.nisn;
+                    } else if (!current.nisn && newS.nisn) {
+                        finalNisn = newS.nisn;
+                    }
+
+                    // Susulkan data baru tanpa merusak data lama
+                    existingStudents[existingIdx] = {
                         ...current,
                         no: newS.no || current.no || (existingIdx + 1),
-                        foto: newS.foto || current.foto,
-                        nis: newS.nis || current.nis || "",
-                        nisn: newS.nisn || current.nisn || newS.nis || "",
-                        nama: newS.nama || current.nama,
-                        gender: newS.gender || current.gender || "L",
-                        kelas: newS.kelas || current.kelas,
-                        jurusan: newS.jurusan || current.jurusan || "-",
-                        tempatLahir: newS.tempatLahir || current.tempatLahir || "",
-                        tanggalLahir: newS.tanggalLahir || current.tanggalLahir || "",
-                        agama: newS.agama || current.agama || "",
-                        tempatTinggal: newS.tempatTinggal || current.tempatTinggal || "",
-                        alamat: newS.alamat || current.alamat || "",
-                        mapsAlamat: newS.mapsAlamat || current.mapsAlamat || "",
-                        nomorHp: newS.nomorHp || current.nomorHp || "",
-                        namaOrtuBapak: newS.namaOrtuBapak || current.namaOrtuBapak || "",
-                        pekerjaanBapak: newS.pekerjaanBapak || current.pekerjaanBapak || "",
-                        noHpBapak: newS.noHpBapak || current.noHpBapak || "-",
-                        namaOrtuIbu: newS.namaOrtuIbu || current.namaOrtuIbu || "",
-                        pekerjaanIbu: newS.pekerjaanIbu || current.pekerjaanIbu || "",
-                        noHpIbu: newS.noHpIbu || current.noHpIbu || "-",
-                        inputSpmb: newS.inputSpmb || current.inputSpmb || "",
-                        waliKelas: newS.waliKelas || current.waliKelas || "-",
-                        kontakOrtu: (newS.noHpBapak && newS.noHpBapak !== "-") ? newS.noHpBapak : (newS.noHpIbu || current.kontakOrtu || "-"),
-                        // Jaga riwayat poin, prestasi & pelanggaran
+                        foto: newS.foto ? supplement(current.foto, newS.foto) : (current.foto || ""),
+                        nis: finalNis || current.nis || "",
+                        nisn: finalNisn || current.nisn || finalNis || "",
+                        nama: supplement(current.nama, newS.nama),
+                        gender: supplement(current.gender, newS.gender) || "L",
+                        kelas: supplement(current.kelas, newS.kelas),
+                        jurusan: supplement(current.jurusan, newS.jurusan) || "-",
+                        tempatLahir: supplement(current.tempatLahir, newS.tempatLahir),
+                        tanggalLahir: supplement(current.tanggalLahir, newS.tanggalLahir),
+                        agama: supplement(current.agama, newS.agama),
+                        tempatTinggal: supplement(current.tempatTinggal, newS.tempatTinggal),
+                        alamat: supplement(current.alamat, newS.alamat),
+                        mapsAlamat: supplement(current.mapsAlamat, newS.mapsAlamat),
+                        nomorHp: supplement(current.nomorHp, newS.nomorHp),
+                        namaOrtuBapak: supplement(current.namaOrtuBapak, newS.namaOrtuBapak),
+                        pekerjaanBapak: supplement(current.pekerjaanBapak, newS.pekerjaanBapak),
+                        noHpBapak: supplement(current.noHpBapak, newS.noHpBapak) || "-",
+                        namaOrtuIbu: supplement(current.namaOrtuIbu, newS.namaOrtuIbu),
+                        pekerjaanIbu: supplement(current.pekerjaanIbu, newS.pekerjaanIbu),
+                        noHpIbu: supplement(current.noHpIbu, newS.noHpIbu) || "-",
+                        inputSpmb: supplement(current.inputSpmb, newS.inputSpmb),
+                        waliKelas: supplement(current.waliKelas, newS.waliKelas) || "-",
+                        kontakOrtu: supplement(current.kontakOrtu, (newS.noHpBapak && newS.noHpBapak !== "-") ? newS.noHpBapak : newS.noHpIbu) || "-",
+                        // Jaga riwayat poin, prestasi & pelanggaran tetap utuh dan aman
+                        id: current.id,
                         prestasi: current.prestasi || [],
                         pelanggaran: current.pelanggaran || []
                     };
                     updatedCount++;
                 }
             } else {
-                // Siswa baru
+                // Siswa baru: Buatkan data siswa dasar
+                const autoNis = newS.nis || newS.nisn || `NIS-${String(existingStudents.length + addedCount + 1).padStart(4, '0')}`;
                 const student = {
                     id: "SIS-" + Date.now() + "-" + idx + "-" + Math.floor(Math.random() * 1000),
-                    no: newS.no || (data.students.length + 1),
-                    foto: newS.foto || (newS.gender === "P" 
-                        ? "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=300&q=80" 
-                        : "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=300&q=80"),
-                    nis: newS.nis || "",
-                    nisn: String(newS.nisn || newS.nis || ("NIS-" + (data.students.length + 1))).trim(),
-                    nama: newS.nama,
+                    no: newS.no || (existingStudents.length + 1),
+                    foto: newS.foto || "",
+                    nis: autoNis,
+                    nisn: String(newS.nisn || autoNis).trim(),
+                    nama: studentName || `Siswa ${existingStudents.length + 1}`,
                     gender: newS.gender || "L",
                     kelas: newS.kelas || "-",
                     jurusan: newS.jurusan || "-",
@@ -760,12 +954,12 @@ const StorageManager = {
                     prestasi: [],
                     pelanggaran: []
                 };
-                data.students.push(student);
+                existingStudents.push(student);
                 addedCount++;
             }
         });
 
-        this.saveData(data);
+        this.saveStudents(existingStudents);
         return { total: studentsList.length, added: addedCount, updated: updatedCount };
     },
 
