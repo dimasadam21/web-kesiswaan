@@ -1715,12 +1715,49 @@
                 </div>
 
                 <!-- DAFTAR GURU TERDAFTAR -->
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                    <strong>Daftar Guru / Staf Terdaftar:</strong>
-                    <span style="font-size: 0.75rem; color: var(--text-muted);">Klik ✏️ Edit untuk mengubah nama, jabatan, sekbid, pokja & password</span>
-                </div>
-                <div id="teachersListContainer" style="max-height: 280px; overflow-y: auto;">
-                    <!-- Diisi via JavaScript -->
+                <div style="background: #ffffff; border: 1px solid var(--border); border-radius: 10px; padding: 1rem; margin-top: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                            <strong style="color: var(--text-main); font-size: 0.95rem;">📋 Daftar Guru / Staf Terdaftar</strong>
+                            <span id="teacherCountBadge" class="badge" style="background: #e0f2fe; color: #0369a1; font-size: 0.75rem; font-weight: 700; padding: 2px 8px; border-radius: 99px;">
+                                0 Guru
+                            </span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;">
+                            <!-- Tombol Template Excel -->
+                            <button type="button" class="btn btn-outline btn-sm" onclick="Forms.downloadTeacherTemplate()" style="font-size: 0.76rem; padding: 0.35rem 0.65rem; border-color: #cbd5e1; color: var(--text-main); background: #f8fafc;" title="Unduh template format Excel (.xlsx) untuk impor akun guru">
+                                📄 Template Excel
+                            </button>
+                            <!-- Tombol Impor Data -->
+                            <button type="button" class="btn btn-outline btn-sm" onclick="Forms.triggerImportTeachers()" style="font-size: 0.76rem; padding: 0.35rem 0.65rem; border-color: #86efac; color: #15803d; background: #f0fdf4;" title="Impor data akun guru dari file Excel (.xlsx, .xls) atau CSV (.csv)">
+                                📤 Impor (.xlsx / .csv)
+                            </button>
+                            <!-- Tombol Ekspor Data -->
+                            <button type="button" class="btn btn-outline btn-sm" onclick="Forms.exportTeachersToExcel()" style="font-size: 0.76rem; padding: 0.35rem 0.65rem; border-color: #93c5fd; color: #1d4ed8; background: #eff6ff;" title="Ekspor data akun guru (Nama Lengkap, Sebagai Jabatan Utama, Username, Password) ke Excel (.xlsx)">
+                                📥 Ekspor (.xlsx)
+                            </button>
+                            <!-- Hidden File Input untuk Impor Guru -->
+                            <input type="file" id="importTeachersFileInput" accept=".xlsx, .xls, .csv" style="display: none;" onchange="Forms.handleImportTeachersFile(event)">
+                        </div>
+                    </div>
+
+                    <!-- Search Bar Anggota / Guru -->
+                    <div style="position: relative; margin-bottom: 0.65rem;">
+                        <span style="position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.95rem; pointer-events: none;">🔍</span>
+                        <input type="text" id="searchTeacherInput" class="form-control-clean" placeholder="Cari nama lengkap guru, jabatan/sebagai, username, kelas, ekskul..." oninput="Forms.handleSearchTeacher(this.value)" style="padding-left: 34px; padding-right: 32px; font-size: 0.85rem; height: 38px; border-radius: 8px; width: 100%;">
+                        <button type="button" id="clearSearchTeacherBtn" onclick="Forms.clearSearchTeacher()" style="display: none; position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: #e2e8f0; border: none; color: #475569; width: 20px; height: 20px; border-radius: 50%; font-size: 0.75rem; line-height: 1; cursor: pointer; display: none; align-items: center; justify-content: center;" title="Reset pencarian">✕</button>
+                    </div>
+
+                    <!-- Keterangan Sub Status -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.55rem; font-size: 0.75rem; color: var(--text-muted); flex-wrap: wrap; gap: 0.35rem;">
+                        <span id="teacherSearchStatusText">Menampilkan seluruh data guru</span>
+                        <span>Klik ✏️ Edit untuk ubah nama, jabatan & password</span>
+                    </div>
+
+                    <!-- Container Daftar Guru -->
+                    <div id="teachersListContainer" style="max-height: 320px; overflow-y: auto; padding-right: 2px;">
+                        <!-- Diisi via JavaScript -->
+                    </div>
                 </div>
             </div>
             <div class="modal-card-footer">

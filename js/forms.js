@@ -11,6 +11,7 @@ const Forms = {
     uploadedSuratKopUrl: null,
     uploadedSuratTtdUrl: null,
     currentSuratSpLevel: "SP 1",
+    teacherSearchQuery: "",
 
     init() {
         this.bindEvents();
@@ -1678,6 +1679,12 @@ const Forms = {
     },
 
     openManageTeachersModal() {
+        this.teacherSearchQuery = "";
+        const searchInput = document.getElementById("searchTeacherInput");
+        if (searchInput) searchInput.value = "";
+        const clearBtn = document.getElementById("clearSearchTeacherBtn");
+        if (clearBtn) clearBtn.style.display = "none";
+
         this.initPembinaSelector('new', []);
         this.renderTeachersList();
         const roleSelect = document.getElementById("newTeacherRoleSelect");
@@ -1817,36 +1824,84 @@ const Forms = {
         const container = document.getElementById("teachersListContainer");
         if (!container) return;
 
-        const teachers = StorageManager.getTeachers();
+        const allTeachers = StorageManager.getTeachers();
+        const q = (this.teacherSearchQuery || "").toLowerCase();
 
-        container.innerHTML = teachers.map(t => {
+        const filtered = q ? allTeachers.filter(t => {
+            const name = (t.name || "").toLowerCase();
+            const uname = (t.username || "").toLowerCase();
+            const role = (t.role || "").toLowerCase();
+            const roleLabel = (t.roleLabel || "").toLowerCase();
+            const sekbid = (t.sekbid || "").toLowerCase();
+            const pembina = (t.pembina || t.pokja || "").toLowerCase();
+            const kelas = (t.kelas || "").toLowerCase();
+            return name.includes(q) || uname.includes(q) || role.includes(q) || roleLabel.includes(q) || sekbid.includes(q) || pembina.includes(q) || kelas.includes(q);
+        }) : allTeachers;
+
+        const badge = document.getElementById("teacherCountBadge");
+        if (badge) {
+            badge.textContent = q ? `${filtered.length} / ${allTeachers.length} Guru` : `${allTeachers.length} Guru`;
+            badge.style.background = q ? (filtered.length > 0 ? "#e0f2fe" : "#fee2e2") : "#e0f2fe";
+            badge.style.color = q ? (filtered.length > 0 ? "#0369a1" : "#991b1b") : "#0369a1";
+        }
+
+        const statusText = document.getElementById("teacherSearchStatusText");
+        if (statusText) {
+            statusText.innerHTML = q 
+                ? `Hasil pencarian untuk "<strong>${this.escapeHtml(this.teacherSearchQuery)}</strong>" (${filtered.length} ditemukan)`
+                : `Menampilkan seluruh ${allTeachers.length} data guru`;
+        }
+
+        if (filtered.length === 0) {
+            container.innerHTML = `
+            <div style="text-align: center; padding: 2rem 1rem; color: var(--text-muted); background: #f8fafc; border-radius: 8px; border: 1px dashed var(--border);">
+                <div style="font-size: 1.8rem; margin-bottom: 0.35rem;">🔍</div>
+                <strong style="color: var(--text-main); display: block; margin-bottom: 4px;">Tidak ada guru yang cocok</strong>
+                <span style="font-size: 0.82rem;">Tidak ditemukan hasil untuk kata kunci "<em>${this.escapeHtml(this.teacherSearchQuery)}</em>".</span>
+                <div style="margin-top: 0.75rem;">
+                    <button type="button" class="btn btn-outline btn-sm" onclick="Forms.clearSearchTeacher()" style="font-size: 0.78rem;">
+                        ✕ Reset Pencarian
+                    </button>
+                </div>
+            </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = filtered.map(t => {
             const hasSekbid = t.sekbid && t.sekbid !== "-";
             const pembinaStr = t.pembina || t.pokja || "";
             const hasPembina = pembinaStr && pembinaStr !== "-";
+            const hasKelas = t.kelas && t.kelas !== "-";
 
             return `
             <div style="background: #ffffff; border: 1px solid var(--border); border-radius: 10px; padding: 0.85rem 1rem; margin-bottom: 0.65rem; display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.03); transition: border-color 0.2s;" onmouseenter="this.style.borderColor='var(--primary)'" onmouseleave="this.style.borderColor='var(--border)'">
                 <div style="flex: 1; min-width: 0;">
                     <div style="display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap;">
-                        <strong style="font-size: 0.98rem; color: var(--text-main);">${t.icon || '👨‍🏫'} ${t.name}</strong>
+                        <strong style="font-size: 0.98rem; color: var(--text-main);">${t.icon || '👨‍🏫'} ${this.escapeHtml(t.name)}</strong>
                         ${t.role === 'superadmin' ? `<span class="badge" style="background: #fef3c7; color: #92400e; font-size: 0.68rem; font-weight: 700; padding: 2px 7px; border-radius: 99px;">👑 Super Admin</span>` : ''}
+                        ${hasKelas ? `<span class="badge" style="background: #dbeafe; color: #1e40af; font-size: 0.68rem; font-weight: 700; padding: 2px 7px; border-radius: 99px;">🏫 ${this.escapeHtml(t.kelas)}</span>` : ''}
                     </div>
-                    <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 3px;">
-                        Username: <strong style="color: var(--text-main);">${t.username}</strong> • Jabatan: <span style="font-weight: 600; color: var(--primary);">${t.roleLabel || t.role}</span>
+                    <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 3px; display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap;">
+                        <span>Sebagai: <strong style="color: var(--primary);">${this.escapeHtml(t.roleLabel || t.role)}</strong></span>
+                        <span>•</span>
+                        <span>Username: <strong style="color: var(--text-main); font-family: monospace;">${this.escapeHtml(t.username)}</strong></span>
+                        <span>•</span>
+                        <span>Password: <code style="background: #f1f5f9; padding: 1px 5px; border-radius: 4px; font-size: 0.78rem; color: #0f172a; border: 1px solid #e2e8f0; font-family: monospace;">${this.escapeHtml(t.password || '123')}</code></span>
                     </div>
                     ${(hasSekbid || hasPembina) ? `
                     <div style="display: flex; gap: 0.35rem; align-items: center; flex-wrap: wrap; margin-top: 0.4rem;">
-                        ${hasSekbid ? `<span class="quote-pill-tag" style="background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0;">🏷️ ${t.sekbid}</span>` : ''}
-                        ${hasPembina ? `<span class="quote-pill-tag" style="background: #faf5ff; color: #6b21a8; border: 1px solid #e9d5ff;">🎖️ Pembina: ${pembinaStr}</span>` : ''}
+                        ${hasSekbid ? `<span class="quote-pill-tag" style="background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0;">🏷️ ${this.escapeHtml(t.sekbid)}</span>` : ''}
+                        ${hasPembina ? `<span class="quote-pill-tag" style="background: #faf5ff; color: #6b21a8; border: 1px solid #e9d5ff;">🎖️ Pembina: ${this.escapeHtml(pembinaStr)}</span>` : ''}
                     </div>
                     ` : ''}
                 </div>
                 <div style="display: flex; align-items: center; gap: 0.4rem; flex-shrink: 0;">
-                    <button type="button" class="btn btn-outline btn-sm" onclick="Forms.openEditTeacherModal('${t.username}')" style="padding: 0.38rem 0.75rem; font-weight: 600; color: var(--primary); border-color: var(--primary-light);">
+                    <button type="button" class="btn btn-outline btn-sm" onclick="Forms.openEditTeacherModal('${this.escapeHtml(t.username)}')" style="padding: 0.38rem 0.75rem; font-weight: 600; color: var(--primary); border-color: var(--primary-light);">
                         ✏️ Edit
                     </button>
                     ${t.username !== 'admin' ? `
-                        <button type="button" class="btn btn-outline btn-sm" style="color: var(--danger); padding: 0.38rem 0.65rem;" onclick="Forms.handleDeleteTeacher('${t.username}')">
+                        <button type="button" class="btn btn-outline btn-sm" style="color: var(--danger); padding: 0.38rem 0.65rem;" onclick="Forms.handleDeleteTeacher('${this.escapeHtml(t.username)}')">
                             Hapus
                         </button>
                     ` : `<span class="status-pill pill-yellow" style="font-size: 0.7rem; padding: 4px 8px;">Akun Utama</span>`}
@@ -1854,6 +1909,24 @@ const Forms = {
             </div>
             `;
         }).join('');
+    },
+
+    handleSearchTeacher(query) {
+        this.teacherSearchQuery = (query || "").trim().toLowerCase();
+        const clearBtn = document.getElementById("clearSearchTeacherBtn");
+        if (clearBtn) {
+            clearBtn.style.display = this.teacherSearchQuery.length > 0 ? "inline-flex" : "none";
+        }
+        this.renderTeachersList();
+    },
+
+    clearSearchTeacher() {
+        this.teacherSearchQuery = "";
+        const searchInput = document.getElementById("searchTeacherInput");
+        if (searchInput) searchInput.value = "";
+        const clearBtn = document.getElementById("clearSearchTeacherBtn");
+        if (clearBtn) clearBtn.style.display = "none";
+        this.renderTeachersList();
     },
 
     handleAddTeacher(e) {
@@ -2085,6 +2158,406 @@ const Forms = {
             } catch (err) {
                 App.showToast(err.message);
             }
+        }
+    },
+
+    escapeHtml(str) {
+        if (str === null || str === undefined) return "";
+        return String(str)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    },
+
+    // EKSPOR DATA AKUN GURU (EXCEL / CSV)
+    exportTeachersToExcel() {
+        const teachers = StorageManager.getTeachers();
+        if (!teachers || teachers.length === 0) {
+            App.showToast("Tidak ada data guru untuk diekspor!");
+            return;
+        }
+
+        // Format kolom presisi: No, Nama Lengkap, Sebagai (Jabatan Utama), Username, Password
+        const exportData = teachers.map((t, idx) => ({
+            "No": idx + 1,
+            "Nama Lengkap": t.name || "",
+            "Sebagai (Jabatan Utama)": t.roleLabel || (t.role === "superadmin" ? "Super Admin" : "Staf Kesiswaan"),
+            "Username": t.username || "",
+            "Password": t.password || ""
+        }));
+
+        const now = new Date();
+        const dateStr = now.toISOString().split("T")[0];
+        const filename = `Data_Guru_Kesiswaan_SMKN1Magelang_${dateStr}.xlsx`;
+
+        if (window.XLSX && XLSX.utils && XLSX.writeFile) {
+            try {
+                const ws = XLSX.utils.json_to_sheet(exportData);
+                ws["!cols"] = [
+                    { wch: 6 },  // No
+                    { wch: 35 }, // Nama Lengkap
+                    { wch: 30 }, // Sebagai (Jabatan Utama)
+                    { wch: 20 }, // Username
+                    { wch: 18 }  // Password
+                ];
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Data Guru");
+                XLSX.writeFile(wb, filename);
+                App.showToast(`Berhasil ekspor ${exportData.length} akun guru ke file Excel (.xlsx).`);
+                return;
+            } catch (e) {
+                console.warn("Gagal ekspor XLSX, beralih ke format CSV:", e);
+            }
+        }
+
+        // Fallback jika library XLSX offline/gagal
+        this.downloadTeacherCsv(exportData, `Data_Guru_Kesiswaan_SMKN1Magelang_${dateStr}.csv`);
+    },
+
+    downloadTeacherCsv(dataRows, filename) {
+        const headers = ["No", "Nama Lengkap", "Sebagai (Jabatan Utama)", "Username", "Password"];
+        const escapeCsv = (val) => {
+            if (val === undefined || val === null) return '""';
+            const s = String(val).replace(/"/g, '""');
+            return `"${s}"`;
+        };
+
+        const lines = [];
+        lines.push(headers.map(h => escapeCsv(h)).join(","));
+
+        dataRows.forEach(row => {
+            lines.push([
+                escapeCsv(row["No"]),
+                escapeCsv(row["Nama Lengkap"]),
+                escapeCsv(row["Sebagai (Jabatan Utama)"]),
+                escapeCsv(row["Username"]),
+                escapeCsv(row["Password"])
+            ].join(","));
+        });
+
+        const csvContent = "\uFEFF" + lines.join("\r\n");
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", filename || "Data_Guru_Kesiswaan.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        App.showToast(`Berhasil ekspor data guru ke file CSV.`);
+    },
+
+    // UNDUH TEMPLATE IMPOR DATA GURU
+    downloadTeacherTemplate() {
+        const sampleData = [
+            {
+                "No": 1,
+                "Nama Lengkap": "Morlan Purba Sibarani, S.Pd., M.Si.",
+                "Sebagai (Jabatan Utama)": "Waka Kesiswaan",
+                "Username": "morlan",
+                "Password": "123"
+            },
+            {
+                "No": 2,
+                "Nama Lengkap": "Drs. H. Mulyadi, M.Pd",
+                "Sebagai (Jabatan Utama)": "Guru BK / Konselor",
+                "Username": "mulyadi",
+                "Password": "123"
+            },
+            {
+                "No": 3,
+                "Nama Lengkap": "Ahmad Suwandi, S.Pd.",
+                "Sebagai (Jabatan Utama)": "Wali Kelas X TKP",
+                "Username": "ahmad",
+                "Password": "ahmad123"
+            },
+            {
+                "No": 4,
+                "Nama Lengkap": "Dra. Hj. Siti Rahma, M.Pd",
+                "Sebagai (Jabatan Utama)": "Koordinator BK",
+                "Username": "sitirahma",
+                "Password": "123"
+            },
+            {
+                "No": 5,
+                "Nama Lengkap": "Budi Santoso, S.Kom.",
+                "Sebagai (Jabatan Utama)": "Staf Kesiswaan",
+                "Username": "budi",
+                "Password": "123"
+            }
+        ];
+
+        const filename = "Template_Impor_Guru_Kesiswaan.xlsx";
+        if (window.XLSX && XLSX.utils && XLSX.writeFile) {
+            try {
+                const ws = XLSX.utils.json_to_sheet(sampleData);
+                ws["!cols"] = [
+                    { wch: 6 },
+                    { wch: 35 },
+                    { wch: 30 },
+                    { wch: 20 },
+                    { wch: 18 }
+                ];
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Template Guru");
+                XLSX.writeFile(wb, filename);
+                App.showToast("Template Excel (.xlsx) guru berhasil diunduh.");
+                return;
+            } catch (e) {
+                console.warn("Gagal ekspor XLSX template, beralih ke CSV:", e);
+            }
+        }
+
+        this.downloadTeacherCsv(sampleData, "Template_Impor_Guru_Kesiswaan.csv");
+    },
+
+    // TRIGGER DAN PROSES IMPOR DATA GURU
+    triggerImportTeachers() {
+        const input = document.getElementById("importTeachersFileInput");
+        if (input) {
+            input.value = "";
+            input.click();
+        }
+    },
+
+    handleImportTeachersFile(event) {
+        const file = event.target.files ? event.target.files[0] : null;
+        if (!file) return;
+
+        const filename = file.name;
+        const ext = filename.split('.').pop().toLowerCase();
+
+        if (!['xlsx', 'xls', 'csv'].includes(ext)) {
+            App.showToast("Format file tidak didukung! Gunakan file .xlsx, .xls, atau .csv");
+            return;
+        }
+
+        App.showToast("Membaca berkas data guru...");
+        const reader = new FileReader();
+
+        if (ext === 'xlsx' || ext === 'xls') {
+            if (window.XLSX && XLSX.read) {
+                reader.onload = (e) => {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        const sheetName = workbook.SheetNames[0];
+                        const worksheet = workbook.Sheets[sheetName];
+                        const rows = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+                        this.processImportedTeacherRows(rows);
+                    } catch (err) {
+                        console.error("Gagal membaca file Excel guru:", err);
+                        App.showToast("Gagal membaca file Excel: " + err.message);
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            } else {
+                App.showToast("Library Excel belum siap. Coba muat ulang halaman.");
+            }
+        } else if (ext === 'csv') {
+            reader.onload = (e) => {
+                try {
+                    const text = e.target.result;
+                    const rows = this.parseCsvToObjects(text);
+                    this.processImportedTeacherRows(rows);
+                } catch (err) {
+                    console.error("Gagal membaca file CSV guru:", err);
+                    App.showToast("Gagal membaca file CSV: " + err.message);
+                }
+            };
+            reader.readAsText(file, "UTF-8");
+        }
+    },
+
+    parseCsvToObjects(csvText) {
+        const lines = csvText.split(/\r?\n/).filter(line => line.trim().length > 0);
+        if (lines.length < 2) return [];
+
+        const splitCsvLine = (line) => {
+            const result = [];
+            let insideQuotes = false;
+            let current = "";
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                if (char === '"') {
+                    if (insideQuotes && line[i + 1] === '"') {
+                        current += '"';
+                        i++;
+                    } else {
+                        insideQuotes = !insideQuotes;
+                    }
+                } else if ((char === ',' || char === ';') && !insideQuotes) {
+                    result.push(current.trim());
+                    current = "";
+                } else {
+                    current += char;
+                }
+            }
+            result.push(current.trim());
+            return result;
+        };
+
+        const headers = splitCsvLine(lines[0]).map(h => h.replace(/^["']|["']$/g, '').trim());
+        const results = [];
+
+        for (let i = 1; i < lines.length; i++) {
+            const values = splitCsvLine(lines[i]);
+            const row = {};
+            headers.forEach((h, idx) => {
+                row[h] = values[idx] !== undefined ? values[idx].replace(/^["']|["']$/g, '').trim() : "";
+            });
+            results.push(row);
+        }
+        return results;
+    },
+
+    processImportedTeacherRows(rows) {
+        if (!rows || rows.length === 0) {
+            App.showToast("Berkas kosong atau tidak ada data yang dapat dibaca!");
+            return;
+        }
+
+        const findVal = (row, candidates) => {
+            const keys = Object.keys(row);
+            for (const candidate of candidates) {
+                const candLower = candidate.toLowerCase();
+                for (const key of keys) {
+                    const keyLower = key.trim().toLowerCase();
+                    if (keyLower === candLower || keyLower.replace(/[^a-z0-9]/g, '') === candLower.replace(/[^a-z0-9]/g, '')) {
+                        return String(row[key] || "").trim();
+                    }
+                }
+            }
+            for (const candidate of candidates) {
+                const candLower = candidate.toLowerCase();
+                for (const key of keys) {
+                    const keyLower = key.trim().toLowerCase();
+                    if (keyLower.includes(candLower)) {
+                        return String(row[key] || "").trim();
+                    }
+                }
+            }
+            return "";
+        };
+
+        try {
+            const data = StorageManager.getData();
+            if (!data.teachers || !Array.isArray(data.teachers)) {
+                data.teachers = JSON.parse(JSON.stringify(DEFAULT_TEACHERS));
+            }
+
+            let addedCount = 0;
+            let updatedCount = 0;
+            let skippedCount = 0;
+
+            rows.forEach((row, idx) => {
+                const nama = findVal(row, ["Nama Lengkap", "Nama", "Nama Guru", "Name", "Nama Lengkap & Gelar Guru"]);
+                const jabatan = findVal(row, ["Sebagai (Jabatan Utama)", "Sebagai", "Jabatan Utama", "Jabatan", "Role Label", "Role"]);
+                let username = findVal(row, ["Username", "Username Login", "User", "Akun"]);
+                let password = findVal(row, ["Password", "Password Akun", "Kata Sandi", "Pass"]);
+
+                // Lewati baris kosong
+                if (!nama && !username && !jabatan) {
+                    skippedCount++;
+                    return;
+                }
+
+                // Jika nama ada tapi username kosong, otomatis buat username dari kata pertama nama
+                if (!username && nama) {
+                    const cleanWords = nama
+                        .replace(/^(drs\.|dra\.|dr\.|prof\.|ir\.|h\.|hj\.)\s*/i, '')
+                        .replace(/[^a-zA-Z0-9\s]/g, '')
+                        .trim()
+                        .split(/\s+/);
+                    const firstWord = (cleanWords[0] || "guru").toLowerCase();
+                    username = firstWord;
+                }
+
+                // Bersihkan username
+                username = (username || `guru${Date.now() + idx}`).replace(/[^a-zA-Z0-9._-]/g, '').toLowerCase();
+
+                // Password default jika kosong
+                if (!password) {
+                    password = username ? `${username}123` : "123";
+                }
+
+                const roleLabel = jabatan || "Staf Kesiswaan";
+                const isSuperAdmin = roleLabel.toLowerCase().includes("super admin") || username.toLowerCase() === "admin";
+
+                // Deteksi Wali Kelas
+                let isWali = false;
+                let extractedKelas = "-";
+                if (/wali\s*kelas/i.test(roleLabel) || /^walas/i.test(roleLabel)) {
+                    isWali = true;
+                    const matchKelas = roleLabel.match(/(?:wali\s*kelas|walas)?\s*(X[I|V|X]*\s*[A-Za-z0-9\s]+)/i);
+                    if (matchKelas && matchKelas[1]) {
+                        extractedKelas = matchKelas[1].trim();
+                    }
+                }
+
+                // Tentukan icon & role
+                let role = isSuperAdmin ? "superadmin" : "guru";
+                let icon = "🧑‍🏫";
+                if (isSuperAdmin) {
+                    icon = "👑";
+                } else if (isWali) {
+                    icon = "🧑‍🏫";
+                } else if (/bk|konsel/i.test(roleLabel)) {
+                    icon = "👨‍🏫";
+                } else if (/waka/i.test(roleLabel)) {
+                    icon = "👩‍💼";
+                }
+
+                const teacherIndex = data.teachers.findIndex(t => t.username.toLowerCase() === username.toLowerCase());
+
+                if (teacherIndex !== -1) {
+                    // Update data akun guru yang sudah ada
+                    const existing = data.teachers[teacherIndex];
+                    data.teachers[teacherIndex] = {
+                        ...existing,
+                        name: nama || existing.name,
+                        role: isSuperAdmin ? "superadmin" : (existing.username.toLowerCase() === "admin" ? "superadmin" : role),
+                        roleLabel: roleLabel || existing.roleLabel,
+                        password: password || existing.password,
+                        kelas: isWali ? extractedKelas : (existing.kelas || "-"),
+                        pokja: isWali ? roleLabel : (existing.pokja || "-"),
+                        icon: icon || existing.icon || "👨‍🏫"
+                    };
+                    updatedCount++;
+                } else {
+                    // Tambah akun guru baru
+                    data.teachers.push({
+                        username,
+                        password,
+                        name: nama || `Guru ${username}`,
+                        role,
+                        roleLabel,
+                        sekbid: "-",
+                        pembina: "-",
+                        pokja: isWali ? roleLabel : "-",
+                        kelas: isWali ? extractedKelas : "-",
+                        icon
+                    });
+                    addedCount++;
+                }
+            });
+
+            // Simpan ke storage lokal
+            StorageManager.saveData(data);
+
+            // Sinkronkan ke Supabase jika aktif
+            if (window.SupabaseClient && typeof SupabaseClient.pushAllTeachers === "function") {
+                SupabaseClient.pushAllTeachers(data.teachers);
+            }
+
+            this.renderTeachersList();
+            App.showToast(`Sukses impor data guru! ${addedCount} guru baru ditambahkan, ${updatedCount} guru diperbarui.`);
+        } catch (err) {
+            console.error("Kesalahan saat mengimpor data guru:", err);
+            App.showToast("Terjadi kesalahan saat memproses data guru: " + err.message);
         }
     },
 
