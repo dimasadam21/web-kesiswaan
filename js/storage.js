@@ -765,12 +765,91 @@ const StorageManager = {
         return newAnn;
     },
 
+    updateAnnouncement(id, updated) {
+        const data = this.getData();
+        const currentList = this.getAnnouncements();
+        const idx = currentList.findIndex(a => a.id === id);
+        if (idx !== -1) {
+            currentList[idx] = { ...currentList[idx], ...updated };
+            data.announcements = currentList;
+            this.saveData(data);
+            return currentList[idx];
+        }
+        return null;
+    },
+
     deleteAnnouncement(id) {
         const data = this.getData();
         const currentList = this.getAnnouncements();
         data.announcements = currentList.filter(a => a.id !== id);
         this.saveData(data);
         return data.announcements;
+    },
+
+    // ==========================================
+    // AGENDA TERDEKAT KESISWAAN
+    // ==========================================
+    getAgendaTerdekat() {
+        const data = this.getData();
+        if (!data.agendaTerdekat || data.agendaTerdekat.length === 0) {
+            return (typeof DEFAULT_AGENDA_TERDEKAT !== 'undefined') ? DEFAULT_AGENDA_TERDEKAT : [];
+        }
+        return data.agendaTerdekat;
+    },
+
+    addAgendaTerdekat(agenda) {
+        const data = this.getData();
+        if (!data.agendaTerdekat) data.agendaTerdekat = [...this.getAgendaTerdekat()];
+        const newAgenda = {
+            id: "AGN-" + Date.now(),
+            nama: agenda.nama || "Agenda Baru",
+            tanggal: agenda.tanggal || new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }),
+            tempat: agenda.tempat || "Lingkungan Sekolah",
+            kategori: agenda.kategori || "Kesiswaan",
+            keterangan: agenda.keterangan || "",
+            countdown: agenda.countdown || "📅 Agenda Baru"
+        };
+        data.agendaTerdekat.unshift(newAgenda);
+        this.saveData(data);
+        return newAgenda;
+    },
+
+    updateAgendaTerdekat(id, updated) {
+        const data = this.getData();
+        const list = this.getAgendaTerdekat();
+        const idx = list.findIndex(a => a.id === id);
+        if (idx !== -1) {
+            list[idx] = { ...list[idx], ...updated };
+            data.agendaTerdekat = list;
+            this.saveData(data);
+            return list[idx];
+        }
+        return null;
+    },
+
+    deleteAgendaTerdekat(id) {
+        const data = this.getData();
+        const list = this.getAgendaTerdekat();
+        data.agendaTerdekat = list.filter(a => a.id !== id);
+        this.saveData(data);
+        return data.agendaTerdekat;
+    },
+
+    // ==========================================
+    // SIMPAN PROGRAM SEKBID & TATA TERTIB
+    // ==========================================
+    saveSekbidPrograms(programs) {
+        const data = this.getData();
+        data.sekbidPrograms = programs;
+        this.saveData(data);
+        return data.sekbidPrograms;
+    },
+
+    saveTataTertib(rules) {
+        const data = this.getData();
+        data.tataTertib = rules;
+        this.saveData(data);
+        return data.tataTertib;
     },
 
     // ==========================================

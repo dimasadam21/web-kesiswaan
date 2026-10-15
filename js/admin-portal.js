@@ -38,23 +38,44 @@ const AdminPortal = {
             this.currentAttendanceClass = "X TKP";
         }
 
-        // Tampilkan tombol tab Presensi untuk Wali Kelas & Super Admin
+        const isAdminKesiswaan = !isSuperAdmin && !isWaliKelas;
+
+        // Tampilkan tombol tab Presensi HANYA untuk Wali Kelas
         const btnPresensi = document.getElementById("adminTabBtnPresensi");
         if (btnPresensi) {
-            btnPresensi.style.display = (isWaliKelas || isSuperAdmin) ? "inline-flex" : "none";
+            btnPresensi.style.display = isWaliKelas ? "inline-flex" : "none";
         }
 
-        // Sembunyikan sub-navigasi tab bawah untuk Super Admin karena sudah terpadu di Pusat Kendali Atas
+        // Sub-navigasi tab bawah untuk Guru / Admin Kesiswaan / Wali Kelas (disembunyikan untuk Super Admin)
         const adminTabsNav = document.querySelector(".admin-tabs-nav");
         if (adminTabsNav) {
             adminTabsNav.style.display = isSuperAdmin ? "none" : "flex";
         }
 
-        // Sembunyikan tab prestasi & kegiatan untuk Wali Kelas (fokus ke presensi & kedisiplinan)
+        // HAK AKSES KONTEN DASBOR (SESUAI ATURAN PENGGUNA):
+        // 1. Pengumuman: Super Admin & Admin Kesiswaan
+        const btnPengumuman = document.getElementById("adminTabBtnPengumuman");
+        if (btnPengumuman) btnPengumuman.style.display = isAdminKesiswaan ? "inline-flex" : "none";
+
+        // 2. Galeri Prestasi: Super Admin & Admin Kesiswaan
         const btnPrestasi = document.getElementById("adminTabBtnPrestasi");
+        if (btnPrestasi) btnPrestasi.style.display = isAdminKesiswaan ? "inline-flex" : "none";
+
+        // 3. Daftar Kegiatan: HANYA Super Admin
         const btnKegiatan = document.getElementById("adminTabBtnKegiatan");
-        if (btnPrestasi) btnPrestasi.style.display = isWaliKelas ? "none" : "inline-flex";
-        if (btnKegiatan) btnKegiatan.style.display = isWaliKelas ? "none" : "inline-flex";
+        if (btnKegiatan) btnKegiatan.style.display = "none";
+
+        // 4. Tata Tertib: HANYA Super Admin
+        const btnTataTertib = document.getElementById("adminTabBtnTataTertib");
+        if (btnTataTertib) btnTataTertib.style.display = "none";
+
+        // 5. Agenda Terdekat: Super Admin & Admin Kesiswaan
+        const btnAgenda = document.getElementById("adminTabBtnAgendaTerdekat");
+        if (btnAgenda) btnAgenda.style.display = isAdminKesiswaan ? "inline-flex" : "none";
+
+        // 6. Program Sekbid: HANYA Super Admin
+        const btnSekbid = document.getElementById("adminTabBtnSekbid");
+        if (btnSekbid) btnSekbid.style.display = "none";
 
         const btnEditJadwal = document.getElementById("btnEditJadwalKegiatanSuperAdmin");
         if (btnEditJadwal) {
@@ -70,6 +91,8 @@ const AdminPortal = {
         this.renderTeacherAllStudents();
         this.renderAdminPrestasiList();
         this.renderAdminKegiatanList();
+        this.renderAdminPengumumanList();
+        this.renderAdminAgendaTerdekatList();
         this.updateAdminBadgeCounts();
 
         // Inisialisasi dropdown kelas presensi
@@ -83,22 +106,30 @@ const AdminPortal = {
         }
     },
 
-    // 0. Beralih Antara Sub-Tab Admin (Presensi, Siswa, Prestasi, Kegiatan)
+    // 0. Beralih Antara Sub-Tab Admin
     switchAdminTab(tabName) {
         this.currentTab = tabName;
 
         const tabBtns = {
             presensi: [document.getElementById("adminTabBtnPresensi"), document.getElementById("hubTabBtnPresensi")],
             siswa: [document.getElementById("adminTabBtnSiswa"), document.getElementById("hubTabBtnSiswa")],
+            pengumuman: [document.getElementById("adminTabBtnPengumuman"), document.getElementById("hubTabBtnPengumuman")],
             prestasi: [document.getElementById("adminTabBtnPrestasi"), document.getElementById("hubTabBtnPrestasi")],
-            kegiatan: [document.getElementById("adminTabBtnKegiatan"), document.getElementById("hubTabBtnKegiatan")]
+            kegiatan: [document.getElementById("adminTabBtnKegiatan"), document.getElementById("hubTabBtnKegiatan")],
+            tatatertib: [document.getElementById("adminTabBtnTataTertib"), document.getElementById("hubTabBtnTataTertib")],
+            agendaterdekat: [document.getElementById("adminTabBtnAgendaTerdekat"), document.getElementById("hubTabBtnAgendaTerdekat")],
+            sekbid: [document.getElementById("adminTabBtnSekbid"), document.getElementById("hubTabBtnSekbid")]
         };
 
         const panes = {
             presensi: document.getElementById("adminPanePresensi"),
             siswa: document.getElementById("adminPaneSiswa"),
+            pengumuman: document.getElementById("adminPanePengumuman"),
             prestasi: document.getElementById("adminPanePrestasi"),
-            kegiatan: document.getElementById("adminPaneKegiatan")
+            kegiatan: document.getElementById("adminPaneKegiatan"),
+            tatatertib: document.getElementById("adminPaneTataTertib"),
+            agendaterdekat: document.getElementById("adminPaneAgendaTerdekat"),
+            sekbid: document.getElementById("adminPaneSekbid")
         };
 
         // Update Tombol Tab
@@ -122,6 +153,14 @@ const AdminPortal = {
             this.renderAdminPrestasiList();
         } else if (tabName === "kegiatan") {
             this.renderAdminKegiatanList();
+        } else if (tabName === "pengumuman") {
+            this.renderAdminPengumumanList();
+        } else if (tabName === "agendaterdekat") {
+            this.renderAdminAgendaTerdekatList();
+        } else if (tabName === "tatatertib") {
+            this.renderAdminTataTertibList();
+        } else if (tabName === "sekbid") {
+            this.renderAdminSekbidList();
         }
 
         this.updateAdminBadgeCounts();
@@ -130,6 +169,8 @@ const AdminPortal = {
     updateAdminBadgeCounts() {
         const allPrestasi = StorageManager.getAllAchievements();
         const allKegiatan = StorageManager.getActivities();
+        const allPengumuman = StorageManager.getAnnouncements();
+        const allAgenda = StorageManager.getAgendaTerdekat();
 
         const badgePres = document.getElementById("adminPrestasiCountBadge");
         if (badgePres) badgePres.textContent = allPrestasi.length;
@@ -140,6 +181,16 @@ const AdminPortal = {
         if (badgeKeg) badgeKeg.textContent = allKegiatan.length;
         const hubBadgeKeg = document.getElementById("hubAdminKegiatanCountBadge");
         if (hubBadgeKeg) hubBadgeKeg.textContent = allKegiatan.length;
+
+        const badgeAnn = document.getElementById("adminPengumumanCountBadge");
+        if (badgeAnn) badgeAnn.textContent = allPengumuman.length;
+        const hubBadgeAnn = document.getElementById("hubAdminPengumumanCountBadge");
+        if (hubBadgeAnn) hubBadgeAnn.textContent = allPengumuman.length;
+
+        const badgeAgn = document.getElementById("adminAgendaCountBadge");
+        if (badgeAgn) badgeAgn.textContent = allAgenda.length;
+        const hubBadgeAgn = document.getElementById("hubAdminAgendaCountBadge");
+        if (hubBadgeAgn) hubBadgeAgn.textContent = allAgenda.length;
     },
 
     // 1. Live Search Siswa Saat Guru Mengetik
@@ -1116,5 +1167,402 @@ const AdminPortal = {
         `;
 
         window.print();
+    },
+
+    escapeHtml(str) {
+        if (!str) return "";
+        return String(str)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    },
+
+    // =========================================================================
+    // 7. MANAJEMEN PENGUMUMAN (SUPER ADMIN & ADMIN KESISWAAN)
+    // =========================================================================
+    renderAdminPengumumanList() {
+        const container = document.getElementById("adminPengumumanListContainer");
+        if (!container) return;
+
+        const announcements = StorageManager.getAnnouncements();
+        if (announcements.length === 0) {
+            container.innerHTML = `
+                <div style="grid-column: 1 / -1; padding: 3rem; text-align: center; color: var(--text-muted); background: #ffffff; border: 1px dashed var(--border); border-radius: var(--radius-md);">
+                    <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">📢</div>
+                    <strong style="color: var(--text-main);">Belum Ada Pengumuman Terbit</strong>
+                    <p style="font-size: 0.85rem; margin-top: 4px;">Klik tombol "+ Buat Pengumuman Baru" untuk menerbitkan informasi resmi.</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = announcements.map(ann => `
+            <div class="pengumuman-admin-card">
+                <div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; gap: 0.5rem; flex-wrap: wrap;">
+                        <span class="status-pill ${ann.badgeClass || 'pill-yellow'}" style="font-size: 0.725rem;">
+                            ${ann.kategoriLabel || ann.kategori.toUpperCase()}
+                        </span>
+                        <span style="font-size: 0.75rem; color: var(--text-muted);">📅 ${ann.tanggal}</span>
+                    </div>
+                    <h4 style="font-size: 1.05rem; font-weight: 800; color: var(--text-main); margin-bottom: 0.35rem; line-height: 1.4;">
+                        ${this.escapeHtml(ann.judul)}
+                    </h4>
+                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.65rem;">
+                        <span>✍️ ${this.escapeHtml(ann.penulis)}</span>
+                    </div>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 1rem;">
+                        ${this.escapeHtml(ann.ringkasan || ann.isi.substring(0, 100) + '...')}
+                    </p>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border); padding-top: 0.75rem; gap: 0.5rem;">
+                    <button class="btn btn-outline btn-sm" onclick="App.openDetailPengumuman('${ann.id}')">
+                        👁️ Lihat
+                    </button>
+                    <div style="display: flex; gap: 0.35rem;">
+                        <button class="btn btn-outline btn-sm" onclick="AdminPortal.openEditPengumuman('${ann.id}')" title="Edit Pengumuman">
+                            ✏️ Edit
+                        </button>
+                        <button class="btn btn-danger btn-sm" onclick="AdminPortal.deletePengumuman('${ann.id}')" title="Hapus Pengumuman">
+                            🗑️
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    },
+
+    openEditPengumuman(id) {
+        const announcements = StorageManager.getAnnouncements();
+        const ann = announcements.find(a => a.id === id);
+        if (!ann) return;
+
+        const editIdEl = document.getElementById("inputAnnEditId");
+        if (editIdEl) editIdEl.value = ann.id;
+        const titleEl = document.getElementById("modalPengumumanTitle");
+        if (titleEl) titleEl.textContent = "✏️ Edit Pengumuman Kesiswaan";
+        const btnSubmit = document.getElementById("btnSaveAnnSubmit");
+        if (btnSubmit) btnSubmit.textContent = "💾 Simpan Perubahan";
+
+        document.getElementById("inputAnnKategori").value = ann.kategori || "informasi";
+        document.getElementById("inputAnnJudul").value = ann.judul || "";
+        document.getElementById("inputAnnPenulis").value = ann.penulis || "";
+        document.getElementById("inputAnnRingkasan").value = ann.ringkasan || "";
+        document.getElementById("inputAnnIsi").value = ann.isi || "";
+
+        Forms.openModal("modalTambahPengumuman");
+    },
+
+    deletePengumuman(id) {
+        if (!confirm("Apakah Anda yakin ingin menghapus pengumuman ini?")) return;
+        StorageManager.deleteAnnouncement(id);
+        this.renderAdminPengumumanList();
+        this.updateAdminBadgeCounts();
+        if (typeof App.renderDashboardPengumuman === "function") {
+            App.renderDashboardPengumuman();
+        }
+        App.showToast("Pengumuman berhasil dihapus!");
+    },
+
+    // =========================================================================
+    // 8. MANAJEMEN AGENDA TERDEKAT (SUPER ADMIN & ADMIN KESISWAAN)
+    // =========================================================================
+    renderAdminAgendaTerdekatList() {
+        const container = document.getElementById("adminAgendaTerdekatListContainer");
+        if (!container) return;
+
+        const agendas = StorageManager.getAgendaTerdekat();
+        if (agendas.length === 0) {
+            container.innerHTML = `
+                <div style="grid-column: 1 / -1; padding: 3rem; text-align: center; color: var(--text-muted); background: #ffffff; border: 1px dashed var(--border); border-radius: var(--radius-md);">
+                    <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">⏰</div>
+                    <strong style="color: var(--text-main);">Belum Ada Agenda Terdekat</strong>
+                    <p style="font-size: 0.85rem; margin-top: 4px;">Klik "+ Tambah Agenda Terdekat" untuk menjadwalkan agenda sekolah.</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = agendas.map(agn => `
+            <div class="agenda-admin-card">
+                <div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; gap: 0.5rem; flex-wrap: wrap;">
+                        <span class="agenda-countdown-badge" style="font-size: 0.725rem;">
+                            ${this.escapeHtml(agn.countdown || '📅 Agenda')}
+                        </span>
+                        <span class="status-pill pill-blue" style="font-size: 0.725rem;">${this.escapeHtml(agn.kategori || 'Kesiswaan')}</span>
+                    </div>
+                    <h4 style="font-size: 1.05rem; font-weight: 800; color: var(--text-main); margin-bottom: 0.35rem; line-height: 1.4;">
+                        ${this.escapeHtml(agn.nama)}
+                    </h4>
+                    <p style="font-size: 0.825rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 0.75rem;">
+                        ${this.escapeHtml(agn.keterangan || '')}
+                    </p>
+                    <div style="font-size: 0.8rem; display: flex; flex-direction: column; gap: 0.25rem; color: var(--text-main); margin-bottom: 1rem; background: #f8fafc; padding: 0.65rem; border-radius: 6px;">
+                        <div>🗓️ <strong>${this.escapeHtml(agn.tanggal)}</strong></div>
+                        <div>📍 <span>${this.escapeHtml(agn.tempat)}</span></div>
+                    </div>
+                </div>
+                <div style="display: flex; justify-content: flex-end; align-items: center; border-top: 1px solid var(--border); padding-top: 0.75rem; gap: 0.5rem;">
+                    <button class="btn btn-outline btn-sm" onclick="AdminPortal.openAddAgendaModal('${agn.id}')" title="Edit Agenda">
+                        ✏️ Edit
+                    </button>
+                    <button class="btn btn-danger btn-sm" onclick="AdminPortal.deleteAgendaTerdekat('${agn.id}')" title="Hapus Agenda">
+                        🗑️ Hapus
+                    </button>
+                </div>
+            </div>
+        `).join('');
+    },
+
+    openAddAgendaModal(id = null) {
+        const editIdEl = document.getElementById("inputAgendaEditId");
+        if (editIdEl) editIdEl.value = id || "";
+        const titleEl = document.getElementById("modalAgendaTitle");
+        const btnText = document.getElementById("btnSaveAgendaText");
+
+        if (id) {
+            const list = StorageManager.getAgendaTerdekat();
+            const agn = list.find(a => a.id === id);
+            if (!agn) return;
+            if (titleEl) titleEl.textContent = "✏️ Edit Agenda Terdekat";
+            if (btnText) btnText.textContent = "💾 Simpan Perubahan";
+            document.getElementById("inputAgendaNama").value = agn.nama || "";
+            document.getElementById("inputAgendaTanggal").value = agn.tanggal || "";
+            document.getElementById("inputAgendaTempat").value = agn.tempat || "";
+            document.getElementById("inputAgendaKategori").value = agn.kategori || "";
+            document.getElementById("inputAgendaCountdown").value = agn.countdown || "";
+            document.getElementById("inputAgendaKeterangan").value = agn.keterangan || "";
+        } else {
+            if (titleEl) titleEl.textContent = "⏰ Tambah Agenda Terdekat";
+            if (btnText) btnText.textContent = "💾 Simpan Agenda";
+            document.getElementById("inputAgendaNama").value = "";
+            document.getElementById("inputAgendaTanggal").value = "";
+            document.getElementById("inputAgendaTempat").value = "";
+            document.getElementById("inputAgendaKategori").value = "Kesiswaan";
+            document.getElementById("inputAgendaCountdown").value = "🔥 Terdekat Pekan Ini";
+            document.getElementById("inputAgendaKeterangan").value = "";
+        }
+
+        Forms.openModal("modalTambahAgendaTerdekat");
+    },
+
+    handleSaveAgendaTerdekat(event) {
+        event.preventDefault();
+        const editId = document.getElementById("inputAgendaEditId").value;
+        const nama = document.getElementById("inputAgendaNama").value.trim();
+        const tanggal = document.getElementById("inputAgendaTanggal").value.trim();
+        const tempat = document.getElementById("inputAgendaTempat").value.trim();
+        const kategori = document.getElementById("inputAgendaKategori").value.trim();
+        const countdown = document.getElementById("inputAgendaCountdown").value.trim();
+        const keterangan = document.getElementById("inputAgendaKeterangan").value.trim();
+
+        if (editId) {
+            StorageManager.updateAgendaTerdekat(editId, { nama, tanggal, tempat, kategori, countdown, keterangan });
+            App.showToast("Agenda terdekat berhasil diperbarui!");
+        } else {
+            StorageManager.addAgendaTerdekat({ nama, tanggal, tempat, kategori, countdown, keterangan });
+            App.showToast("Agenda terdekat baru berhasil ditambahkan!");
+        }
+
+        Forms.closeModal("modalTambahAgendaTerdekat");
+        this.renderAdminAgendaTerdekatList();
+        this.updateAdminBadgeCounts();
+        if (typeof App.renderDashboardAgendaTerdekat === "function") {
+            App.renderDashboardAgendaTerdekat();
+        }
+    },
+
+    deleteAgendaTerdekat(id) {
+        if (!confirm("Apakah Anda yakin ingin menghapus agenda terdekat ini?")) return;
+        StorageManager.deleteAgendaTerdekat(id);
+        this.renderAdminAgendaTerdekatList();
+        this.updateAdminBadgeCounts();
+        if (typeof App.renderDashboardAgendaTerdekat === "function") {
+            App.renderDashboardAgendaTerdekat();
+        }
+        App.showToast("Agenda terdekat berhasil dihapus!");
+    },
+
+    // =========================================================================
+    // 9. MANAJEMEN TATA TERTIB (KHUSUS SUPER ADMIN)
+    // =========================================================================
+    renderAdminTataTertibList() {
+        const container = document.getElementById("adminTataTertibListContainer");
+        if (!container) return;
+
+        const rules = StorageManager.getTataTertib();
+        container.innerHTML = rules.map((r, catIdx) => `
+            <div class="tatatertib-admin-card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem;">
+                    <div>
+                        <span class="status-pill ${r.badgeClass || 'pill-blue'}" style="font-size: 0.725rem;">
+                            ${this.escapeHtml(r.kategoriLabel)}
+                        </span>
+                        <h4 style="font-size: 1.05rem; font-weight: 800; color: var(--text-main); margin-top: 0.25rem;">
+                            ${this.escapeHtml(r.judul)}
+                        </h4>
+                    </div>
+                    <span style="font-size: 0.8rem; color: var(--text-muted);">${r.butirAturan.length} Butir Ketentuan</span>
+                </div>
+                <ol style="padding-left: 1.25rem; margin: 0; display: flex; flex-direction: column; gap: 0.5rem;">
+                    ${r.butirAturan.map((b, ruleIdx) => `
+                        <li style="font-size: 0.875rem; color: var(--text-main); line-height: 1.5;">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem;">
+                                <span>${this.escapeHtml(b)}</span>
+                                <button class="btn btn-outline btn-sm" style="padding: 2px 6px; font-size: 0.75rem; color: #dc2626;" onclick="AdminPortal.deleteTataTertibRule(${catIdx}, ${ruleIdx})" title="Hapus Aturan Ini">✕</button>
+                            </div>
+                        </li>
+                    `).join('')}
+                </ol>
+            </div>
+        `).join('');
+    },
+
+    openAddTataTertibModal() {
+        document.getElementById("inputTTText").value = "";
+        Forms.openModal("modalTambahTataTertib");
+    },
+
+    handleSaveNewTataTertib(event) {
+        event.preventDefault();
+        const kategori = document.getElementById("inputTTKategori").value;
+        const text = document.getElementById("inputTTText").value.trim();
+        if (!text) return;
+
+        const rules = StorageManager.getTataTertib();
+        const target = rules.find(r => r.kategori === kategori);
+        if (target) {
+            target.butirAturan.push(text);
+            StorageManager.saveTataTertib(rules);
+            App.showToast("Aturan tata tertib baru berhasil ditambahkan!");
+            Forms.closeModal("modalTambahTataTertib");
+            this.renderAdminTataTertibList();
+            if (typeof App.renderDashboardTataTertib === "function") {
+                App.renderDashboardTataTertib();
+            }
+        }
+    },
+
+    deleteTataTertibRule(catIdx, ruleIdx) {
+        if (!confirm("Apakah Anda yakin ingin menghapus butir aturan ini?")) return;
+        const rules = StorageManager.getTataTertib();
+        if (rules[catIdx] && rules[catIdx].butirAturan[ruleIdx]) {
+            rules[catIdx].butirAturan.splice(ruleIdx, 1);
+            StorageManager.saveTataTertib(rules);
+            App.showToast("Butir aturan berhasil dihapus!");
+            this.renderAdminTataTertibList();
+            if (typeof App.renderDashboardTataTertib === "function") {
+                App.renderDashboardTataTertib();
+            }
+        }
+    },
+
+    // =========================================================================
+    // 10. MANAJEMEN PROGRAM KERJA SEKBID 1 - 10 (KHUSUS SUPER ADMIN)
+    // =========================================================================
+    currentAdminSekbidIdx: 0,
+
+    renderAdminSekbidList(sekbidIndex = null) {
+        if (sekbidIndex !== null) this.currentAdminSekbidIdx = sekbidIndex;
+        const navContainer = document.getElementById("adminSekbidSelectorNav");
+        const formContainer = document.getElementById("adminSekbidEditorFormContainer");
+        if (!navContainer || !formContainer) return;
+
+        const sekbids = StorageManager.getSekbidPrograms();
+        const idx = this.currentAdminSekbidIdx;
+
+        // Render Selector Pills
+        navContainer.innerHTML = sekbids.map((s, i) => `
+            <button type="button" class="${i === idx ? 'active' : ''}" onclick="AdminPortal.selectAdminSekbid(${i})">
+                Sekbid ${s.nomor}: ${s.namaSingkat}
+            </button>
+        `).join('');
+
+        const cur = sekbids[idx];
+        const programLines = (cur.programKerja || []).map(p => typeof p === 'string' ? p : (p.nama + ' - ' + p.deskripsi)).join('\n');
+
+        formContainer.innerHTML = `
+            <form onsubmit="AdminPortal.handleSaveSekbid(event, ${idx})">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border); padding-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+                    <div style="display: flex; align-items: center; gap: 0.65rem;">
+                        <span style="font-size: 1.75rem;">${cur.ikon}</span>
+                        <div>
+                            <h4 style="font-size: 1.15rem; font-weight: 800; color: var(--primary); margin: 0;">Sekbid ${cur.nomor}: ${this.escapeHtml(cur.nama)}</h4>
+                            <span style="font-size: 0.8rem; color: var(--text-muted);">${this.escapeHtml(cur.namaSingkat)}</span>
+                        </div>
+                    </div>
+                    <span class="status-pill pill-blue">OSIS Sekbid ${cur.nomor}</span>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group-clean">
+                            <label style="font-size: 0.825rem; font-weight: 700;">Guru Pembina Sekbid</label>
+                            <input type="text" id="editSekbidPembina" class="form-control-clean" value="${this.escapeHtml(cur.pembina || '')}" required>
+                        </div>
+                        <div class="form-group-clean">
+                            <label style="font-size: 0.825rem; font-weight: 700;">Ketua Sekbid (Siswa)</label>
+                            <input type="text" id="editSekbidKetua" class="form-control-clean" value="${this.escapeHtml(cur.ketua || '')}" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group-clean">
+                        <label style="font-size: 0.825rem; font-weight: 700;">Fokus & Visi Sekbid</label>
+                        <textarea id="editSekbidVisi" class="form-control-clean" rows="2" required>${this.escapeHtml(cur.visi || '')}</textarea>
+                    </div>
+
+                    <div class="form-group-clean">
+                        <label style="font-size: 0.825rem; font-weight: 700;">Daftar Program Kerja (Tulis 1 program per baris dengan format: Nama Program - Rincian)</label>
+                        <textarea id="editSekbidPrograms" class="form-control-clean" rows="6" placeholder="Contoh: Pemilihan Ketua OSIS - Penyelenggaraan pemilu demokratis..." required>${this.escapeHtml(programLines)}</textarea>
+                    </div>
+
+                    <div style="display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 0.5rem;">
+                        <button type="submit" class="btn btn-primary">
+                            💾 Simpan Perubahan Sekbid ${cur.nomor}
+                        </button>
+                    </div>
+                </div>
+            </form>
+        `;
+    },
+
+    selectAdminSekbid(index) {
+        this.renderAdminSekbidList(index);
+    },
+
+    handleSaveSekbid(event, index) {
+        event.preventDefault();
+        const sekbids = StorageManager.getSekbidPrograms();
+        const cur = sekbids[index];
+        if (!cur) return;
+
+        const pembina = document.getElementById("editSekbidPembina").value.trim();
+        const ketua = document.getElementById("editSekbidKetua").value.trim();
+        const visi = document.getElementById("editSekbidVisi").value.trim();
+        const progText = document.getElementById("editSekbidPrograms").value.trim();
+
+        const rawLines = progText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+        const parsedPrograms = rawLines.map(line => {
+            const parts = line.split(' - ');
+            if (parts.length > 1) {
+                return { nama: parts[0].trim(), deskripsi: parts.slice(1).join(' - ').trim(), status: "Aktif Terlaksana" };
+            }
+            return { nama: line, deskripsi: "Program kerja aktif kesiswaan", status: "Aktif Terlaksana" };
+        });
+
+        cur.pembina = pembina;
+        cur.ketua = ketua;
+        cur.visi = visi;
+        cur.programKerja = parsedPrograms;
+
+        StorageManager.saveSekbidPrograms(sekbids);
+        App.showToast(`Program kerja Sekbid ${cur.nomor} berhasil diperbarui!`);
+        this.renderAdminSekbidList(index);
+        if (typeof App.renderDashboardSekbid === "function") {
+            App.renderDashboardSekbid(index);
+        }
     }
 };

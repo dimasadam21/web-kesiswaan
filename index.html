@@ -379,13 +379,25 @@
                             👥 Cari & Rekap Siswa
                         </button>
                         <button id="hubTabBtnPresensi" class="hub-nav-btn" onclick="AdminPortal.switchAdminTab('presensi')">
-                            📋 Presensi & Disiplin Kelas
+                            📋 Presensi & Disiplin
+                        </button>
+                        <button id="hubTabBtnPengumuman" class="hub-nav-btn" onclick="AdminPortal.switchAdminTab('pengumuman')">
+                            📢 Pengumuman <span id="hubAdminPengumumanCountBadge" class="admin-tab-badge">0</span>
                         </button>
                         <button id="hubTabBtnPrestasi" class="hub-nav-btn" onclick="AdminPortal.switchAdminTab('prestasi')">
-                            🏆 Kelola Prestasi Siswa <span id="hubAdminPrestasiCountBadge" class="admin-tab-badge">0</span>
+                            🏆 Galeri Prestasi <span id="hubAdminPrestasiCountBadge" class="admin-tab-badge">0</span>
                         </button>
                         <button id="hubTabBtnKegiatan" class="hub-nav-btn" onclick="AdminPortal.switchAdminTab('kegiatan')">
-                            📅 Kelola Kegiatan Kesiswaan <span id="hubAdminKegiatanCountBadge" class="admin-tab-badge">0</span>
+                            📋 Daftar Kegiatan <span id="hubAdminKegiatanCountBadge" class="admin-tab-badge">0</span>
+                        </button>
+                        <button id="hubTabBtnTataTertib" class="hub-nav-btn" onclick="AdminPortal.switchAdminTab('tatatertib')">
+                            📜 Tata Tertib
+                        </button>
+                        <button id="hubTabBtnAgendaTerdekat" class="hub-nav-btn" onclick="AdminPortal.switchAdminTab('agendaterdekat')">
+                            ⏰ Agenda Terdekat <span id="hubAdminAgendaCountBadge" class="admin-tab-badge">0</span>
+                        </button>
+                        <button id="hubTabBtnSekbid" class="hub-nav-btn" onclick="AdminPortal.switchAdminTab('sekbid')">
+                            🏢 Program Sekbid
                         </button>
                     </div>
                 </div>
@@ -433,6 +445,9 @@
                             <button class="hub-btn hub-btn-amber" onclick="Forms.openModal('modalTambahPengumuman')" title="Buat & Publikasikan Pengumuman Baru">
                                 📢 + Pengumuman
                             </button>
+                            <button class="hub-btn hub-btn-emerald" onclick="AdminPortal.openAddAgendaModal()" style="background: #10b981; color: #ffffff;" title="Tambah Agenda Terdekat Baru">
+                                ⏰ + Agenda
+                            </button>
                             <button class="hub-btn hub-btn-slate" onclick="Forms.openActivityModal()" title="Tambah Agenda Kegiatan Kesiswaan">
                                 📅 + Kegiatan
                             </button>
@@ -449,11 +464,23 @@
                 <button id="adminTabBtnSiswa" class="admin-tab-btn active" onclick="AdminPortal.switchAdminTab('siswa')">
                     👥 Cari & Rekap Siswa
                 </button>
-                <button id="adminTabBtnPrestasi" class="admin-tab-btn" onclick="AdminPortal.switchAdminTab('prestasi')">
-                    🏆 Kelola Prestasi Siswa <span id="adminPrestasiCountBadge" class="admin-tab-badge">0</span>
+                <button id="adminTabBtnPengumuman" class="admin-tab-btn" onclick="AdminPortal.switchAdminTab('pengumuman')">
+                    📢 Pengumuman <span id="adminPengumumanCountBadge" class="admin-tab-badge">0</span>
                 </button>
-                <button id="adminTabBtnKegiatan" class="admin-tab-btn" onclick="AdminPortal.switchAdminTab('kegiatan')">
-                    📅 Kelola Kegiatan Kesiswaan <span id="adminKegiatanCountBadge" class="admin-tab-badge">0</span>
+                <button id="adminTabBtnPrestasi" class="admin-tab-btn" onclick="AdminPortal.switchAdminTab('prestasi')">
+                    🏆 Galeri Prestasi <span id="adminPrestasiCountBadge" class="admin-tab-badge">0</span>
+                </button>
+                <button id="adminTabBtnKegiatan" class="admin-tab-btn" onclick="AdminPortal.switchAdminTab('kegiatan')" style="display: none;">
+                    📋 Daftar Kegiatan <span id="adminKegiatanCountBadge" class="admin-tab-badge">0</span>
+                </button>
+                <button id="adminTabBtnTataTertib" class="admin-tab-btn" onclick="AdminPortal.switchAdminTab('tatatertib')" style="display: none;">
+                    📜 Tata Tertib
+                </button>
+                <button id="adminTabBtnAgendaTerdekat" class="admin-tab-btn" onclick="AdminPortal.switchAdminTab('agendaterdekat')">
+                    ⏰ Agenda Terdekat <span id="adminAgendaCountBadge" class="admin-tab-badge">0</span>
+                </button>
+                <button id="adminTabBtnSekbid" class="admin-tab-btn" onclick="AdminPortal.switchAdminTab('sekbid')" style="display: none;">
+                    🏢 Program Sekbid
                 </button>
             </div>
 
@@ -723,6 +750,90 @@
 
                 <div id="adminKegiatanListContainer" class="kegiatan-admin-grid">
                     <!-- Diisi via JavaScript -->
+                </div>
+            </div>
+
+            <!-- PANE 4: KELOLA PENGUMUMAN (SUPER ADMIN & ADMIN KESISWAAN) -->
+            <div id="adminPanePengumuman" class="admin-pane" style="display: none;">
+                <div class="admin-section-header">
+                    <div>
+                        <h3 style="font-size: 1.2rem; color: var(--primary);">📢 Manajemen Pengumuman & Informasi Kesiswaan</h3>
+                        <p style="font-size: 0.85rem; color: var(--text-muted);">
+                            Kelola pengumuman resmi, edaran kedisiplinan, dan berita kesiswaan sekolah.
+                        </p>
+                    </div>
+                    <button class="btn btn-primary" onclick="Forms.openModal('modalTambahPengumuman')">
+                        📢 + Buat Pengumuman Baru
+                    </button>
+                </div>
+
+                <div id="adminPengumumanListContainer" class="pengumuman-admin-grid">
+                    <!-- Diisi via JavaScript AdminPortal.renderAdminPengumumanList() -->
+                </div>
+            </div>
+
+            <!-- PANE 5: KELOLA AGENDA TERDEKAT (SUPER ADMIN & ADMIN KESISWAAN) -->
+            <div id="adminPaneAgendaTerdekat" class="admin-pane" style="display: none;">
+                <div class="admin-section-header">
+                    <div>
+                        <h3 style="font-size: 1.2rem; color: var(--primary);">⏰ Manajemen Agenda Terdekat Kesiswaan</h3>
+                        <p style="font-size: 0.85rem; color: var(--text-muted);">
+                            Jadwal pelaksanaan kegiatan terdekat yang diprioritaskan bagi siswa dan sekolah.
+                        </p>
+                    </div>
+                    <button class="btn btn-primary" onclick="AdminPortal.openAddAgendaModal()">
+                        ⏰ + Tambah Agenda Terdekat
+                    </button>
+                </div>
+
+                <div id="adminAgendaTerdekatListContainer" class="agenda-admin-grid">
+                    <!-- Diisi via JavaScript AdminPortal.renderAdminAgendaTerdekatList() -->
+                </div>
+            </div>
+
+            <!-- PANE 6: KELOLA TATA TERTIB (KHUSUS SUPER ADMIN) -->
+            <div id="adminPaneTataTertib" class="admin-pane" style="display: none;">
+                <div class="admin-section-header">
+                    <div>
+                        <h3 style="font-size: 1.2rem; color: var(--primary);">📜 Pedoman Tata Tertib & Pembinaan Karakter</h3>
+                        <p style="font-size: 0.85rem; color: var(--text-muted);">
+                            Kelola kategori aturan kedisiplinan (kehadiran, seragam, etika, larangan keras) serta batasan SP.
+                        </p>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                        <button class="btn btn-outline" onclick="Forms.openManageViolationsRulesModal()">
+                            ⚖️ Aturan Sanksi & SP
+                        </button>
+                        <button class="btn btn-primary" onclick="AdminPortal.openAddTataTertibModal()">
+                            ➕ Tambah Pasal Tata Tertib
+                        </button>
+                    </div>
+                </div>
+
+                <div id="adminTataTertibListContainer" class="tatatertib-admin-wrap">
+                    <!-- Diisi via JavaScript AdminPortal.renderAdminTataTertibList() -->
+                </div>
+            </div>
+
+            <!-- PANE 7: KELOLA PROGRAM SEKBID (KHUSUS SUPER ADMIN) -->
+            <div id="adminPaneSekbid" class="admin-pane" style="display: none;">
+                <div class="admin-section-header">
+                    <div>
+                        <h3 style="font-size: 1.2rem; color: var(--primary);">🏢 Manajemen Program Kerja Seksi Bidang (Sekbid 1 - 10)</h3>
+                        <p style="font-size: 0.85rem; color: var(--text-muted);">
+                            Perbarui visi misi, nama pembina, ketua, dan butir program kerja tahunan Sekbid 1 s.d. 10.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Navigasi Sekbid 1 - 10 -->
+                <div id="adminSekbidSelectorNav" class="sekbid-admin-nav-pills" style="margin-bottom: 1.25rem;">
+                    <!-- Diisi via JS -->
+                </div>
+
+                <!-- Form Edit Sekbid Terpilih -->
+                <div id="adminSekbidEditorFormContainer" class="sekbid-admin-editor-card">
+                    <!-- Diisi via JS -->
                 </div>
             </div>
 
@@ -2672,12 +2783,13 @@
         <div class="modal-card" style="max-width: 620px;">
             <div class="modal-card-header">
                 <div>
-                    <h3 style="font-size: 1.15rem; color: var(--text-main); margin: 0;">📢 Buat Pengumuman Kesiswaan Baru</h3>
+                    <h3 id="modalPengumumanTitle" style="font-size: 1.15rem; color: var(--text-main); margin: 0;">📢 Buat Pengumuman Kesiswaan Baru</h3>
                     <p style="font-size: 0.8rem; color: var(--text-muted); margin: 2px 0 0 0;">Pengumuman akan langsung tampil di Dasbor utama sekolah untuk publik.</p>
                 </div>
                 <button type="button" class="modal-close-icon" onclick="Forms.closeAllModals()">✕</button>
             </div>
             <form onsubmit="App.handleSaveNewAnnouncement(event)">
+                <input type="hidden" id="inputAnnEditId" value="">
                 <div class="modal-card-body" style="padding: 1.25rem 1.5rem; display: flex; flex-direction: column; gap: 0.85rem;">
                     <div class="form-group-clean">
                         <label style="font-size: 0.825rem; font-weight: 700; color: var(--text-main);">Kategori Pengumuman</label>
@@ -2707,7 +2819,96 @@
                 </div>
                 <div class="modal-card-footer">
                     <button type="button" class="btn btn-outline" onclick="Forms.closeAllModals()">Batal</button>
-                    <button type="submit" class="btn btn-primary">📢 Publikasikan Sekarang</button>
+                    <button type="submit" class="btn btn-primary" id="btnSaveAnnSubmit">📢 Publikasikan Sekarang</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         MODAL TAMBAH / EDIT AGENDA TERDEKAT (SUPER ADMIN & ADMIN KESISWAAN)
+         ===================================================================== -->
+    <div id="modalTambahAgendaTerdekat" class="modal-backdrop">
+        <div class="modal-card" style="max-width: 580px;">
+            <div class="modal-card-header">
+                <div>
+                    <h3 id="modalAgendaTitle" style="font-size: 1.15rem; color: var(--text-main); margin: 0;">⏰ Tambah Agenda Terdekat</h3>
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin: 2px 0 0 0;">Jadwal agenda akan dipublikasikan ke siswa dan dasbor.</p>
+                </div>
+                <button type="button" class="modal-close-icon" onclick="Forms.closeAllModals()">✕</button>
+            </div>
+            <form onsubmit="AdminPortal.handleSaveAgendaTerdekat(event)">
+                <input type="hidden" id="inputAgendaEditId" value="">
+                <div class="modal-card-body" style="padding: 1.25rem 1.5rem; display: flex; flex-direction: column; gap: 0.85rem;">
+                    <div class="form-group-clean">
+                        <label style="font-size: 0.825rem; font-weight: 700; color: var(--text-main);">Nama Agenda Kegiatan</label>
+                        <input type="text" id="inputAgendaNama" class="form-control-clean" placeholder="Contoh: Upacara Bendera & Penertiban Seragam" required>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                        <div class="form-group-clean">
+                            <label style="font-size: 0.825rem; font-weight: 700; color: var(--text-main);">Tanggal Pelaksanaan</label>
+                            <input type="text" id="inputAgendaTanggal" class="form-control-clean" placeholder="Contoh: 2 Mei 2026" required>
+                        </div>
+                        <div class="form-group-clean">
+                            <label style="font-size: 0.825rem; font-weight: 700; color: var(--text-main);">Lokasi / Tempat</label>
+                            <input type="text" id="inputAgendaTempat" class="form-control-clean" placeholder="Contoh: Lapangan Utama Sekolah" required>
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                        <div class="form-group-clean">
+                            <label style="font-size: 0.825rem; font-weight: 700; color: var(--text-main);">Kategori Agenda</label>
+                            <input type="text" id="inputAgendaKategori" class="form-control-clean" placeholder="Contoh: Upacara Resmi / Senam" required>
+                        </div>
+                        <div class="form-group-clean">
+                            <label style="font-size: 0.825rem; font-weight: 700; color: var(--text-main);">Label Highlight (Badge)</label>
+                            <input type="text" id="inputAgendaCountdown" class="form-control-clean" placeholder="Contoh: 🔥 Terdekat Pekan Ini / 📅 Pekan Depan">
+                        </div>
+                    </div>
+                    <div class="form-group-clean">
+                        <label style="font-size: 0.825rem; font-weight: 700; color: var(--text-main);">Keterangan / Instruksi Siswa</label>
+                        <textarea id="inputAgendaKeterangan" class="form-control-clean" rows="3" placeholder="Rincian instruksi pakaian, persiapan, atau peserta wajib..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-card-footer">
+                    <button type="button" class="btn btn-outline" onclick="Forms.closeAllModals()">Batal</button>
+                    <button type="submit" class="btn btn-primary" id="btnSaveAgendaText">💾 Simpan Agenda</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         MODAL TAMBAH PASAL TATA TERTIB (KHUSUS SUPER ADMIN)
+         ===================================================================== -->
+    <div id="modalTambahTataTertib" class="modal-backdrop">
+        <div class="modal-card" style="max-width: 580px;">
+            <div class="modal-card-header">
+                <div>
+                    <h3 style="font-size: 1.15rem; color: var(--text-main); margin: 0;">➕ Tambah Butir Aturan Tata Tertib</h3>
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin: 2px 0 0 0;">Tambahkan butir aturan ke dalam kategori tata tertib siswa.</p>
+                </div>
+                <button type="button" class="modal-close-icon" onclick="Forms.closeAllModals()">✕</button>
+            </div>
+            <form onsubmit="AdminPortal.handleSaveNewTataTertib(event)">
+                <div class="modal-card-body" style="padding: 1.25rem 1.5rem; display: flex; flex-direction: column; gap: 0.85rem;">
+                    <div class="form-group-clean">
+                        <label style="font-size: 0.825rem; font-weight: 700; color: var(--text-main);">Kategori Tata Tertib</label>
+                        <select id="inputTTKategori" class="form-control-clean" required>
+                            <option value="kehadiran">🕒 Waktu & Kehadiran</option>
+                            <option value="seragam">👔 Seragam & Kerapian</option>
+                            <option value="etika">🤝 Etika & Karakter</option>
+                            <option value="larangan">⚠️ Larangan Keras</option>
+                            <option value="sanksi">⚖️ Sistem Poin & Sanksi</option>
+                        </select>
+                    </div>
+                    <div class="form-group-clean">
+                        <label style="font-size: 0.825rem; font-weight: 700; color: var(--text-main);">Teks Aturan Baru</label>
+                        <textarea id="inputTTText" class="form-control-clean" rows="4" placeholder="Ketik ketentuan aturan resmi yang wajib dipatuhi siswa..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-card-footer">
+                    <button type="button" class="btn btn-outline" onclick="Forms.closeAllModals()">Batal</button>
+                    <button type="submit" class="btn btn-primary">➕ Tambahkan Aturan</button>
                 </div>
             </form>
         </div>

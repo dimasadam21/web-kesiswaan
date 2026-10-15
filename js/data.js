@@ -1138,3 +1138,45 @@ const DEFAULT_PENGUMUMAN = [
     }
 ];
 
+// ==========================================================================
+// AGENDA TERDEKAT KESISWAAN
+// ==========================================================================
+const DEFAULT_AGENDA_TERDEKAT = [
+    {
+        id: "AGN-01",
+        nama: "Upacara Peringatan Hari Pendidikan & Disiplin Pelajar",
+        tanggal: "2 Mei 2026",
+        tempat: "Lapangan Utama SMKN 1 Magelang",
+        kategori: "Upacara Resmi",
+        keterangan: "Wajib diikuti seluruh siswa dengan seragam upacara lengkap, topi, dan dasi.",
+        countdown: "🔥 Terdekat Pekan Ini"
+    },
+    {
+        id: "AGN-02",
+        nama: "Gelar Senam Bersama SAIH & Pemeriksaan Kerapian",
+        tanggal: "6 Mei 2026",
+        tempat: "Halaman Olahraga Sekolah",
+        kategori: "Senam & Disiplin",
+        keterangan: "Senam kebugaran pagi dilanjutkan inspeksi atribut seragam dan kerapian rambut siswa.",
+        countdown: "📅 Agenda 2"
+    },
+    {
+        id: "AGN-03",
+        nama: "Latihan Dasar Kepemimpinan Siswa (LDKS) OSIS/MPK",
+        tanggal: "15 Mei 2026",
+        tempat: "Bumi Perkemahan & Aula Pertemuan",
+        kategori: "Kepemimpinan",
+        keterangan: "Pembekalan karakter kedisiplinan dan manajemen kepemimpinan bagi calon pengurus.",
+        countdown: "📅 Agenda 3"
+    },
+    {
+        id: "AGN-04",
+        nama: "Razia Kedisiplinan & Sosialisasi Tata Tertib Terpadu",
+        tanggal: "22 Mei 2026",
+        tempat: "Seluruh Ruang Kelas X, XI, XII",
+        kategori: "Kedisiplinan",
+        keterangan: "Pemeriksaan kelengkapan atribut sekolah serta razia barang terlarang secara berkala.",
+        countdown: "📅 Agenda 4"
+    }
+];
+

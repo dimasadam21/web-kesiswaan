@@ -1,5 +1,5 @@
 // Service Worker untuk Sistem Kesiswaan PWA
-const CACHE_NAME = 'kesiswaan-app-v18';
+const CACHE_NAME = 'kesiswaan-app-v19';
 const STATIC_ASSETS = [
   './',
   './index.html',

@@ -478,8 +478,8 @@ const App = {
         const container = document.getElementById("dashboardAgendaTerdekatList");
         if (!container) return;
 
-        const activities = StorageManager.getActivities();
-        if (activities.length === 0) {
+        const agendas = StorageManager.getAgendaTerdekat();
+        if (agendas.length === 0) {
             container.innerHTML = `
                 <div style="grid-column: 1 / -1; padding: 2rem; text-align: center; color: var(--text-muted); background: #ffffff; border: 1px dashed var(--border); border-radius: var(--radius-md);">
                     <div style="font-size: 2rem;">⏰</div>
@@ -489,11 +489,11 @@ const App = {
             return;
         }
 
-        // Tampilkan 3-4 agenda terdekat dengan kartu beraksen highlight & countdown
-        container.innerHTML = activities.slice(0, 4).map((act, idx) => `
+        // Tampilkan agenda terdekat dengan kartu beraksen highlight & countdown
+        container.innerHTML = agendas.slice(0, 4).map((act, idx) => `
             <div class="agenda-terdekat-card ${idx === 0 ? 'priority-card' : ''}">
                 <div class="agenda-terdekat-header">
-                    <span class="agenda-countdown-badge">${idx === 0 ? '🔥 Terdekat Pekan Ini' : '📅 Agenda ' + (idx + 1)}</span>
+                    <span class="agenda-countdown-badge">${act.countdown || (idx === 0 ? '🔥 Terdekat Pekan Ini' : '📅 Agenda ' + (idx + 1))}</span>
                     <span class="status-pill pill-blue">${act.kategori || 'Kesiswaan'}</span>
                 </div>
                 <h4 class="agenda-terdekat-title">${act.nama}</h4>
@@ -620,20 +620,38 @@ const App = {
         };
 
         const meta = labels[kategori] || labels.informasi;
+        const editId = document.getElementById("inputAnnEditId")?.value;
 
-        StorageManager.addAnnouncement({
-            kategori,
-            kategoriLabel: meta.label,
-            badgeClass: meta.badge,
-            judul,
-            penulis,
-            ringkasan: ringkasan || isi.substring(0, 120) + "...",
-            isi
-        });
+        if (editId) {
+            StorageManager.updateAnnouncement(editId, {
+                kategori,
+                kategoriLabel: meta.label,
+                badgeClass: meta.badge,
+                judul,
+                penulis,
+                ringkasan: ringkasan || isi.substring(0, 120) + "...",
+                isi
+            });
+            this.showToast("Pengumuman berhasil diperbarui!");
+        } else {
+            StorageManager.addAnnouncement({
+                kategori,
+                kategoriLabel: meta.label,
+                badgeClass: meta.badge,
+                judul,
+                penulis,
+                ringkasan: ringkasan || isi.substring(0, 120) + "...",
+                isi
+            });
+            this.showToast("Pengumuman baru berhasil dipublikasikan!");
+        }
 
-        this.showToast("Pengumuman baru berhasil dipublikasikan di Dasbor!");
         Forms.closeModal("modalTambahPengumuman");
         this.renderDashboardPengumuman();
+        if (window.AdminPortal) {
+            AdminPortal.renderAdminPengumumanList();
+            AdminPortal.updateAdminBadgeCounts();
+        }
     },
 
     // =========================================================================
