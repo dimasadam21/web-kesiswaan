@@ -1768,7 +1768,24 @@ const Forms = {
         }
 
         document.getElementById("editTeacherUsername").value = teacher.username;
-        document.getElementById("editTeacherUsernameDisplay").value = teacher.username;
+        const usernameInput = document.getElementById("editTeacherUsernameDisplay");
+        const helpEl = document.getElementById("editTeacherUsernameHelp");
+        if (usernameInput) {
+            usernameInput.value = teacher.username;
+            if (teacher.username.toLowerCase() === "admin") {
+                usernameInput.readOnly = true;
+                usernameInput.style.background = "#f1f5f9";
+                usernameInput.style.cursor = "not-allowed";
+                usernameInput.title = "Username akun Super Admin utama 'admin' tidak dapat diubah demi keamanan sistem.";
+                if (helpEl) helpEl.textContent = "🔒 Akun Super Admin utama 'admin' dikunci demi keamanan sistem.";
+            } else {
+                usernameInput.readOnly = false;
+                usernameInput.style.background = "#ffffff";
+                usernameInput.style.cursor = "text";
+                usernameInput.title = "Ketik untuk mengganti username akun login";
+                if (helpEl) helpEl.textContent = "✏️ Username dapat diubah (huruf/angka tanpa spasi).";
+            }
+        }
         document.getElementById("editTeacherName").value = teacher.name;
         document.getElementById("editTeacherPassword").value = teacher.password || "";
         document.getElementById("editTeacherRole").value = teacher.role || "guru";
@@ -1836,7 +1853,8 @@ const Forms = {
 
     handleSaveEditTeacher(e) {
         e.preventDefault();
-        const username = document.getElementById("editTeacherUsername").value;
+        const oldUsername = document.getElementById("editTeacherUsername").value;
+        const newUsername = (document.getElementById("editTeacherUsernameDisplay")?.value || oldUsername).trim();
         const name = document.getElementById("editTeacherName").value.trim();
         const presetJabatan = document.getElementById("editTeacherJabatanPreset").value;
         const customJabatan = document.getElementById("editTeacherCustomJabatan").value.trim();
@@ -1846,13 +1864,14 @@ const Forms = {
         const pembina = this.pembinaSelectedEdit.join(", ") || "-";
         const password = document.getElementById("editTeacherPassword").value.trim();
 
-        if (!name || !password) {
-            App.showToast("Nama dan password guru wajib diisi!");
+        if (!newUsername || !name || !password) {
+            App.showToast("Username, nama, dan password guru wajib diisi!");
             return;
         }
 
         try {
-            StorageManager.updateTeacher(username, {
+            const updatedTeacher = StorageManager.updateTeacher(oldUsername, {
+                username: newUsername,
                 name,
                 role,
                 roleLabel,
@@ -1864,7 +1883,8 @@ const Forms = {
             });
 
             // Sinkronkan sesi jika yang diedit adalah akun yang sedang aktif login
-            if (AuthManager.currentUser && AuthManager.currentUser.username.toLowerCase() === username.toLowerCase()) {
+            if (AuthManager.currentUser && AuthManager.currentUser.username.toLowerCase() === oldUsername.toLowerCase()) {
+                AuthManager.currentUser.username = updatedTeacher.username;
                 AuthManager.currentUser.name = name;
                 AuthManager.currentUser.role = role;
                 AuthManager.currentUser.roleLabel = roleLabel;
@@ -1874,7 +1894,7 @@ const Forms = {
 
             this.closeModal("modalEditTeacher");
             this.renderTeachersList();
-            App.showToast(`Data guru ${name} berhasil diperbarui!`);
+            App.showToast(`Data guru ${name} (${updatedTeacher.username}) berhasil diperbarui!`);
         } catch (err) {
             App.showToast(err.message);
         }

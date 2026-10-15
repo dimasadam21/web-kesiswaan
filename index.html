@@ -1786,8 +1786,11 @@
 
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
                         <div class="form-group-clean">
-                            <label>Username (ID Login Akun)</label>
-                            <input type="text" id="editTeacherUsernameDisplay" class="form-control-clean" readonly disabled style="background: #f1f5f9; cursor: not-allowed; font-weight: 600;">
+                            <label>Username (ID Login Akun) *</label>
+                            <input type="text" id="editTeacherUsernameDisplay" class="form-control-clean" required placeholder="Contoh: aziz" autocomplete="off" spellcheck="false" style="font-weight: 600;">
+                            <span id="editTeacherUsernameHelp" style="font-size: 0.72rem; color: var(--text-muted); display: block; margin-top: 3px;">
+                                Username dapat diubah (huruf/angka tanpa spasi).
+                            </span>
                         </div>
                         <div class="form-group-clean">
                             <label>Password Akun *</label>

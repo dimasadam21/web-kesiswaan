@@ -143,19 +143,49 @@ const StorageManager = {
         const newRole = updatedData.role !== undefined ? updatedData.role : current.role;
         const newRoleLabel = updatedData.roleLabel ? updatedData.roleLabel.trim() : current.roleLabel;
 
+        // Validasi dan pembaruan username
+        let finalUsername = current.username;
+        if (updatedData.username && updatedData.username.trim() !== "") {
+            const candidate = updatedData.username.trim();
+            if (!/^[a-zA-Z0-9._-]+$/.test(candidate)) {
+                throw new Error("Username hanya boleh terdiri dari huruf, angka, titik (.), strip (-), atau garis bawah (_) tanpa spasi!");
+            }
+            if (candidate.toLowerCase() !== current.username.toLowerCase()) {
+                if (current.username.toLowerCase() === "admin") {
+                    throw new Error("Username akun Super Admin utama 'admin' tidak dapat diubah!");
+                }
+                const isTaken = data.teachers.some(t => t.username.toLowerCase() === candidate.toLowerCase());
+                if (isTaken) {
+                    throw new Error(`Username "${candidate}" sudah digunakan oleh guru lain! Silakan pilih username lain.`);
+                }
+                finalUsername = candidate;
+            }
+        }
+
+        const oldUsername = current.username;
+        const isUsernameChanged = finalUsername.toLowerCase() !== oldUsername.toLowerCase();
+
         data.teachers[index] = {
             ...current,
+            username: finalUsername,
             name: updatedData.name ? updatedData.name.trim() : current.name,
             role: newRole,
             roleLabel: newRoleLabel,
             sekbid: updatedData.sekbid !== undefined ? updatedData.sekbid.trim() : (current.sekbid || "-"),
             pokja: updatedData.pokja !== undefined ? updatedData.pokja.trim() : (current.pokja || "-"),
+            pembina: updatedData.pembina !== undefined ? updatedData.pembina.trim() : (current.pembina || current.pokja || "-"),
             password: updatedData.password ? updatedData.password.trim() : current.password,
             icon: updatedData.icon || (newRole === "superadmin" ? "👑" : (current.icon || "👨‍🏫"))
         };
         this.saveData(data);
-        if (window.SupabaseClient && typeof SupabaseClient.pushTeacher === "function") {
-            SupabaseClient.pushTeacher(data.teachers[index]);
+
+        if (window.SupabaseClient) {
+            if (isUsernameChanged && typeof SupabaseClient.deleteTeacher === "function") {
+                SupabaseClient.deleteTeacher(oldUsername);
+            }
+            if (typeof SupabaseClient.pushTeacher === "function") {
+                SupabaseClient.pushTeacher(data.teachers[index]);
+            }
         }
         return data.teachers[index];
     },
