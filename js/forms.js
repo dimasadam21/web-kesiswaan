@@ -4442,13 +4442,13 @@ const Forms = {
         if (elKode1) elKode1.value = act1.kode || "SENIN UPACARA";
 
         // Rabu
-        const act3 = schedule[3] || { nama: "Senam SAIH", kode: "RABU SENAM SAIH", aktif: true };
+        const act3 = schedule[3] || { nama: "Senam", kode: "RABU SENAM", aktif: true };
         const elActive3 = document.getElementById("schedActive3");
         const elNama3 = document.getElementById("schedNama3");
         const elKode3 = document.getElementById("schedKode3");
         if (elActive3) elActive3.checked = act3.aktif !== false;
-        if (elNama3) elNama3.value = act3.nama || "Senam SAIH";
-        if (elKode3) elKode3.value = act3.kode || "RABU SENAM SAIH";
+        if (elNama3) elNama3.value = act3.nama || "Senam";
+        if (elKode3) elKode3.value = act3.kode || "RABU SENAM";
 
         // Jumat
         const act5 = schedule[5] || { nama: "Senam", kode: "JUMAT SENAM", aktif: true };
@@ -4477,8 +4477,8 @@ const Forms = {
         // Rabu
         schedule[3] = {
             hari: "Rabu",
-            nama: document.getElementById("schedNama3").value.trim() || "Senam SAIH",
-            kode: document.getElementById("schedKode3").value.trim().toUpperCase() || "RABU SENAM SAIH",
+            nama: document.getElementById("schedNama3").value.trim() || "Senam",
+            kode: document.getElementById("schedKode3").value.trim().toUpperCase() || "RABU SENAM",
             aktif: document.getElementById("schedActive3").checked
         };
 

@@ -9,12 +9,32 @@
 const AdminPortal = {
     selectedStudent: null,
     currentTab: 'siswa',
-    currentAttendanceDate: new Date().toISOString().split('T')[0],
+    currentAttendanceDate: null,
     currentAttendanceClass: 'X TKP',
+
+    getTodayDate() {
+        const d = new Date();
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    },
+
+    getDayOfWeek(dateStr) {
+        if (!dateStr) dateStr = this.getTodayDate();
+        const parts = String(dateStr).split('-');
+        if (parts.length === 3) {
+            return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10)).getDay();
+        }
+        return new Date(dateStr + "T00:00:00").getDay();
+    },
 
     init() {},
 
     initTeacherPortal(user) {
+        // Otomatiskan tanggal presensi sesuai hari lokal saat ini saat mengisi
+        this.currentAttendanceDate = this.getTodayDate();
+
         const greeting = document.getElementById("teacherGreetingName");
         if (greeting) {
             greeting.textContent = `${user.name} (${user.roleLabel})`;
@@ -726,13 +746,37 @@ const AdminPortal = {
     // 7. PRESENSI & DISIPLIN KELAS WALI KELAS (UPACARA, SENAM, DAN CHECKLIST)
     // =========================================================================
     getHariKegiatanText(dateStr) {
-        if (!dateStr) dateStr = this.currentAttendanceDate || new Date().toISOString().split('T')[0];
-        const dateObj = new Date(dateStr + "T00:00:00");
-        const dayOfWeek = dateObj.getDay(); // 0: Minggu, 1: Senin, 3: Rabu, 5: Jumat
+        if (!dateStr) dateStr = this.currentAttendanceDate || this.getTodayDate();
+        const dayOfWeek = this.getDayOfWeek(dateStr); // 0: Minggu, 1: Senin, 2: Selasa, 3: Rabu, 4: Kamis, 5: Jumat, 6: Sabtu
         const schedule = StorageManager.getAttendanceSchedule();
 
-        if (schedule && schedule[dayOfWeek] && schedule[dayOfWeek].aktif !== false) {
-            return schedule[dayOfWeek].kode || schedule[dayOfWeek].nama;
+        // 1. Khusus hari Senin: SENIN UPACARA
+        if (dayOfWeek === 1) {
+            if (schedule && schedule[1] && schedule[1].aktif !== false && schedule[1].kode) {
+                return schedule[1].kode;
+            }
+            return "SENIN UPACARA";
+        }
+
+        // 2. Khusus hari Rabu: RABU SENAM
+        if (dayOfWeek === 3) {
+            if (schedule && schedule[3] && schedule[3].aktif !== false && schedule[3].kode && schedule[3].kode !== "RABU SENAM SAIH") {
+                return schedule[3].kode;
+            }
+            return "RABU SENAM";
+        }
+
+        // 3. Khusus hari Jumat: JUMAT SENAM
+        if (dayOfWeek === 5) {
+            if (schedule && schedule[5] && schedule[5].aktif !== false && schedule[5].kode) {
+                return schedule[5].kode;
+            }
+            return "JUMAT SENAM";
+        }
+
+        // Hari lainnya (Selasa, Kamis, Sabtu, Minggu)
+        if (schedule && schedule[dayOfWeek] && schedule[dayOfWeek].aktif !== false && schedule[dayOfWeek].kode) {
+            return schedule[dayOfWeek].kode;
         }
 
         const dayNames = ["MINGGU", "SENIN", "SELASA", "RABU", "KAMIS", "JUMAT", "SABTU"];
@@ -784,8 +828,9 @@ const AdminPortal = {
         const tbody = document.getElementById("attTableBody");
         if (!tbody) return;
 
+        // Otomatiskan tanggal presensi sesuai hari lokal saat ini jika belum ditentukan
         if (!this.currentAttendanceDate) {
-            this.currentAttendanceDate = new Date().toISOString().split('T')[0];
+            this.currentAttendanceDate = this.getTodayDate();
         }
         if (!this.currentAttendanceClass) {
             this.currentAttendanceClass = "X TKP";
@@ -801,12 +846,30 @@ const AdminPortal = {
             classSelect.value = this.currentAttendanceClass;
         }
 
+        const dayOfWeek = this.getDayOfWeek(this.currentAttendanceDate);
+        const isNoRambut = (dayOfWeek === 3 || dayOfWeek === 5); // Khusus Rabu (3) dan Jumat (5) tidak ada instrumen rambut
+
         const bannerText = this.getHariKegiatanText(this.currentAttendanceDate);
         const headerBanner = document.getElementById("attHeaderBannerText");
         if (headerBanner) headerBanner.textContent = `📅 ${bannerText}`;
 
         const tableBanner = document.getElementById("attTableActivityBanner");
-        if (tableBanner) tableBanner.textContent = bannerText;
+        if (tableBanner) {
+            tableBanner.textContent = bannerText;
+            tableBanner.colSpan = isNoRambut ? 4 : 5;
+        }
+
+        const thRambut = document.getElementById("attColHeaderRambut");
+        if (thRambut) {
+            thRambut.style.display = isNoRambut ? "none" : "";
+        }
+
+        const ruleRambut = document.getElementById("attRuleRambutText");
+        if (ruleRambut) {
+            ruleRambut.innerHTML = isNoRambut
+                ? "• <strong>Make up</strong>: Otomatis masuk pelanggaran <em>Make up</em> (+10 Poin)."
+                : "• <strong>Rambut / Make up</strong>: Otomatis masuk pelanggaran <em>Rambut/Make up</em> (+10 Poin).";
+        }
 
         // Pastikan siswa untuk kelas target sudah disiapkan
         StorageManager.ensureStudentsForClass(this.currentAttendanceClass);
@@ -831,7 +894,7 @@ const AdminPortal = {
         if (students.length === 0) {
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="7" style="padding: 2.5rem; text-align: center; color: var(--text-muted);">
+                    <td colspan="${isNoRambut ? 6 : 7}" style="padding: 2.5rem; text-align: center; color: var(--text-muted);">
                         Belum ada data siswa terdaftar untuk kelas <strong>${this.currentAttendanceClass}</strong>.<br>
                         ${AuthManager.isSuperAdmin() ? '<button class="btn btn-primary btn-sm" style="margin-top: 0.75rem;" onclick="Forms.openImportStudentsModal()">📥 Impor Siswa Excel</button>' : ''}
                     </td>
@@ -863,6 +926,12 @@ const AdminPortal = {
             const switchClass = isPresent ? 'att-present' : 'att-absent';
             const switchLabel = isPresent ? 'Hadir' : (status === 'izin' ? 'Izin' : (status === 'sakit' ? 'Sakit' : 'Alpha'));
 
+            const rambutTd = isNoRambut ? '' : `
+                <td style="padding: 4px; border-right: 1px solid #e2e8f0; vertical-align: middle;">
+                    <input type="checkbox" class="att-checkbox-custom" ${rec.rambut ? 'checked' : ''} onchange="AdminPortal.handleViolationCheckbox('${s.id}', 'rambut', this.checked)" title="Rambut panjang/dicat">
+                </td>
+            `;
+
             return `
                 <tr style="border-bottom: 1px solid #e2e8f0; transition: background 0.15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
                     <td style="padding: 6px 4px; border-right: 1px solid #e2e8f0; font-weight: 700; color: var(--text-muted); font-size: 0.85rem;">${no}</td>
@@ -882,9 +951,7 @@ const AdminPortal = {
                             </div>
                         </div>
                     </td>
-                    <td style="padding: 4px; border-right: 1px solid #e2e8f0; vertical-align: middle;">
-                        <input type="checkbox" class="att-checkbox-custom" ${rec.rambut ? 'checked' : ''} onchange="AdminPortal.handleViolationCheckbox('${s.id}', 'rambut', this.checked)" title="Rambut panjang/dicat">
-                    </td>
+                    ${rambutTd}
                     <td style="padding: 4px; border-right: 1px solid #e2e8f0; vertical-align: middle;">
                         <input type="checkbox" class="att-checkbox-custom" ${rec.atribut ? 'checked' : ''} onchange="AdminPortal.handleViolationCheckbox('${s.id}', 'atribut', this.checked)" title="Atribut seragam tidak lengkap">
                     </td>
@@ -1121,22 +1188,27 @@ const AdminPortal = {
         const attData = StorageManager.getClassAttendance(this.currentAttendanceClass, this.currentAttendanceDate);
         const records = (attData && attData.records) ? attData.records : {};
         const bannerText = this.getHariKegiatanText(this.currentAttendanceDate);
+        const dayOfWeek = this.getDayOfWeek(this.currentAttendanceDate);
+        const isNoRambut = (dayOfWeek === 3 || dayOfWeek === 5);
 
         const exportData = students.map((s, idx) => {
             const rec = records[s.id] || { status: 'alpha', rambut: false, atribut: false, makeup: false, seragam: false };
             const statusUpper = (rec.status || 'alpha').toUpperCase();
-            return {
+            const row = {
                 "No": s.no || (idx + 1),
                 "Nama Siswa": s.nama,
                 "Kelas": s.kelas,
                 "Tanggal": this.currentAttendanceDate,
                 "Kegiatan": bannerText,
-                "Kehadiran": statusUpper,
-                "Rambut (10 Poin)": rec.rambut ? "Melanggar" : "Rapi",
-                "Atribut (5 Poin)": rec.atribut ? "Melanggar" : "Lengkap",
-                "Make up (10 Poin)": rec.makeup ? "Melanggar" : "Rapi",
-                "Seragam (5 Poin)": rec.seragam ? "Melanggar" : "Rapi"
+                "Kehadiran": statusUpper
             };
+            if (!isNoRambut) {
+                row["Rambut (10 Poin)"] = rec.rambut ? "Melanggar" : "Rapi";
+            }
+            row["Atribut (5 Poin)"] = rec.atribut ? "Melanggar" : "Lengkap";
+            row["Make up (10 Poin)"] = rec.makeup ? "Melanggar" : "Rapi";
+            row["Seragam (5 Poin)"] = rec.seragam ? "Melanggar" : "Rapi";
+            return row;
         });
 
         if (typeof XLSX === 'undefined') {
@@ -1162,6 +1234,8 @@ const AdminPortal = {
         const attData = StorageManager.getClassAttendance(this.currentAttendanceClass, this.currentAttendanceDate);
         const records = (attData && attData.records) ? attData.records : {};
         const bannerText = this.getHariKegiatanText(this.currentAttendanceDate);
+        const dayOfWeek = this.getDayOfWeek(this.currentAttendanceDate);
+        const isNoRambut = (dayOfWeek === 3 || dayOfWeek === 5);
 
         const printContainer = document.getElementById("printRaporContainer");
         if (!printContainer) return;
@@ -1174,7 +1248,7 @@ const AdminPortal = {
                     <td style="border: 1px solid #000; text-align: center; padding: 4px;">${s.no || (idx + 1)}</td>
                     <td style="border: 1px solid #000; padding: 4px 8px; text-align: left;">${s.nama}</td>
                     <td style="border: 1px solid #000; text-align: center; padding: 4px; font-weight: bold;">${statusText}</td>
-                    <td style="border: 1px solid #000; text-align: center; padding: 4px;">${rec.rambut ? '✓' : ''}</td>
+                    ${!isNoRambut ? `<td style="border: 1px solid #000; text-align: center; padding: 4px;">${rec.rambut ? '✓' : ''}</td>` : ''}
                     <td style="border: 1px solid #000; text-align: center; padding: 4px;">${rec.atribut ? '✓' : ''}</td>
                     <td style="border: 1px solid #000; text-align: center; padding: 4px;">${rec.makeup ? '✓' : ''}</td>
                     <td style="border: 1px solid #000; text-align: center; padding: 4px;">${rec.seragam ? '✓' : ''}</td>
@@ -1195,13 +1269,13 @@ const AdminPortal = {
                         <tr>
                             <th rowspan="2" style="border: 1px solid #000; width: 35px; padding: 6px; vertical-align: middle;">No</th>
                             <th rowspan="2" style="border: 1px solid #000; text-align: left; padding: 6px 8px; vertical-align: middle;">Nama Siswa</th>
-                            <th colspan="5" style="border: 1px solid #000; padding: 6px; font-weight: bold; background: #eee; text-transform: uppercase;">
+                            <th colspan="${isNoRambut ? 4 : 5}" style="border: 1px solid #000; padding: 6px; font-weight: bold; background: #eee; text-transform: uppercase;">
                                 ${bannerText}
                             </th>
                         </tr>
                         <tr>
                             <th style="border: 1px solid #000; width: 90px; padding: 6px;">Kehadiran</th>
-                            <th style="border: 1px solid #000; width: 60px; padding: 6px;">Rambut</th>
+                            ${!isNoRambut ? '<th style="border: 1px solid #000; width: 60px; padding: 6px;">Rambut</th>' : ''}
                             <th style="border: 1px solid #000; width: 60px; padding: 6px;">Atribut</th>
                             <th style="border: 1px solid #000; width: 60px; padding: 6px; font-style: italic;">Make up</th>
                             <th style="border: 1px solid #000; width: 60px; padding: 6px;">Seragam</th>

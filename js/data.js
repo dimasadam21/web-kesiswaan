@@ -322,10 +322,10 @@ const OFFICIAL_X_TKP_STUDENTS = [
     "YOGI DWI PRADANA"
 ];
 
-// JADWAL DEFAULT KEGIATAN RUTIN KESISWAAN (SENIN UPACARA, RABU SENAM SAIH, JUMAT SENAM)
+// JADWAL DEFAULT KEGIATAN RUTIN KESISWAAN (SENIN UPACARA, RABU SENAM, JUMAT SENAM)
 const DEFAULT_ATTENDANCE_SCHEDULE = {
     1: { hari: "Senin", nama: "Presensi Upacara", kode: "SENIN UPACARA", aktif: true },
-    3: { hari: "Rabu", nama: "Senam SAIH", kode: "RABU SENAM SAIH", aktif: true },
+    3: { hari: "Rabu", nama: "Senam", kode: "RABU SENAM", aktif: true },
     5: { hari: "Jumat", nama: "Senam", kode: "JUMAT SENAM", aktif: true }
 };
 

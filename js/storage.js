@@ -1147,9 +1147,13 @@ const StorageManager = {
                 ? JSON.parse(JSON.stringify(DEFAULT_ATTENDANCE_SCHEDULE))
                 : {
                     1: { hari: "Senin", nama: "Presensi Upacara", kode: "SENIN UPACARA", aktif: true },
-                    3: { hari: "Rabu", nama: "Senam SAIH", kode: "RABU SENAM SAIH", aktif: true },
+                    3: { hari: "Rabu", nama: "Senam", kode: "RABU SENAM", aktif: true },
                     5: { hari: "Jumat", nama: "Senam", kode: "JUMAT SENAM", aktif: true }
                 };
+            this.saveData(data);
+        } else if (data.attendanceSchedule[3] && (data.attendanceSchedule[3].kode === "RABU SENAM SAIH" || data.attendanceSchedule[3].nama === "Senam SAIH")) {
+            data.attendanceSchedule[3].nama = "Senam";
+            data.attendanceSchedule[3].kode = "RABU SENAM";
             this.saveData(data);
         }
         return data.attendanceSchedule;
