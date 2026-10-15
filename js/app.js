@@ -868,20 +868,17 @@ const App = {
             if (headerGuest) headerGuest.style.display = "none";
             if (headerUser) headerUser.style.display = "flex";
 
+            const adminTabsNav = document.querySelector(".admin-tabs-nav");
             if (user.role === "superadmin") {
                 if (headerUserName) headerUserName.textContent = `👑 Super Admin: ${user.name}`;
                 if (headerUserBadge) headerUserBadge.className = "user-badge-pill superadmin";
                 if (superAdminToolbar) superAdminToolbar.style.display = "block";
-                if (btnTambahSiswa) btnTambahSiswa.style.display = "inline-flex";
-                if (btnImporSiswa) btnImporSiswa.style.display = "inline-flex";
-                if (btnKelolaSiswa) btnKelolaSiswa.style.display = "inline-flex";
+                if (adminTabsNav) adminTabsNav.style.display = "none";
             } else {
                 if (headerUserName) headerUserName.textContent = `${user.icon || '👨‍🏫'} ${user.name}`;
                 if (headerUserBadge) headerUserBadge.className = "user-badge-pill";
                 if (superAdminToolbar) superAdminToolbar.style.display = "none";
-                if (btnTambahSiswa) btnTambahSiswa.style.display = "none";
-                if (btnImporSiswa) btnImporSiswa.style.display = "none";
-                if (btnKelolaSiswa) btnKelolaSiswa.style.display = "none";
+                if (adminTabsNav) adminTabsNav.style.display = "flex";
             }
 
             AdminPortal.initTeacherPortal(user);

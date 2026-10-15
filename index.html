@@ -412,6 +412,26 @@
                     </div>
                     <span class="command-hub-badge">Akses Penuh Super Admin</span>
                 </div>
+
+                <!-- NAVIGASI TAB HALAMAN DASBOR (TERPADU DI PUSAT KENDALI SUPER ADMIN) -->
+                <div class="command-hub-nav-row">
+                    <span class="command-hub-nav-label">🧭 Halaman Utama:</span>
+                    <div class="command-hub-nav-pills">
+                        <button id="hubTabBtnSiswa" class="hub-nav-btn active" onclick="AdminPortal.switchAdminTab('siswa')">
+                            👥 Cari & Rekap Siswa
+                        </button>
+                        <button id="hubTabBtnPresensi" class="hub-nav-btn" onclick="AdminPortal.switchAdminTab('presensi')">
+                            📋 Presensi & Disiplin Kelas
+                        </button>
+                        <button id="hubTabBtnPrestasi" class="hub-nav-btn" onclick="AdminPortal.switchAdminTab('prestasi')">
+                            🏆 Kelola Prestasi Siswa <span id="hubAdminPrestasiCountBadge" class="admin-tab-badge">0</span>
+                        </button>
+                        <button id="hubTabBtnKegiatan" class="hub-nav-btn" onclick="AdminPortal.switchAdminTab('kegiatan')">
+                            📅 Kelola Kegiatan Kesiswaan <span id="hubAdminKegiatanCountBadge" class="admin-tab-badge">0</span>
+                        </button>
+                    </div>
+                </div>
+
                 <div class="command-hub-grid">
                     <!-- Kelompok 1: Siswa & Guru -->
                     <div class="command-hub-card">
@@ -463,8 +483,8 @@
                 </div>
             </div>
 
-            <!-- SUB-NAVIGASI TAB MENU ADMIN & SUPER ADMIN -->
-            <div class="admin-tabs-nav">
+            <!-- SUB-NAVIGASI TAB MENU KHUSUS GURU & WALI KELAS (DISEMBUNYIKAN UNTUK SUPER ADMIN KARENA SUDAH DI PUSAT KENDALI) -->
+            <div class="admin-tabs-nav" style="display: none;">
                 <button id="adminTabBtnPresensi" class="admin-tab-btn" onclick="AdminPortal.switchAdminTab('presensi')" style="display: none;">
                     📋 Presensi & Disiplin Kelas
                 </button>
@@ -476,16 +496,6 @@
                 </button>
                 <button id="adminTabBtnKegiatan" class="admin-tab-btn" onclick="AdminPortal.switchAdminTab('kegiatan')">
                     📅 Kelola Kegiatan Kesiswaan <span id="adminKegiatanCountBadge" class="admin-tab-badge">0</span>
-                </button>
-                <!-- FITUR SISWA BARU & IMPOR EXCEL DI SAMPING KELOLA KEGIATAN KESISWAAN (KHUSUS SUPER ADMIN) -->
-                <button id="btnTambahSiswaSuperAdmin" class="admin-tab-btn superadmin-tab-action" onclick="Forms.openStudentModal()" style="display: none;" title="Tambah Data Siswa Baru (Khusus Super Admin)">
-                    👤 + Siswa Baru
-                </button>
-                <button id="btnImporSiswaSuperAdmin" class="admin-tab-btn superadmin-tab-action" onclick="Forms.openImportStudentsModal()" style="display: none; background: #059669 !important;" title="Impor Data Siswa dari File Excel / CSV">
-                    📥 Impor Excel
-                </button>
-                <button id="btnKelolaSiswaSuperAdmin" class="admin-tab-btn superadmin-tab-action" onclick="Forms.openManageStudentsModal()" style="display: none; background: #0284c7 !important;" title="Kelola Seluruh Siswa, Edit, Hapus & Ekspor (Khusus Super Admin)">
-                    👥 Kelola Siswa
                 </button>
             </div>
 

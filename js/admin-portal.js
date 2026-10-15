@@ -44,27 +44,17 @@ const AdminPortal = {
             btnPresensi.style.display = (isWaliKelas || isSuperAdmin) ? "inline-flex" : "none";
         }
 
+        // Sembunyikan sub-navigasi tab bawah untuk Super Admin karena sudah terpadu di Pusat Kendali Atas
+        const adminTabsNav = document.querySelector(".admin-tabs-nav");
+        if (adminTabsNav) {
+            adminTabsNav.style.display = isSuperAdmin ? "none" : "flex";
+        }
+
         // Sembunyikan tab prestasi & kegiatan untuk Wali Kelas (fokus ke presensi & kedisiplinan)
         const btnPrestasi = document.getElementById("adminTabBtnPrestasi");
         const btnKegiatan = document.getElementById("adminTabBtnKegiatan");
         if (btnPrestasi) btnPrestasi.style.display = isWaliKelas ? "none" : "inline-flex";
         if (btnKegiatan) btnKegiatan.style.display = isWaliKelas ? "none" : "inline-flex";
-
-        // Tombol Super Admin
-        const btnTambahSiswa = document.getElementById("btnTambahSiswaSuperAdmin");
-        if (btnTambahSiswa) {
-            btnTambahSiswa.style.display = isSuperAdmin ? "inline-flex" : "none";
-        }
-
-        const btnImporSiswa = document.getElementById("btnImporSiswaSuperAdmin");
-        if (btnImporSiswa) {
-            btnImporSiswa.style.display = isSuperAdmin ? "inline-flex" : "none";
-        }
-
-        const btnKelolaSiswa = document.getElementById("btnKelolaSiswaSuperAdmin");
-        if (btnKelolaSiswa) {
-            btnKelolaSiswa.style.display = isSuperAdmin ? "inline-flex" : "none";
-        }
 
         const btnEditJadwal = document.getElementById("btnEditJadwalKegiatanSuperAdmin");
         if (btnEditJadwal) {
@@ -98,10 +88,10 @@ const AdminPortal = {
         this.currentTab = tabName;
 
         const tabBtns = {
-            presensi: document.getElementById("adminTabBtnPresensi"),
-            siswa: document.getElementById("adminTabBtnSiswa"),
-            prestasi: document.getElementById("adminTabBtnPrestasi"),
-            kegiatan: document.getElementById("adminTabBtnKegiatan")
+            presensi: [document.getElementById("adminTabBtnPresensi"), document.getElementById("hubTabBtnPresensi")],
+            siswa: [document.getElementById("adminTabBtnSiswa"), document.getElementById("hubTabBtnSiswa")],
+            prestasi: [document.getElementById("adminTabBtnPrestasi"), document.getElementById("hubTabBtnPrestasi")],
+            kegiatan: [document.getElementById("adminTabBtnKegiatan"), document.getElementById("hubTabBtnKegiatan")]
         };
 
         const panes = {
@@ -113,9 +103,10 @@ const AdminPortal = {
 
         // Update Tombol Tab
         Object.keys(tabBtns).forEach(key => {
-            if (tabBtns[key]) {
-                tabBtns[key].classList.toggle("active", key === tabName);
-            }
+            const btns = Array.isArray(tabBtns[key]) ? tabBtns[key] : [tabBtns[key]];
+            btns.forEach(btn => {
+                if (btn) btn.classList.toggle("active", key === tabName);
+            });
         });
 
         // Update Panel Tampilan
@@ -142,9 +133,13 @@ const AdminPortal = {
 
         const badgePres = document.getElementById("adminPrestasiCountBadge");
         if (badgePres) badgePres.textContent = allPrestasi.length;
+        const hubBadgePres = document.getElementById("hubAdminPrestasiCountBadge");
+        if (hubBadgePres) hubBadgePres.textContent = allPrestasi.length;
 
         const badgeKeg = document.getElementById("adminKegiatanCountBadge");
         if (badgeKeg) badgeKeg.textContent = allKegiatan.length;
+        const hubBadgeKeg = document.getElementById("hubAdminKegiatanCountBadge");
+        if (hubBadgeKeg) hubBadgeKeg.textContent = allKegiatan.length;
     },
 
     // 1. Live Search Siswa Saat Guru Mengetik
