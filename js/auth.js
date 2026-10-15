@@ -42,13 +42,36 @@ const AuthManager = {
     // Login Siswa
     loginAsStudent(nisnOrQuery) {
         if (!nisnOrQuery) throw new Error("Masukkan NISN atau Nama Siswa Anda!");
-        const q = nisnOrQuery.trim().toLowerCase();
+        const raw = String(nisnOrQuery).trim();
+        const q = raw.toLowerCase();
         const students = StorageManager.getStudents();
-        const found = students.find(s => 
-            (s.nisn && String(s.nisn).trim() === nisnOrQuery.trim()) || 
-            (s.nis && String(s.nis).trim() === nisnOrQuery.trim()) || 
-            s.nama.toLowerCase().includes(q)
+        
+        // 1. Cocokkan ID unik / NISN / NIS persis
+        let found = students.find(s => 
+            s.id === raw ||
+            (s.nisn && String(s.nisn).trim() === raw) || 
+            (s.nis && String(s.nis).trim() === raw)
         );
+
+        // 2. Cocokkan Nama persis
+        if (!found) {
+            found = students.find(s => s.nama && s.nama.trim().toLowerCase() === q);
+        }
+
+        // 3. Cocokkan semua token kata yang diketik
+        if (!found) {
+            const tokens = q.split(/\s+/).filter(Boolean);
+            found = students.find(s => {
+                const n = (s.nama || "").toLowerCase();
+                const k = (s.kelas || "").toLowerCase();
+                return tokens.every(t => n.includes(t) || k.includes(t));
+            });
+        }
+
+        // 4. Fallback includes
+        if (!found) {
+            found = students.find(s => s.nama && s.nama.toLowerCase().includes(q));
+        }
 
         if (!found) {
             throw new Error("Siswa tidak ditemukan! Pastikan NIS, NISN, atau Nama sudah terdaftar.");

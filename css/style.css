@@ -3752,5 +3752,135 @@ body.has-wallpaper-active .tata-tertib-section {
     box-shadow: 0 2px 6px rgba(14, 116, 144, 0.25);
 }
 
+/* ==========================================================================
+   AUTOCOMPLETE LIVE SUGGESTIONS DROPDOWN (PENCARIAN SISWA OTOMATIS)
+   ========================================================================== */
+.student-search-suggest-dropdown {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    width: 100%;
+    background: #ffffff;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg, 12px);
+    box-shadow: 0 12px 28px -4px rgba(0, 0, 0, 0.14), 0 6px 12px -2px rgba(0, 0, 0, 0.08);
+    z-index: 1050;
+    max-height: 330px;
+    overflow-y: auto;
+    animation: fadeInSuggest 0.16s ease-out;
+}
+
+@keyframes fadeInSuggest {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.suggest-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.7rem 0.9rem;
+    border-bottom: 1px solid #f1f5f9;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.1s ease;
+    user-select: none;
+}
+
+.suggest-item:last-child {
+    border-bottom: none;
+}
+
+.suggest-item:hover,
+.suggest-item.active {
+    background: #f8fafc;
+}
+
+.suggest-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    object-fit: cover;
+    border: 1.5px solid var(--border);
+    flex-shrink: 0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+.suggest-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.suggest-name {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text-main);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.3;
+}
+
+.suggest-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.74rem;
+    color: var(--text-muted);
+    margin-top: 2px;
+    flex-wrap: wrap;
+}
+
+.suggest-badge-class {
+    background: #e0f2fe;
+    color: #0369a1;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+}
+
+.suggest-action {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-shrink: 0;
+}
+
+.suggest-arrow {
+    font-size: 0.74rem;
+    font-weight: 700;
+    color: var(--primary);
+    background: #eff6ff;
+    padding: 3px 8px;
+    border-radius: 6px;
+    border: 1px solid #bfdbfe;
+    transition: background 0.15s, color 0.15s;
+    white-space: nowrap;
+}
+
+.suggest-item:hover .suggest-arrow {
+    background: var(--primary);
+    color: #ffffff;
+    border-color: var(--primary);
+}
+
+.suggest-footer {
+    padding: 0.55rem 0.85rem;
+    background: #f8fafc;
+    border-top: 1px solid var(--border);
+    font-size: 0.74rem;
+    color: var(--text-muted);
+    text-align: center;
+    font-weight: 600;
+}
+
+.suggest-empty {
+    padding: 1.25rem 1rem;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    line-height: 1.5;
+}
+
 
 

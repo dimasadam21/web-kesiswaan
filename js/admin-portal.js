@@ -201,38 +201,95 @@ const AdminPortal = {
         const q = (query || "").trim().toLowerCase();
         if (!q) {
             dropdown.style.display = "none";
+            dropdown.innerHTML = "";
             return;
         }
 
-        const students = StorageManager.getStudents();
-        const matches = students.filter(s => 
-            s.nama.toLowerCase().includes(q) || 
-            s.nisn.includes(q) ||
-            s.kelas.toLowerCase().includes(q)
-        );
+        const tokens = q.split(/\s+/).filter(Boolean);
+        const students = StorageManager.getStudents() || [];
+
+        const matches = students.filter(s => {
+            const nama = (s.nama || "").toLowerCase();
+            const nis = String(s.nis || "").toLowerCase();
+            const nisn = String(s.nisn || "").toLowerCase();
+            const kelas = (s.kelas || "").toLowerCase();
+            const jurusan = (s.jurusan || "").toLowerCase();
+
+            return tokens.every(t => 
+                nama.includes(t) || 
+                nis.includes(t) || 
+                nisn.includes(t) || 
+                kelas.includes(t) ||
+                jurusan.includes(t)
+            );
+        });
+
+        // Urutkan kecocokan: Yang diawali query diletakkan paling atas
+        matches.sort((a, b) => {
+            const aName = (a.nama || "").toLowerCase();
+            const bName = (b.nama || "").toLowerCase();
+            const aStarts = aName.startsWith(q);
+            const bStarts = bName.startsWith(q);
+            if (aStarts && !bStarts) return -1;
+            if (!aStarts && bStarts) return 1;
+            return aName.localeCompare(bName);
+        });
 
         if (matches.length === 0) {
-            dropdown.innerHTML = `<div style="padding: 0.75rem 1rem; color: var(--text-muted); font-size: 0.85rem;">Tidak ada siswa yang cocok.</div>`;
+            dropdown.innerHTML = `<div style="padding: 1rem; color: var(--text-muted); font-size: 0.85rem; text-align: center;">Tidak ada siswa yang cocok dengan "<strong>${query}</strong>".</div>`;
             dropdown.style.display = "block";
             return;
         }
 
-        dropdown.innerHTML = matches.map(s => {
+        const maxDisplay = 10;
+        const displayed = matches.slice(0, maxDisplay);
+
+        const highlight = (text) => {
+            let res = text || "";
+            tokens.forEach(t => {
+                const cleanT = t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                if (cleanT) {
+                    const reg = new RegExp(`(${cleanT})`, 'gi');
+                    res = res.replace(reg, '<mark style="background: #fef08a; color: #1e293b; padding: 0 2px; border-radius: 3px; font-weight: 700;">$1</mark>');
+                }
+            });
+            return res;
+        };
+
+        const fallbackFemale = "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=120&q=80";
+        const fallbackMale = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80";
+
+        let html = displayed.map(s => {
             const st = StorageManager.calculateStudentStatus(s);
+            const fallbackAvatar = s.gender === 'P' ? fallbackFemale : fallbackMale;
+            const fotoUrl = s.foto || fallbackAvatar;
+            const highlightedName = highlight(s.nama);
+
             return `
-                <div style="padding: 0.65rem 1rem; border-bottom: 1px solid var(--border); cursor: pointer; display: flex; justify-content: space-between; align-items: center;"
+                <div style="padding: 0.65rem 0.9rem; border-bottom: 1px solid var(--border); cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; transition: background 0.15s;"
                      onclick="AdminPortal.selectTargetStudent('${s.id}')"
                      onmouseover="this.style.background='#f1f5f9'"
                      onmouseout="this.style.background='#ffffff'">
-                    <div>
-                        <strong style="color: var(--text-main); font-size: 0.9rem;">${s.nama}</strong>
-                        <div style="font-size: 0.75rem; color: var(--text-muted);">${s.kelas} • NISN: ${s.nisn}</div>
+                    <div style="display: flex; align-items: center; gap: 0.65rem; min-width: 0; flex: 1;">
+                        <img src="${fotoUrl}" alt="Foto" style="width: 36px; height: 36px; border-radius: 8px; object-fit: cover; border: 1px solid var(--border); flex-shrink: 0;" onerror="this.src='${fallbackAvatar}'">
+                        <div style="min-width: 0;">
+                            <strong style="color: var(--text-main); font-size: 0.88rem; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${highlightedName}</strong>
+                            <div style="font-size: 0.74rem; color: var(--text-muted);"><span style="background: #e0f2fe; color: #0369a1; font-weight: 700; padding: 1px 5px; border-radius: 4px;">${s.kelas}</span> • NIS: ${s.nis || '-'} • NISN: ${s.nisn || '-'}</div>
+                        </div>
                     </div>
-                    <span class="status-pill ${st.badgeClass}" style="font-size: 0.7rem;">${st.statusText}</span>
+                    <div style="display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0;">
+                        <span class="status-pill ${st.badgeClass}" style="font-size: 0.7rem; padding: 2px 7px;">${st.statusText}</span>
+                        <span style="font-size: 0.75rem; font-weight: 700; color: #0284c7; background: #e0f2fe; padding: 3px 8px; border-radius: 6px;">👉 Buka</span>
+                    </div>
                 </div>
             `;
         }).join('');
 
+        if (matches.length > maxDisplay) {
+            html += `<div style="padding: 0.5rem; background: #f8fafc; font-size: 0.74rem; color: var(--text-muted); text-align: center; border-top: 1px solid var(--border);">Menampilkan 10 dari total ${matches.length} siswa cocok. Ketik lebih spesifik...</div>`;
+        }
+
+        dropdown.innerHTML = html;
         dropdown.style.display = "block";
     },
 
@@ -245,8 +302,15 @@ const AdminPortal = {
             return;
         }
 
-        const students = StorageManager.getStudents();
-        const match = students.find(s => s.nama.toLowerCase().includes(q) || s.nisn.includes(q));
+        const students = StorageManager.getStudents() || [];
+        const tokens = q.split(/\s+/).filter(Boolean);
+        const match = students.find(s => {
+            const n = (s.nama || "").toLowerCase();
+            const nis = String(s.nis || "").toLowerCase();
+            const nisn = String(s.nisn || "").toLowerCase();
+            return tokens.every(t => n.includes(t) || nis.includes(t) || nisn.includes(t));
+        });
+
         if (match) {
             this.selectTargetStudent(match.id);
         } else {

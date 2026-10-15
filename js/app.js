@@ -101,6 +101,17 @@ const App = {
         } catch (e) {
             console.error("Autologin parameter error:", e);
         }
+
+        // Tutup dropdown saran pencarian siswa jika klik di luar
+        document.addEventListener("click", (e) => {
+            const dropdown = document.getElementById("loginStudentSuggestDropdown");
+            const input = document.getElementById("loginStudentQuery");
+            if (dropdown && dropdown.style.display !== "none") {
+                if (!dropdown.contains(e.target) && e.target !== input) {
+                    dropdown.style.display = "none";
+                }
+            }
+        });
     },
 
     // 1. Terapkan Branding & Pengaturan Sekolah Dinamis
@@ -923,6 +934,142 @@ const App = {
     quickStudentLogin(nisn) {
         try {
             AuthManager.loginAsStudent(nisn);
+        } catch (err) {
+            this.showToast(err.message);
+        }
+    },
+
+    escapeHtml(str) {
+        if (str === null || str === undefined) return "";
+        return String(str)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    },
+
+    handleStudentSearchSuggest(query) {
+        const dropdown = document.getElementById("loginStudentSuggestDropdown");
+        if (!dropdown) return;
+
+        const q = (query || "").trim().toLowerCase();
+        if (!q || q.length < 1) {
+            dropdown.style.display = "none";
+            dropdown.innerHTML = "";
+            return;
+        }
+
+        const tokens = q.split(/\s+/).filter(Boolean);
+        const students = StorageManager.getStudents() || [];
+
+        const matches = students.filter(s => {
+            const nama = (s.nama || "").toLowerCase();
+            const nis = String(s.nis || "").toLowerCase();
+            const nisn = String(s.nisn || "").toLowerCase();
+            const kelas = (s.kelas || "").toLowerCase();
+            const jurusan = (s.jurusan || "").toLowerCase();
+
+            return tokens.every(token => 
+                nama.includes(token) || 
+                nis.includes(token) || 
+                nisn.includes(token) || 
+                kelas.includes(token) ||
+                jurusan.includes(token)
+            );
+        });
+
+        // Urutkan: Nama yang berawalan query berada di urutan atas
+        matches.sort((a, b) => {
+            const aName = (a.nama || "").toLowerCase();
+            const bName = (b.nama || "").toLowerCase();
+            const aStarts = aName.startsWith(q);
+            const bStarts = bName.startsWith(q);
+            if (aStarts && !bStarts) return -1;
+            if (!aStarts && bStarts) return 1;
+            return aName.localeCompare(bName);
+        });
+
+        if (matches.length === 0) {
+            dropdown.innerHTML = `
+                <div class="suggest-empty">
+                    <div style="font-size: 1.5rem; margin-bottom: 0.25rem;">🔍</div>
+                    Tidak ada siswa ditemukan dengan kata kunci "<strong>${this.escapeHtml(query)}</strong>".<br>
+                    <small style="color: var(--text-muted);">Pastikan ejaan nama, NIS, atau kelas sudah sesuai.</small>
+                </div>
+            `;
+            dropdown.style.display = "block";
+            return;
+        }
+
+        const maxDisplay = 8;
+        const displayed = matches.slice(0, maxDisplay);
+
+        const highlight = (text) => {
+            if (!text) return "";
+            let escapedText = this.escapeHtml(text);
+            tokens.forEach(t => {
+                const cleanT = t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                if (cleanT) {
+                    const reg = new RegExp(`(${cleanT})`, 'gi');
+                    escapedText = escapedText.replace(reg, '<mark style="background: #fef08a; color: #1e293b; padding: 0 3px; border-radius: 3px; font-weight: 700;">$1</mark>');
+                }
+            });
+            return escapedText;
+        };
+
+        const fallbackFemale = "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=120&q=80";
+        const fallbackMale = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80";
+
+        let html = displayed.map((s, idx) => {
+            const st = StorageManager.calculateStudentStatus(s);
+            const fallbackAvatar = s.gender === 'P' ? fallbackFemale : fallbackMale;
+            const fotoUrl = s.foto || fallbackAvatar;
+            const highlightedName = highlight(s.nama || '-');
+
+            return `
+                <div class="suggest-item" onclick="App.selectStudentFromSuggest('${this.escapeHtml(s.id)}')" data-index="${idx}">
+                    <img src="${this.escapeHtml(fotoUrl)}" alt="Foto" class="suggest-avatar" onerror="this.src='${fallbackAvatar}'">
+                    <div class="suggest-info">
+                        <div class="suggest-name">${highlightedName}</div>
+                        <div class="suggest-meta">
+                            <span class="suggest-badge-class">${this.escapeHtml(s.kelas || '-')}</span>
+                            <span class="suggest-nis">NIS: ${this.escapeHtml(s.nis || '-')} • NISN: ${this.escapeHtml(s.nisn || '-')}</span>
+                        </div>
+                    </div>
+                    <div class="suggest-action">
+                        <span class="status-pill ${st.badgeClass || 'pill-green'}" style="font-size: 0.7rem; padding: 2px 7px;">${st.statusText || 'Aman'}</span>
+                        <span class="suggest-arrow">👉 Masuk</span>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        if (matches.length > maxDisplay) {
+            html += `
+                <div class="suggest-footer">
+                    Menampilkan <strong>${maxDisplay}</strong> dari total <strong>${matches.length}</strong> siswa yang cocok. Ketik lebih spesifik jika nama Anda belum muncul...
+                </div>
+            `;
+        }
+
+        dropdown.innerHTML = html;
+        dropdown.style.display = "block";
+    },
+
+    selectStudentFromSuggest(studentId) {
+        const student = StorageManager.getStudentById(studentId);
+        const dropdown = document.getElementById("loginStudentSuggestDropdown");
+        if (dropdown) dropdown.style.display = "none";
+
+        if (!student) return;
+
+        const input = document.getElementById("loginStudentQuery");
+        if (input) input.value = student.nama;
+
+        try {
+            AuthManager.loginAsStudent(student.id);
+            this.showToast(`🎉 Berhasil masuk sebagai ${student.nama} (${student.kelas})`);
         } catch (err) {
             this.showToast(err.message);
         }

@@ -98,8 +98,9 @@
                     </div>
 
                     <form id="studentLoginForm" class="auth-form-clean" onsubmit="App.handleStudentLogin(event)">
-                        <div>
-                            <input type="text" id="loginStudentQuery" class="form-control-clean" placeholder="Ketik NIS / NISN atau Nama Siswa Anda..." required>
+                        <div style="position: relative;">
+                            <input type="text" id="loginStudentQuery" class="form-control-clean" placeholder="Ketik nama (contoh: Muhammad) atau NIS..." autocomplete="off" oninput="App.handleStudentSearchSuggest(this.value)" onfocus="App.handleStudentSearchSuggest(this.value)" required>
+                            <div id="loginStudentSuggestDropdown" class="student-search-suggest-dropdown" style="display: none;"></div>
                         </div>
                         <button type="submit" class="btn btn-primary" style="width: 100%;">
                             Masuk & Cek Riwayat Saya
