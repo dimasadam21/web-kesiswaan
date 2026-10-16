@@ -116,16 +116,21 @@
                         <div class="login-box-icon">👨‍🏫</div>
                         <div class="login-box-title">
                             <h3>Masuk Sebagai Guru / Kesiswaan</h3>
-                            <p>Masuk dengan Username & Password Anda</p>
                         </div>
                     </div>
 
                     <form id="teacherLoginForm" class="auth-form-clean" onsubmit="App.handleTeacherLogin(event)">
                         <div>
-                            <input type="text" id="loginTeacherUsername" class="form-control-clean" placeholder="Username (contoh: admin / kesiswaan)" required>
+                            <input type="text" id="loginTeacherUsername" class="form-control-clean" placeholder="Username" required autocomplete="username">
                         </div>
-                        <div>
-                            <input type="password" id="loginTeacherPassword" class="form-control-clean" placeholder="Password (default: 123)" required>
+                        <div style="position: relative;">
+                            <input type="password" id="loginTeacherPassword" class="form-control-clean" placeholder="Password" style="padding-right: 2.75rem;" required autocomplete="current-password">
+                            <button type="button" id="btnToggleTeacherPassword" class="btn-toggle-password" onclick="App.togglePasswordVisibility('loginTeacherPassword', this)" style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; padding: 4px; line-height: 1; color: var(--text-muted); display: flex; align-items: center; justify-content: center; z-index: 2;" title="Lihat password" aria-label="Lihat password">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                            </button>
                         </div>
                         <button type="submit" class="btn btn-success" style="width: 100%;">
                             Masuk Portal Kesiswaan
