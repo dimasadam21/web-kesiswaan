@@ -48,9 +48,9 @@ const AuthManager = {
         
         // 1. Cocokkan ID unik / NISN / NIS persis
         let found = students.find(s => 
-            s.id === raw ||
-            (s.nisn && String(s.nisn).trim() === raw) || 
-            (s.nis && String(s.nis).trim() === raw)
+            (s.id !== undefined && s.id !== null && String(s.id).trim().toLowerCase() === q) ||
+            (s.nisn && String(s.nisn).trim().toLowerCase() === q) || 
+            (s.nis && String(s.nis).trim().toLowerCase() === q)
         );
 
         // 2. Cocokkan Nama persis

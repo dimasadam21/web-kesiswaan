@@ -98,8 +98,10 @@
                     </div>
 
                     <form id="studentLoginForm" class="auth-form-clean" onsubmit="App.handleStudentLogin(event)">
-                        <div style="position: relative;">
-                            <input type="text" id="loginStudentQuery" class="form-control-clean" placeholder="Ketik nama (contoh: Muhammad) atau NIS..." autocomplete="off" oninput="App.handleStudentSearchSuggest(this.value)" onfocus="App.handleStudentSearchSuggest(this.value)" required>
+                        <div class="search-input-wrapper" style="position: relative;">
+                            <span class="search-input-icon" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); font-size: 1rem; color: var(--text-muted); pointer-events: none; z-index: 2;">🔍</span>
+                            <input type="text" id="loginStudentQuery" class="form-control-clean" style="padding-left: 2.75rem; padding-right: 2.5rem;" placeholder="Ketik nama siswa atau NIS..." autocomplete="off" oninput="App.handleStudentSearchSuggest(this.value)" onfocus="App.handleStudentSearchSuggest(this.value)" onkeydown="App.handleStudentSearchKeydown(event)" required>
+                            <button type="button" id="clearLoginStudentQuery" onclick="App.clearStudentSearchInput()" style="display: none; position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: #e2e8f0; border: none; border-radius: 50%; width: 22px; height: 22px; font-size: 0.75rem; line-height: 1; cursor: pointer; color: #475569; z-index: 2;" title="Bersihkan pencarian">✕</button>
                             <div id="loginStudentSuggestDropdown" class="student-search-suggest-dropdown" style="display: none;"></div>
                         </div>
                         <button type="submit" class="btn btn-primary" style="width: 100%;">
@@ -3108,7 +3110,16 @@
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js').catch(() => {});
+                navigator.serviceWorker.register('./sw.js').then((reg) => {
+                    reg.update();
+                }).catch(() => {});
+            });
+            let refreshing = false;
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                if (!refreshing) {
+                    refreshing = true;
+                    window.location.reload();
+                }
             });
         }
     </script>

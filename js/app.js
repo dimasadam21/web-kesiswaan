@@ -8,6 +8,8 @@ const App = {
     currentSlideIndex: 0,
     sliderInterval: null,
     achievementSlides: [],
+    suggestActiveIndex: -1,
+    currentSuggestMatches: [],
 
     init() {
         StorageManager.init();
@@ -102,12 +104,16 @@ const App = {
             console.error("Autologin parameter error:", e);
         }
 
+        // Bersihkan sisa elemen contoh akun siswa jika tersisa dari cache DOM
+        document.querySelectorAll('.demo-hint-box').forEach(el => el.remove());
+
         // Tutup dropdown saran pencarian siswa jika klik di luar
         document.addEventListener("click", (e) => {
             const dropdown = document.getElementById("loginStudentSuggestDropdown");
             const input = document.getElementById("loginStudentQuery");
+            const clearBtn = document.getElementById("clearLoginStudentQuery");
             if (dropdown && dropdown.style.display !== "none") {
-                if (!dropdown.contains(e.target) && e.target !== input) {
+                if (!dropdown.contains(e.target) && e.target !== input && (!clearBtn || !clearBtn.contains(e.target))) {
                     dropdown.style.display = "none";
                 }
             }
@@ -949,14 +955,85 @@ const App = {
             .replace(/'/g, "&#039;");
     },
 
+    clearStudentSearchInput() {
+        const input = document.getElementById("loginStudentQuery");
+        const clearBtn = document.getElementById("clearLoginStudentQuery");
+        const dropdown = document.getElementById("loginStudentSuggestDropdown");
+        if (input) {
+            input.value = "";
+            input.focus();
+        }
+        if (clearBtn) clearBtn.style.display = "none";
+        if (dropdown) {
+            dropdown.style.display = "none";
+            dropdown.innerHTML = "";
+        }
+        this.suggestActiveIndex = -1;
+        this.currentSuggestMatches = [];
+    },
+
+    handleStudentSearchKeydown(event) {
+        const dropdown = document.getElementById("loginStudentSuggestDropdown");
+        if (!dropdown || dropdown.style.display === "none") return;
+
+        const items = dropdown.querySelectorAll(".suggest-item");
+        if (items.length === 0) return;
+
+        if (event.key === "ArrowDown") {
+            event.preventDefault();
+            this.suggestActiveIndex++;
+            if (this.suggestActiveIndex >= items.length) {
+                this.suggestActiveIndex = 0;
+            }
+            this.updateSuggestHighlight(items);
+        } else if (event.key === "ArrowUp") {
+            event.preventDefault();
+            this.suggestActiveIndex--;
+            if (this.suggestActiveIndex < 0) {
+                this.suggestActiveIndex = items.length - 1;
+            }
+            this.updateSuggestHighlight(items);
+        } else if (event.key === "Enter") {
+            if (this.suggestActiveIndex >= 0 && this.suggestActiveIndex < this.currentSuggestMatches.length) {
+                event.preventDefault();
+                const selectedStudent = this.currentSuggestMatches[this.suggestActiveIndex];
+                if (selectedStudent) {
+                    this.selectStudentFromSuggest(selectedStudent.id);
+                }
+            }
+        } else if (event.key === "Escape") {
+            dropdown.style.display = "none";
+            this.suggestActiveIndex = -1;
+        }
+    },
+
+    updateSuggestHighlight(items) {
+        items.forEach((item, idx) => {
+            if (idx === this.suggestActiveIndex) {
+                item.classList.add("highlighted");
+                item.scrollIntoView({ block: "nearest" });
+            } else {
+                item.classList.remove("highlighted");
+            }
+        });
+    },
+
     handleStudentSearchSuggest(query) {
         const dropdown = document.getElementById("loginStudentSuggestDropdown");
+        const clearBtn = document.getElementById("clearLoginStudentQuery");
         if (!dropdown) return;
 
-        const q = (query || "").trim().toLowerCase();
+        const raw = query || "";
+        if (clearBtn) {
+            clearBtn.style.display = raw.trim().length > 0 ? "flex" : "none";
+        }
+
+        const q = raw.trim().toLowerCase();
         if (!q || q.length < 1) {
             dropdown.style.display = "none";
             dropdown.innerHTML = "";
+            this.suggestActiveIndex = -1;
+            this.currentSuggestMatches = [];
             return;
         }
 
@@ -991,6 +1068,8 @@ const App = {
         });
 
         if (matches.length === 0) {
+            this.suggestActiveIndex = -1;
+            this.currentSuggestMatches = [];
             dropdown.innerHTML = `
                 <div class="suggest-empty">
                     <div style="font-size: 1.5rem; margin-bottom: 0.25rem;">🔍</div>
@@ -1002,8 +1081,10 @@ const App = {
             return;
         }
 
-        const maxDisplay = 8;
+        const maxDisplay = 10;
         const displayed = matches.slice(0, maxDisplay);
+        this.currentSuggestMatches = displayed;
+        this.suggestActiveIndex = -1;
 
         const highlight = (text) => {
             if (!text) return "";
@@ -1039,7 +1120,7 @@ const App = {
                     </div>
                     <div class="suggest-action">
                         <span class="status-pill ${st.badgeClass || 'pill-green'}" style="font-size: 0.7rem; padding: 2px 7px;">${st.statusText || 'Aman'}</span>
-                        <span class="suggest-arrow">👉 Masuk</span>
+                        <span class="suggest-arrow">👉 Pilih & Masuk</span>
                     </div>
                 </div>
             `;
@@ -1061,15 +1142,19 @@ const App = {
         const student = StorageManager.getStudentById(studentId);
         const dropdown = document.getElementById("loginStudentSuggestDropdown");
         if (dropdown) dropdown.style.display = "none";
+        this.suggestActiveIndex = -1;
+        this.currentSuggestMatches = [];
 
         if (!student) return;
 
         const input = document.getElementById("loginStudentQuery");
         if (input) input.value = student.nama;
+        const clearBtn = document.getElementById("clearLoginStudentQuery");
+        if (clearBtn) clearBtn.style.display = "flex";
 
         try {
             AuthManager.loginAsStudent(student.id);
-            this.showToast(`🎉 Berhasil masuk sebagai ${student.nama} (${student.kelas})`);
+            this.showToast(`🎉 Berhasil masuk sebagai ${student.nama} (${student.kelas || '-'})`);
         } catch (err) {
             this.showToast(err.message);
         }

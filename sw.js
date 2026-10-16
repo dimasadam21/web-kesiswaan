@@ -1,5 +1,5 @@
 // Service Worker untuk Sistem Kesiswaan PWA
-const CACHE_NAME = 'kesiswaan-app-v27';
+const CACHE_NAME = 'kesiswaan-app-v28';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -31,7 +31,10 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) => {
       return Promise.all(
-        keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
+        keys.filter((key) => key !== CACHE_NAME).map((key) => {
+          console.log('[SW] Menghapus cache lama:', key);
+          return caches.delete(key);
+        })
       );
     }).then(() => self.clients.claim())
   );
@@ -40,21 +43,42 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   // Hanya tangani request GET untuk aset lokal
   if (event.request.method !== 'GET') return;
-  
+
+  const url = new URL(event.request.url);
+  // Lewati request eksternal (CDN, API Supabase, Gambar Unsplash, dsb)
+  if (url.origin !== self.location.origin) return;
+
+  const isNavigationOrHtml = event.request.mode === 'navigate' || 
+                             (event.request.headers.get('accept') && event.request.headers.get('accept').includes('text/html')) ||
+                             url.pathname.endsWith('index.html') || url.pathname === '/' || url.pathname === '';
+
+  if (isNavigationOrHtml) {
+    // NETWORK FIRST untuk navigasi/HTML agar update UI dan penghapusan teks lama langsung tampil
+    event.respondWith(
+      fetch(event.request).then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200) {
+          const resClone = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, resClone));
+        }
+        return networkResponse;
+      }).catch(() => {
+        return caches.match(event.request).then((cached) => cached || caches.match('./index.html'));
+      })
+    );
+    return;
+  }
+
+  // Network First untuk skrip js dan css lokal selama masa aktif pengembangan
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        // Kembalikan cache dulu, lalu fetch versi terbaru di latar belakang (stale-while-revalidate)
-        fetch(event.request).then((networkResponse) => {
-          if (networkResponse && networkResponse.status === 200) {
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, networkResponse));
-          }
-        }).catch(() => {});
-        return cachedResponse;
+    fetch(event.request).then((networkResponse) => {
+      if (networkResponse && networkResponse.status === 200) {
+        const resClone = networkResponse.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, resClone));
       }
-      return fetch(event.request);
+      return networkResponse;
     }).catch(() => {
-      return caches.match('./index.html');
+      return caches.match(event.request);
     })
   );
 });
+

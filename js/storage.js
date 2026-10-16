@@ -595,15 +595,25 @@ const StorageManager = {
     },
 
     getStudentById(id) {
-        if (!id) return null;
-        const clean = String(id).trim();
-        return this.getStudents().find(s => s.id === clean || s.nisn === clean || s.nis === clean) || null;
+        if (id === undefined || id === null) return null;
+        const clean = String(id).trim().toLowerCase();
+        if (!clean) return null;
+        return this.getStudents().find(s => 
+            (s.id !== undefined && s.id !== null && String(s.id).trim().toLowerCase() === clean) || 
+            (s.nisn !== undefined && s.nisn !== null && String(s.nisn).trim().toLowerCase() === clean) || 
+            (s.nis !== undefined && s.nis !== null && String(s.nis).trim().toLowerCase() === clean)
+        ) || null;
     },
 
     getStudentByNisn(nisn) {
-        if (!nisn) return null;
-        const clean = String(nisn).trim();
-        return this.getStudents().find(s => s.nisn === clean || s.nis === clean || s.id === clean) || null;
+        if (nisn === undefined || nisn === null) return null;
+        const clean = String(nisn).trim().toLowerCase();
+        if (!clean) return null;
+        return this.getStudents().find(s => 
+            (s.nisn !== undefined && s.nisn !== null && String(s.nisn).trim().toLowerCase() === clean) || 
+            (s.nis !== undefined && s.nis !== null && String(s.nis).trim().toLowerCase() === clean) || 
+            (s.id !== undefined && s.id !== null && String(s.id).trim().toLowerCase() === clean)
+        ) || null;
     },
 
     calculateStudentStatus(student) {

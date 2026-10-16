@@ -864,6 +864,11 @@ h1, h2, h3, h4 {
     font-size: 1.5rem;
 }
 
+.login-box.student {
+    position: relative;
+    z-index: 20;
+}
+
 .login-box.student .login-box-icon {
     background: #eff6ff;
     color: var(--primary);
@@ -891,13 +896,7 @@ h1, h2, h3, h4 {
 }
 
 .demo-hint-box {
-    margin-top: 0.85rem;
-    font-size: 0.775rem;
-    color: var(--text-muted);
-    background: #f8fafc;
-    border: 1px solid var(--border);
-    padding: 0.5rem 0.75rem;
-    border-radius: var(--radius-sm);
+    display: none !important;
 }
 
 /* 3. SHOWCASE PRESTASI BERJALAN & ANIMASI POP-UP / FADE-IN FOTO */
@@ -3791,8 +3790,15 @@ body.has-wallpaper-active .tata-tertib-section {
 }
 
 .suggest-item:hover,
-.suggest-item.active {
-    background: #f8fafc;
+.suggest-item.active,
+.suggest-item.highlighted {
+    background: #f1f5f9;
+}
+
+.suggest-item.highlighted .suggest-arrow {
+    background: var(--primary);
+    color: #ffffff;
+    border-color: var(--primary);
 }
 
 .suggest-avatar {
