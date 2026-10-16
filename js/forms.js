@@ -612,16 +612,19 @@ const Forms = {
         const alamat = document.getElementById("formStudentAlamat") ? document.getElementById("formStudentAlamat").value.trim() : "";
         const mapsAlamat = document.getElementById("formStudentMapsAlamat") ? document.getElementById("formStudentMapsAlamat").value.trim() : "";
 
-        if (!nisn || !nama || !kelas) {
-            App.showToast("NISN, Nama, dan Kelas wajib diisi!");
+        if (!nama || !kelas) {
+            App.showToast("Nama dan Kelas wajib diisi!");
             return;
         }
+
+        const autoNis = nis || nisn || ("NIS-" + Date.now().toString().slice(-6));
+        const finalNisn = nisn || autoNis;
 
         try {
             const newStudent = StorageManager.addStudent({
                 foto: this.addStudentCurrentFoto || "",
-                nis,
-                nisn,
+                nis: nis || autoNis,
+                nisn: finalNisn,
                 nama,
                 gender,
                 kelas,
@@ -1406,7 +1409,38 @@ const Forms = {
 
         const mapped = rawRows
             .map((r, idx) => this.mapExcelRow(r, idx))
-            .filter(r => r.nis || r.nisn || r.nama);
+            .filter(r => r.nama && String(r.nama).trim().length > 0);
+
+        // Pencocokan cerdas berdasarkan Nama & Kelas (bukan NIS/NISN)
+        const existingStudents = StorageManager.getStudents() || [];
+        const normalizeName = (str) => String(str || "").toLowerCase().replace(/[\t\r\n]+/g, " ").replace(/\s+/g, " ").trim();
+        const normalizeClass = (str) => {
+            let c = String(str || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+            if (c.startsWith("10")) c = "x" + c.slice(2);
+            else if (c.startsWith("11")) c = "xi" + c.slice(2);
+            else if (c.startsWith("12")) c = "xii" + c.slice(2);
+            return c;
+        };
+
+        const existingMap = new Map();
+        existingStudents.forEach(s => {
+            const key = `${normalizeName(s.nama)}::${normalizeClass(s.kelas)}`;
+            existingMap.set(key, s);
+        });
+
+        let matchCount = 0;
+        let newCount = 0;
+
+        mapped.forEach(r => {
+            const key = `${normalizeName(r.nama)}::${normalizeClass(r.kelas)}`;
+            if (existingMap.has(key)) {
+                r._isExisting = true;
+                matchCount++;
+            } else {
+                r._isExisting = false;
+                newCount++;
+            }
+        });
 
         this.parsedImportRows = mapped;
         this.renderImportPreview(mapped);
@@ -1417,13 +1451,13 @@ const Forms = {
         if (mapped.length > 0) {
             if (summary) {
                 summary.className = "status-pill pill-green";
-                summary.textContent = `✅ ${mapped.length} siswa siap diimpor`;
+                summary.textContent = `✅ ${mapped.length} siswa siap diimpor (${matchCount} cocok Nama & Kelas, ${newCount} baru)`;
             }
             if (btnExec) btnExec.disabled = false;
         } else {
             if (summary) {
                 summary.className = "status-pill pill-yellow";
-                summary.textContent = "0 data valid ditemukan";
+                summary.textContent = "0 data valid ditemukan (kolom Nama Lengkap wajib terisi)";
             }
             if (btnExec) btnExec.disabled = true;
         }
@@ -1437,7 +1471,7 @@ const Forms = {
             tbody.innerHTML = `
                 <tr>
                     <td colspan="11" style="text-align: center; padding: 2rem; color: var(--text-muted);">
-                        Belum ada data siswa yang terbaca atau kolom NIS/Nama kosong.
+                        Belum ada data siswa yang terbaca atau kolom Nama Lengkap kosong.
                     </td>
                 </tr>
             `;
@@ -1447,7 +1481,14 @@ const Forms = {
         tbody.innerHTML = rows.map((r, idx) => `
             <tr>
                 <td>${r.no || (idx + 1)}</td>
-                <td><strong style="color: var(--text-main);">${r.nama || '-'}</strong></td>
+                <td>
+                    <div style="font-weight: 700; color: var(--text-main);">${r.nama || '-'}</div>
+                    <div style="margin-top: 3px;">
+                        ${r._isExisting 
+                            ? '<span class="status-pill pill-blue" style="font-size: 0.68rem; padding: 1px 6px;">Siswa Terdaftar (Nama &amp; Kelas Cocok)</span>' 
+                            : '<span class="status-pill pill-green" style="font-size: 0.68rem; padding: 1px 6px;">+ Siswa Baru</span>'}
+                    </div>
+                </td>
                 <td><span class="status-pill pill-gray">${r.kelas || '-'}</span></td>
                 <td><span style="font-weight: 700; color: var(--primary);">${r.nis || r.nisn || '-'}</span></td>
                 <td>${(r.tempatLahir ? r.tempatLahir + ', ' : '') + (r.tanggalLahir || '-')}</td>
@@ -1505,7 +1546,7 @@ const Forms = {
                 }
             }
 
-            App.showToast(`🎉 Sukses! ${res.total} data siswa diproses (${res.added} siswa baru, ${res.updated} diperbarui). Buka menu 'Kelola Siswa' untuk melihat data.`);
+            App.showToast(`🎉 Sukses! ${res.total} data siswa diproses (${res.added} siswa baru, ${res.updated} diperbarui berdasarkan Nama & Kelas). Buka menu 'Kelola Siswa' untuk melihat data.`);
         } catch (err) {
             App.showToast("Gagal melakukan impor: " + err.message);
         }

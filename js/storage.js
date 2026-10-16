@@ -641,17 +641,30 @@ const StorageManager = {
         }));
 
         if (Array.isArray(currentStudents) && currentStudents.length > 0) {
+            const normalizeName = (str) => String(str || "").toLowerCase().replace(/[\t\r\n]+/g, " ").replace(/\s+/g, " ").trim();
+            const normalizeClass = (str) => {
+                let c = String(str || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+                if (c.startsWith("10")) c = "x" + c.slice(2);
+                else if (c.startsWith("11")) c = "xi" + c.slice(2);
+                else if (c.startsWith("12")) c = "xii" + c.slice(2);
+                return c;
+            };
+            const makeKey = (s) => {
+                const n = normalizeName(s.nama);
+                const k = normalizeClass(s.kelas);
+                return n && k ? `${n}::${k}` : (n || (s.id ? String(s.id).toLowerCase() : ''));
+            };
+
             const currentMap = new Map();
             currentStudents.forEach(cs => {
+                const key = makeKey(cs);
+                if (key) currentMap.set(key, cs);
                 if (cs.id) currentMap.set(String(cs.id).toLowerCase(), cs);
-                if (cs.nis) currentMap.set(String(cs.nis).toLowerCase(), cs);
-                if (cs.nisn) currentMap.set(String(cs.nisn).toLowerCase(), cs);
             });
 
             result.forEach(s => {
-                const cur = (s.id && currentMap.get(String(s.id).toLowerCase())) ||
-                            (s.nis && currentMap.get(String(s.nis).toLowerCase())) ||
-                            (s.nisn && currentMap.get(String(s.nisn).toLowerCase()));
+                const cur = currentMap.get(makeKey(s)) ||
+                            (s.id && currentMap.get(String(s.id).toLowerCase()));
                 if (cur) {
                     if (Array.isArray(cur.pelanggaran) && cur.pelanggaran.length > 0) {
                         s.pelanggaran = cur.pelanggaran;
@@ -665,12 +678,10 @@ const StorageManager = {
                 }
             });
 
-            // Siswa buatan manual yang tidak ada di master tetap dipertahankan
+            // Siswa buatan manual yang tidak ada di master tetap dipertahankan berdasarkan Nama & Kelas
             currentStudents.forEach(cs => {
-                const inMaster = result.some(r => 
-                    (cs.id && r.id && String(cs.id).toLowerCase() === String(r.id).toLowerCase()) ||
-                    (cs.nis && r.nis && String(cs.nis).toLowerCase() === String(r.nis).toLowerCase())
-                );
+                const csKey = makeKey(cs);
+                const inMaster = result.some(r => makeKey(r) === csKey);
                 if (!inMaster && cs.nama && cs.kelas) {
                     result.push(cs);
                 }
@@ -902,17 +913,33 @@ const StorageManager = {
 
     addStudent(newStudent) {
         const data = this.getData();
-        const exists = data.students.some(s => s.nisn === newStudent.nisn);
-        if (exists) throw new Error("NISN sudah terdaftar!");
+        const normalizeName = (str) => String(str || "").toLowerCase().replace(/[\t\r\n]+/g, " ").replace(/\s+/g, " ").trim();
+        const normalizeClass = (str) => {
+            let c = String(str || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+            if (c.startsWith("10")) c = "x" + c.slice(2);
+            else if (c.startsWith("11")) c = "xi" + c.slice(2);
+            else if (c.startsWith("12")) c = "xii" + c.slice(2);
+            return c;
+        };
 
+        const targetName = normalizeName(newStudent.nama);
+        const targetClass = normalizeClass(newStudent.kelas);
+
+        const exists = data.students.some(s => 
+            normalizeName(s.nama) === targetName && 
+            normalizeClass(s.kelas) === targetClass
+        );
+        if (exists) throw new Error(`Siswa atas nama "${newStudent.nama}" di kelas "${newStudent.kelas}" sudah terdaftar!`);
+
+        const autoNis = newStudent.nis || newStudent.nisn || `NIS-${Date.now().toString().slice(-6)}`;
         const student = {
             id: "SIS-" + Date.now() + "-" + Math.floor(Math.random() * 1000),
             no: newStudent.no || (data.students.length + 1),
             foto: newStudent.foto || (newStudent.gender === "P" 
                 ? "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=300&q=80" 
                 : "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=300&q=80"),
-            nis: newStudent.nis || "",
-            nisn: newStudent.nisn,
+            nis: newStudent.nis || autoNis,
+            nisn: newStudent.nisn || autoNis,
             nama: newStudent.nama,
             gender: newStudent.gender || "L",
             kelas: newStudent.kelas,
@@ -941,13 +968,29 @@ const StorageManager = {
 
     updateStudent(studentId, updatedData) {
         const data = this.getData();
-        const index = data.students.findIndex(s => s.id === studentId || s.nisn === studentId);
+        const index = data.students.findIndex(s => s.id === studentId || s.nisn === studentId || s.nis === studentId);
         if (index === -1) throw new Error("Data siswa tidak ditemukan.");
 
-        // Cek jika NISN diubah dan bentrok dengan siswa lain
-        if (updatedData.nisn && updatedData.nisn !== data.students[index].nisn) {
-            const conflict = data.students.some((s, idx) => idx !== index && s.nisn === updatedData.nisn);
-            if (conflict) throw new Error("NISN baru sudah digunakan oleh siswa lain!");
+        // Cek jika Nama atau Kelas diubah dan bentrok dengan siswa lain
+        if (updatedData.nama || updatedData.kelas) {
+            const normalizeName = (str) => String(str || "").toLowerCase().replace(/[\t\r\n]+/g, " ").replace(/\s+/g, " ").trim();
+            const normalizeClass = (str) => {
+                let c = String(str || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+                if (c.startsWith("10")) c = "x" + c.slice(2);
+                else if (c.startsWith("11")) c = "xi" + c.slice(2);
+                else if (c.startsWith("12")) c = "xii" + c.slice(2);
+                return c;
+            };
+
+            const targetName = normalizeName(updatedData.nama || data.students[index].nama);
+            const targetClass = normalizeClass(updatedData.kelas || data.students[index].kelas);
+
+            const conflict = data.students.some((s, idx) => 
+                idx !== index && 
+                normalizeName(s.nama) === targetName && 
+                normalizeClass(s.kelas) === targetClass
+            );
+            if (conflict) throw new Error(`Siswa atas nama "${updatedData.nama || data.students[index].nama}" di kelas "${updatedData.kelas || data.students[index].kelas}" sudah terdaftar pada data lain!`);
         }
 
         const current = data.students[index];
@@ -995,45 +1038,31 @@ const StorageManager = {
             return strNew;
         };
 
-        const normalizeName = (str) => String(str || "").toLowerCase().replace(/\s+/g, " ").trim();
-        const normalizeClass = (str) => String(str || "").toLowerCase().replace(/[^a-z0-9]/g, "");
-
-        const isRealNis = (v) => {
-            if (!v) return false;
-            const s = String(v).trim().toUpperCase();
-            return !s.startsWith("NIS-") && !s.startsWith("SIS-") && s !== "-" && s.length >= 3;
+        const normalizeName = (str) => String(str || "").toLowerCase().replace(/[\t\r\n]+/g, " ").replace(/\s+/g, " ").trim();
+        const normalizeClass = (str) => {
+            let c = String(str || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+            if (c.startsWith("10")) c = "x" + c.slice(2);
+            else if (c.startsWith("11")) c = "xi" + c.slice(2);
+            else if (c.startsWith("12")) c = "xii" + c.slice(2);
+            return c;
         };
 
         const isSameStudent = (existing, incoming) => {
             const eName = normalizeName(existing.nama);
             const iName = normalizeName(incoming.nama);
+            // Dasar penentuan siswa tetap vs baru adalah Nama dan Kelas (bukan NIS/NISN)
+            if (!eName || !iName || eName !== iName) {
+                return false;
+            }
+
             const eKelas = normalizeClass(existing.kelas);
             const iKelas = normalizeClass(incoming.kelas);
 
-            // 1. Syarat utama: Nama dan Kelas sama persis -> pasti siswa yang sama!
-            if (eName && iName && eName === iName) {
-                if (eKelas && iKelas) {
-                    if (eKelas === iKelas) return true;
-                } else {
-                    return true;
-                }
+            if (eKelas && iKelas) {
+                return eKelas === iKelas;
             }
 
-            // 2. Cocokkan NIS nomor induk asli (bukan kode NIS-XXXX dummy)
-            const cleanENis = String(existing.nis || "").trim();
-            const cleanINis = String(incoming.nis || "").trim();
-            if (isRealNis(cleanENis) && isRealNis(cleanINis) && cleanENis.toLowerCase() === cleanINis.toLowerCase()) {
-                return true;
-            }
-
-            // 3. Cocokkan NISN asli
-            const cleanENisn = String(existing.nisn || "").trim();
-            const cleanINisn = String(incoming.nisn || "").trim();
-            if (isRealNis(cleanENisn) && isRealNis(cleanINisn) && cleanENisn.toLowerCase() === cleanINisn.toLowerCase()) {
-                return true;
-            }
-
-            return false;
+            return true;
         };
 
         if (mode === 'replace') {
@@ -1076,8 +1105,8 @@ const StorageManager = {
         // Mode Upsert / Tambah Baru
         studentsList.forEach((newS, idx) => {
             const studentName = String(newS.nama || '').trim();
-            // Valid jika setidaknya ada nama atau NIS
-            if (!studentName && !newS.nis && !newS.nisn) return;
+            // Siswa wajib memiliki nama untuk dapat diidentifikasi
+            if (!studentName) return;
 
             const existingIdx = existingStudents.findIndex(s => isSameStudent(s, newS));
 
@@ -1086,18 +1115,14 @@ const StorageManager = {
                 if (mode === 'upsert') {
                     const current = existingStudents[existingIdx];
 
-                    // Upgrade NIS: jika data lama adalah dummy tapi data baru punya NIS asli, gunakan yang asli
+                    // Upgrade NIS/NISN jika berkas baru memiliki nomor induk
                     let finalNis = current.nis;
-                    if (!isRealNis(current.nis) && isRealNis(newS.nis)) {
-                        finalNis = newS.nis;
-                    } else if (!current.nis && newS.nis) {
+                    if (newS.nis && String(newS.nis).trim() !== "-" && String(newS.nis).trim() !== "") {
                         finalNis = newS.nis;
                     }
 
                     let finalNisn = current.nisn;
-                    if (!isRealNis(current.nisn) && isRealNis(newS.nisn)) {
-                        finalNisn = newS.nisn;
-                    } else if (!current.nisn && newS.nisn) {
+                    if (newS.nisn && String(newS.nisn).trim() !== "-" && String(newS.nisn).trim() !== "") {
                         finalNisn = newS.nisn;
                     }
 
