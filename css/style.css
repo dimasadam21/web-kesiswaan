@@ -3777,11 +3777,12 @@ body.has-wallpaper-active .tata-tertib-section {
 .suggest-item {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 0.75rem;
-    padding: 0.7rem 0.9rem;
+    padding: 0.75rem 1rem;
     border-bottom: 1px solid #f1f5f9;
     cursor: pointer;
-    transition: background 0.15s ease, transform 0.1s ease;
+    transition: background 0.15s ease, color 0.15s ease;
     user-select: none;
 }
 
@@ -3792,32 +3793,16 @@ body.has-wallpaper-active .tata-tertib-section {
 .suggest-item:hover,
 .suggest-item.active,
 .suggest-item.highlighted {
-    background: #f1f5f9;
+    background: #eff6ff;
 }
 
-.suggest-item.highlighted .suggest-arrow {
-    background: var(--primary);
-    color: #ffffff;
-    border-color: var(--primary);
-}
-
-.suggest-avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 10px;
-    object-fit: cover;
-    border: 1.5px solid var(--border);
-    flex-shrink: 0;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-}
-
-.suggest-info {
-    flex: 1;
-    min-width: 0;
+.suggest-item:hover .suggest-name,
+.suggest-item.highlighted .suggest-name {
+    color: var(--primary);
 }
 
 .suggest-name {
-    font-size: 0.9rem;
+    font-size: 0.92rem;
     font-weight: 700;
     color: var(--text-main);
     white-space: nowrap;
@@ -3826,45 +3811,20 @@ body.has-wallpaper-active .tata-tertib-section {
     line-height: 1.3;
 }
 
-.suggest-meta {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.74rem;
-    color: var(--text-muted);
-    margin-top: 2px;
-    flex-wrap: wrap;
-}
-
 .suggest-badge-class {
     background: #e0f2fe;
     color: #0369a1;
-    font-weight: 700;
-    padding: 1px 6px;
-    border-radius: 4px;
-    font-size: 0.7rem;
-}
-
-.suggest-action {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    flex-shrink: 0;
-}
-
-.suggest-arrow {
-    font-size: 0.74rem;
-    font-weight: 700;
-    color: var(--primary);
-    background: #eff6ff;
-    padding: 3px 8px;
+    font-weight: 800;
+    padding: 3px 9px;
     border-radius: 6px;
-    border: 1px solid #bfdbfe;
-    transition: background 0.15s, color 0.15s;
-    white-space: nowrap;
+    font-size: 0.76rem;
+    flex-shrink: 0;
+    border: 1px solid #bae6fd;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
 
-.suggest-item:hover .suggest-arrow {
+.suggest-item:hover .suggest-badge-class,
+.suggest-item.highlighted .suggest-badge-class {
     background: var(--primary);
     color: #ffffff;
     border-color: var(--primary);

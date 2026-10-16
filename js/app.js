@@ -1099,29 +1099,13 @@ const App = {
             return escapedText;
         };
 
-        const fallbackFemale = "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=120&q=80";
-        const fallbackMale = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80";
-
         let html = displayed.map((s, idx) => {
-            const st = StorageManager.calculateStudentStatus(s);
-            const fallbackAvatar = s.gender === 'P' ? fallbackFemale : fallbackMale;
-            const fotoUrl = s.foto || fallbackAvatar;
             const highlightedName = highlight(s.nama || '-');
 
             return `
                 <div class="suggest-item" onclick="App.selectStudentFromSuggest('${this.escapeHtml(s.id)}')" data-index="${idx}">
-                    <img src="${this.escapeHtml(fotoUrl)}" alt="Foto" class="suggest-avatar" onerror="this.src='${fallbackAvatar}'">
-                    <div class="suggest-info">
-                        <div class="suggest-name">${highlightedName}</div>
-                        <div class="suggest-meta">
-                            <span class="suggest-badge-class">${this.escapeHtml(s.kelas || '-')}</span>
-                            <span class="suggest-nis">NIS: ${this.escapeHtml(s.nis || '-')} • NISN: ${this.escapeHtml(s.nisn || '-')}</span>
-                        </div>
-                    </div>
-                    <div class="suggest-action">
-                        <span class="status-pill ${st.badgeClass || 'pill-green'}" style="font-size: 0.7rem; padding: 2px 7px;">${st.statusText || 'Aman'}</span>
-                        <span class="suggest-arrow">👉 Pilih & Masuk</span>
-                    </div>
+                    <span class="suggest-name">${highlightedName}</span>
+                    <span class="suggest-badge-class">${this.escapeHtml(s.kelas || '-')}</span>
                 </div>
             `;
         }).join('');
