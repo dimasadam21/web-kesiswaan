@@ -1299,6 +1299,98 @@ const StorageManager = {
         return data.classAttendances[key];
     },
 
+    getAllClassAttendances(kelas) {
+        const data = this.getData();
+        if (!data.classAttendances) data.classAttendances = {};
+        let list = Object.values(data.classAttendances);
+        if (kelas) {
+            const cleanTarget = kelas.trim().toLowerCase().replace(/[\s\-_.]/g, '');
+            list = list.filter(item => {
+                if (!item || !item.kelas) return false;
+                const cleanItem = item.kelas.trim().toLowerCase().replace(/[\s\-_.]/g, '');
+                return cleanItem === cleanTarget || item.kelas.trim().toUpperCase() === kelas.trim().toUpperCase();
+            });
+        }
+        list.sort((a, b) => (b.tanggal || '').localeCompare(a.tanggal || ''));
+        return list;
+    },
+
+    ensureSampleAttendancesForClass(kelas) {
+        const existing = this.getAllClassAttendances(kelas);
+        if (existing.length > 0) return existing;
+
+        const students = this.ensureStudentsForClass(kelas);
+        if (!students || students.length === 0) return [];
+
+        const today = new Date();
+        const sampleDates = [];
+        let cur = new Date(today);
+        cur.setDate(cur.getDate() - 1);
+
+        while (sampleDates.length < 3) {
+            const day = cur.getDay();
+            if (day !== 0 && day !== 6) {
+                const y = cur.getFullYear();
+                const m = String(cur.getMonth() + 1).padStart(2, '0');
+                const d = String(cur.getDate()).padStart(2, '0');
+                sampleDates.push(`${y}-${m}-${d}`);
+            }
+            cur.setDate(cur.getDate() - 1);
+        }
+
+        const kegiatanLabels = {
+            1: "SENIN UPACARA",
+            2: "SELASA LITERASI",
+            3: "RABU SENAM & KEBERSIHAN",
+            4: "KAMIS BERKARYA",
+            5: "JUMAT RELIGI"
+        };
+
+        sampleDates.forEach((dateStr, sessionIdx) => {
+            const parts = dateStr.split('-');
+            const dObj = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+            const dayOfWeek = dObj.getDay();
+            const keg = kegiatanLabels[dayOfWeek] || "Presensi Rutin";
+
+            const records = {};
+            students.forEach((s, sIdx) => {
+                let st = 'hadir';
+                let rambut = false;
+                let atribut = false;
+                let makeup = false;
+                let seragam = false;
+
+                if (sIdx === (sessionIdx + 2) % students.length) {
+                    st = 'izin';
+                } else if (sIdx === (sessionIdx + 5) % students.length) {
+                    st = 'sakit';
+                } else if (sIdx === 1 && sessionIdx === 0) {
+                    st = 'hadir';
+                    atribut = true;
+                } else if (sIdx === 3 && sessionIdx === 1) {
+                    st = 'hadir';
+                    seragam = true;
+                }
+
+                records[s.id] = {
+                    status: st,
+                    rambut: rambut,
+                    atribut: atribut,
+                    makeup: makeup,
+                    seragam: seragam,
+                    violations: {}
+                };
+            });
+
+            this.saveClassAttendance(kelas, dateStr, {
+                kegiatan: keg,
+                records: records
+            });
+        });
+
+        return this.getAllClassAttendances(kelas);
+    },
+
     addStudentViolation(studentId, violationData) {
         return this.addViolation(studentId, violationData);
     },

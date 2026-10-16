@@ -408,10 +408,13 @@
                     <span class="command-hub-nav-label">🧭 Halaman Utama:</span>
                     <div class="command-hub-nav-pills">
                         <button id="hubTabBtnSiswa" class="hub-nav-btn active" onclick="AdminPortal.switchAdminTab('siswa')">
-                            👥 Cari & Rekap Siswa
+                            👥 Cari Siswa
                         </button>
                         <button id="hubTabBtnPresensi" class="hub-nav-btn" onclick="AdminPortal.switchAdminTab('presensi')">
                             📋 Presensi & Disiplin
+                        </button>
+                        <button id="hubTabBtnRiwayat" class="hub-nav-btn" onclick="AdminPortal.switchAdminTab('riwayat')">
+                            📅 Rekap Riwayat Sebelumnya
                         </button>
                         <button id="hubTabBtnPengumuman" class="hub-nav-btn" onclick="AdminPortal.switchAdminTab('pengumuman')">
                             📢 Pengumuman <span id="hubAdminPengumumanCountBadge" class="admin-tab-badge">0</span>
@@ -493,8 +496,11 @@
                 <button id="adminTabBtnPresensi" class="admin-tab-btn" onclick="AdminPortal.switchAdminTab('presensi')" style="display: none;">
                     📋 Presensi & Disiplin Kelas
                 </button>
+                <button id="adminTabBtnRiwayat" class="admin-tab-btn" onclick="AdminPortal.switchAdminTab('riwayat')" style="display: none;">
+                    📅 Rekap Riwayat Sebelumnya
+                </button>
                 <button id="adminTabBtnSiswa" class="admin-tab-btn active" onclick="AdminPortal.switchAdminTab('siswa')">
-                    👥 Cari & Rekap Siswa
+                    👥 Cari Siswa
                 </button>
                 <button id="adminTabBtnPengumuman" class="admin-tab-btn" onclick="AdminPortal.switchAdminTab('pengumuman')">
                     📢 Pengumuman <span id="adminPengumumanCountBadge" class="admin-tab-badge">0</span>
@@ -600,7 +606,122 @@
                 </div>
             </div>
 
-            <!-- PANE 1: CARI & REKAP SISWA -->
+            <!-- PANE REKAP RIWAYAT SEBELUMNYA (KHUSUS WALI KELAS & SUPER ADMIN) -->
+            <div id="adminPaneRiwayat" class="admin-pane" style="display: none;">
+                <div class="attendance-table-container">
+                    <!-- HEADER & FILTER TOOLBAR -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.25rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border);">
+                        <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                            <div style="font-size: 1.1rem; font-weight: 800; color: var(--primary); display: flex; align-items: center; gap: 0.4rem;">
+                                📅 Rekap Riwayat Presensi &amp; Disiplin
+                            </div>
+
+                            <!-- Pilihan Kelas (Dropdown untuk Super Admin, Badge untuk Wali Kelas) -->
+                            <div id="rekapFilterKelasWrap" style="display: flex; align-items: center; gap: 0.4rem;">
+                                <label style="font-size: 0.825rem; font-weight: 700; color: var(--text-main);">Kelas:</label>
+                                <select id="rekapFilterKelas" class="form-control-clean" style="padding: 0.35rem 0.65rem; font-size: 0.85rem; font-weight: 700;" onchange="AdminPortal.handleRekapClassChange(this.value)">
+                                    <!-- Diisi via JS -->
+                                </select>
+                            </div>
+                            <div id="rekapWaliKelasIndicator" style="display: none; align-items: center; gap: 0.4rem;">
+                                <label style="font-size: 0.825rem; font-weight: 700; color: var(--text-main);">Kelas:</label>
+                                <span id="rekapWaliKelasBadge" style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); color: #1d4ed8; border: 1.5px solid #93c5fd; padding: 0.35rem 0.85rem; border-radius: 8px; font-weight: 800; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 0.4rem; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+                                    🏫 <span id="rekapWaliKelasBadgeText">XI FL</span>
+                                </span>
+                            </div>
+
+                            <!-- Filter Bulan / Periode -->
+                            <div style="display: flex; align-items: center; gap: 0.4rem;">
+                                <label style="font-size: 0.825rem; font-weight: 700; color: var(--text-main);">Bulan:</label>
+                                <select id="rekapFilterBulan" class="form-control-clean" style="padding: 0.35rem 0.65rem; font-size: 0.85rem; font-weight: 600;" onchange="AdminPortal.handleRekapMonthChange(this.value)">
+                                    <option value="">Semua Bulan (Keseluruhan)</option>
+                                    <option value="01">Januari</option>
+                                    <option value="02">Februari</option>
+                                    <option value="03">Maret</option>
+                                    <option value="04">April</option>
+                                    <option value="05">Mei</option>
+                                    <option value="06">Juni</option>
+                                    <option value="07">Juli</option>
+                                    <option value="08">Agustus</option>
+                                    <option value="09">September</option>
+                                    <option value="10">Oktober</option>
+                                    <option value="11">November</option>
+                                    <option value="12">Desember</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- TOMBOL AKSI: CETAK REKAP & EKSPOR EXCEL -->
+                        <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                            <button class="btn btn-outline" style="font-size: 0.8rem; padding: 0.4rem 0.75rem;" onclick="AdminPortal.exportRekapRiwayatToExcel()" title="Unduh Rekap Akumulasi ke File Excel">
+                                📊 Ekspor Excel
+                            </button>
+                            <button class="btn btn-primary" style="font-size: 0.8rem; padding: 0.4rem 0.75rem;" onclick="AdminPortal.printRekapRiwayat()" title="Cetak Rekap Riwayat Presensi Resmi">
+                                🖨️ Cetak Rekap Riwayat
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- KARTU RINGKASAN KPI KELAS -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 0.75rem; margin-bottom: 1.25rem;">
+                        <div style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border: 1px solid #86efac; border-radius: 10px; padding: 0.75rem 1rem;">
+                            <div style="font-size: 0.75rem; font-weight: 700; color: #15803d; text-transform: uppercase; letter-spacing: 0.5px;">Tingkat Kehadiran</div>
+                            <div style="display: flex; align-items: baseline; justify-content: space-between; margin-top: 0.25rem;">
+                                <div id="rekapKpiPersenHadir" style="font-size: 1.45rem; font-weight: 900; color: #166534;">100%</div>
+                                <span style="font-size: 0.75rem; color: #15803d; font-weight: 700;">Rata-rata Kelas</span>
+                            </div>
+                        </div>
+                        <div style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border: 1px solid #93c5fd; border-radius: 10px; padding: 0.75rem 1rem;">
+                            <div style="font-size: 0.75rem; font-weight: 700; color: #1d4ed8; text-transform: uppercase; letter-spacing: 0.5px;">Total Sesi Tercatat</div>
+                            <div style="display: flex; align-items: baseline; justify-content: space-between; margin-top: 0.25rem;">
+                                <div id="rekapKpiTotalSesi" style="font-size: 1.45rem; font-weight: 900; color: #1e40af;">0 Hari</div>
+                                <span style="font-size: 0.75rem; color: #1d4ed8; font-weight: 700;" id="rekapKpiTotalSiswa">0 Siswa</span>
+                            </div>
+                        </div>
+                        <div style="background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); border: 1px solid #fde68a; border-radius: 10px; padding: 0.75rem 1rem;">
+                            <div style="font-size: 0.75rem; font-weight: 700; color: #b45309; text-transform: uppercase; letter-spacing: 0.5px;">Izin &amp; Sakit</div>
+                            <div style="display: flex; align-items: baseline; justify-content: space-between; margin-top: 0.25rem;">
+                                <div id="rekapKpiIzinSakit" style="font-size: 1.45rem; font-weight: 900; color: #92400e;">0 Izin • 0 Sakit</div>
+                            </div>
+                        </div>
+                        <div style="background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); border: 1px solid #fca5a5; border-radius: 10px; padding: 0.75rem 1rem;">
+                            <div style="font-size: 0.75rem; font-weight: 700; color: #b91c1c; text-transform: uppercase; letter-spacing: 0.5px;">Alpha &amp; Pelanggaran</div>
+                            <div style="display: flex; align-items: baseline; justify-content: space-between; margin-top: 0.25rem;">
+                                <div id="rekapKpiAlphaDisiplin" style="font-size: 1.45rem; font-weight: 900; color: #991b1b;">0 Alpha • 0 Disiplin</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TOGGLE TAMPILAN VIEW: AKUMULASI SISWA ATAU LOG SESI HARIAN -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 0.85rem;">
+                        <div style="display: inline-flex; background: #e2e8f0; padding: 3px; border-radius: 8px; gap: 3px;">
+                            <button id="rekapViewBtnSiswa" class="btn btn-sm" style="background: #ffffff; color: var(--primary); font-weight: 800; border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.08); font-size: 0.8rem; padding: 0.4rem 0.85rem;" onclick="AdminPortal.switchRekapView('siswa')">
+                                📊 Rekap Akumulasi Per Siswa
+                            </button>
+                            <button id="rekapViewBtnHarian" class="btn btn-sm" style="background: transparent; color: var(--text-muted); font-weight: 700; border-radius: 6px; font-size: 0.8rem; padding: 0.4rem 0.85rem;" onclick="AdminPortal.switchRekapView('harian')">
+                                📜 Log Sesi Presensi Harian
+                            </button>
+                        </div>
+                        <div id="rekapTableInfoBadge" style="font-size: 0.82rem; color: var(--text-muted); font-weight: 600;">
+                            Menampilkan data riwayat presensi
+                        </div>
+                    </div>
+
+                    <!-- CONTAINER TABEL RIWAYAT -->
+                    <div class="table-responsive" style="max-height: 65vh; overflow-y: auto; border: 1px solid #cbd5e1; border-radius: 8px;">
+                        <table class="table-modern" id="tableRekapRiwayat" style="width: 100%; border-collapse: collapse; text-align: center;">
+                            <thead id="rekapTableHeader" style="position: sticky; top: 0; background: #f8fafc; z-index: 10;">
+                                <!-- Diisi via JavaScript renderAttendanceHistoryTable() -->
+                            </thead>
+                            <tbody id="rekapTableBody">
+                                <!-- Diisi via JavaScript renderAttendanceHistoryTable() -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PANE 1: CARI SISWA -->
             <div id="adminPaneSiswa" class="admin-pane">
                 <!-- FITUR UTAMA GURU: KOTAK SEARCH NAMA SISWA YANG INGIN DITUJU -->
                 <div class="teacher-search-box">

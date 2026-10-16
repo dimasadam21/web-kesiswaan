@@ -1,7 +1,7 @@
 /**
  * PORTAL GURU & KESISWAAN (SETELAH GURU / ADMIN / SUPER ADMIN LOGIN)
  * Fitur Utama: 
- * 1. Sub-navigasi terpisah: Cari & Rekap Siswa, Kelola Prestasi Siswa, dan Kelola Kegiatan Kesiswaan.
+ * 1. Sub-navigasi terpisah: Cari Siswa, Presensi & Disiplin Kelas, Rekap Riwayat Sebelumnya, Kelola Prestasi, dan Kelola Kegiatan.
  * 2. Kelola banyak prestasi siswa dengan thumbnail foto & hapus prestasi (otomatis tayang di slider dasbor).
  * 3. Kelola agenda kegiatan kesiswaan dengan tambah & hapus kegiatan (otomatis tayang di agenda dasbor).
  */
@@ -11,6 +11,8 @@ const AdminPortal = {
     currentTab: 'siswa',
     currentAttendanceDate: null,
     currentAttendanceClass: 'X TKP',
+    currentRekapView: 'siswa',
+    currentRekapFilterMonth: '',
 
     getTodayDate() {
         const d = new Date();
@@ -60,10 +62,14 @@ const AdminPortal = {
 
         const isAdminKesiswaan = !isSuperAdmin && !isWaliKelas;
 
-        // Tampilkan tombol tab Presensi HANYA untuk Wali Kelas
+        // Tampilkan tombol tab Presensi & Rekap Riwayat HANYA untuk Wali Kelas
         const btnPresensi = document.getElementById("adminTabBtnPresensi");
         if (btnPresensi) {
             btnPresensi.style.display = isWaliKelas ? "inline-flex" : "none";
+        }
+        const btnRiwayat = document.getElementById("adminTabBtnRiwayat");
+        if (btnRiwayat) {
+            btnRiwayat.style.display = isWaliKelas ? "inline-flex" : "none";
         }
 
         // Sub-navigasi tab bawah untuk Guru / Admin Kesiswaan / Wali Kelas (disembunyikan untuk Super Admin)
@@ -132,6 +138,7 @@ const AdminPortal = {
 
         const tabBtns = {
             presensi: [document.getElementById("adminTabBtnPresensi"), document.getElementById("hubTabBtnPresensi")],
+            riwayat: [document.getElementById("adminTabBtnRiwayat"), document.getElementById("hubTabBtnRiwayat")],
             siswa: [document.getElementById("adminTabBtnSiswa"), document.getElementById("hubTabBtnSiswa")],
             pengumuman: [document.getElementById("adminTabBtnPengumuman"), document.getElementById("hubTabBtnPengumuman")],
             prestasi: [document.getElementById("adminTabBtnPrestasi"), document.getElementById("hubTabBtnPrestasi")],
@@ -143,6 +150,7 @@ const AdminPortal = {
 
         const panes = {
             presensi: document.getElementById("adminPanePresensi"),
+            riwayat: document.getElementById("adminPaneRiwayat"),
             siswa: document.getElementById("adminPaneSiswa"),
             pengumuman: document.getElementById("adminPanePengumuman"),
             prestasi: document.getElementById("adminPanePrestasi"),
@@ -169,6 +177,8 @@ const AdminPortal = {
 
         if (tabName === "presensi") {
             this.renderClassAttendance();
+        } else if (tabName === "riwayat") {
+            this.renderAttendanceHistory();
         } else if (tabName === "prestasi") {
             this.renderAdminPrestasiList();
         } else if (tabName === "kegiatan") {
@@ -1347,6 +1357,562 @@ const AdminPortal = {
                         Wali Kelas ${this.currentAttendanceClass}
                         <br><br><br><br>
                         <strong>${AuthManager.getCurrentUser() ? AuthManager.getCurrentUser().name : '...................................'}</strong>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        window.print();
+    },
+
+    // =========================================================================
+    // FITUR: REKAP RIWAYAT SEBELUMNYA (PRESENSI & KEDISIPLINAN KELAS)
+    // =========================================================================
+    populateRekapClassOptions() {
+        const selectWrap = document.getElementById("rekapFilterKelasWrap");
+        const select = document.getElementById("rekapFilterKelas");
+        const waliIndicator = document.getElementById("rekapWaliKelasIndicator");
+        const waliBadgeText = document.getElementById("rekapWaliKelasBadgeText");
+
+        const currentUser = AuthManager.getCurrentUser();
+        const isSuperAdmin = AuthManager.isSuperAdmin();
+        const hasAssignedClass = currentUser && currentUser.kelas && currentUser.kelas !== "-";
+        const isWaliKelas = !isSuperAdmin && hasAssignedClass;
+
+        if (isWaliKelas) {
+            this.currentAttendanceClass = currentUser.kelas;
+            if (selectWrap) selectWrap.style.display = "none";
+            if (waliIndicator) {
+                waliIndicator.style.display = "flex";
+                if (waliBadgeText) waliBadgeText.textContent = currentUser.kelas;
+            }
+            return;
+        }
+
+        if (selectWrap) selectWrap.style.display = "flex";
+        if (waliIndicator) waliIndicator.style.display = "none";
+        if (!select) return;
+
+        const classes = (typeof DAFTAR_WALI_KELAS_MASTER !== 'undefined')
+            ? DAFTAR_WALI_KELAS_MASTER.map(w => w.kode)
+            : ["X TKP", "X DPIB", "XI BA", "XII BA"];
+
+        const uniqueClasses = Array.from(new Set(classes));
+        select.innerHTML = uniqueClasses.map(cls => {
+            const selected = cls === this.currentAttendanceClass ? 'selected' : '';
+            return `<option value="${cls}" ${selected}>${cls}</option>`;
+        }).join('');
+    },
+
+    handleRekapClassChange(val) {
+        if (!val) return;
+        this.currentAttendanceClass = val;
+        const attSelect = document.getElementById("attFilterKelas");
+        if (attSelect) attSelect.value = val;
+        this.renderAttendanceHistory();
+    },
+
+    handleRekapMonthChange(val) {
+        this.currentRekapFilterMonth = val || '';
+        this.renderAttendanceHistory();
+    },
+
+    switchRekapView(view) {
+        this.currentRekapView = view;
+        const btnSiswa = document.getElementById("rekapViewBtnSiswa");
+        const btnHarian = document.getElementById("rekapViewBtnHarian");
+        if (btnSiswa && btnHarian) {
+            if (view === 'siswa') {
+                btnSiswa.style.background = "#ffffff";
+                btnSiswa.style.color = "var(--primary)";
+                btnSiswa.style.boxShadow = "0 1px 2px rgba(0,0,0,0.08)";
+                btnHarian.style.background = "transparent";
+                btnHarian.style.color = "var(--text-muted)";
+                btnHarian.style.boxShadow = "none";
+            } else {
+                btnHarian.style.background = "#ffffff";
+                btnHarian.style.color = "var(--primary)";
+                btnHarian.style.boxShadow = "0 1px 2px rgba(0,0,0,0.08)";
+                btnSiswa.style.background = "transparent";
+                btnSiswa.style.color = "var(--text-muted)";
+                btnSiswa.style.boxShadow = "none";
+            }
+        }
+        this.renderAttendanceHistoryTable();
+    },
+
+    renderAttendanceHistory() {
+        const currentUser = AuthManager.getCurrentUser();
+        const isSuperAdmin = AuthManager.isSuperAdmin();
+        const hasAssignedClass = currentUser && currentUser.kelas && currentUser.kelas !== "-";
+        const isWaliKelas = !isSuperAdmin && hasAssignedClass;
+
+        if (isWaliKelas) {
+            this.currentAttendanceClass = currentUser.kelas;
+        } else if (!this.currentAttendanceClass) {
+            this.currentAttendanceClass = hasAssignedClass ? currentUser.kelas : "X TKP";
+        }
+
+        this.populateRekapClassOptions();
+
+        // Pastikan siswa dan data presensi siap
+        StorageManager.ensureStudentsForClass(this.currentAttendanceClass);
+        StorageManager.ensureSampleAttendancesForClass(this.currentAttendanceClass);
+
+        const allStudents = StorageManager.getStudents();
+        const cleanCurrent = this.currentAttendanceClass.trim().toLowerCase().replace(/[\s\-_.]/g, '');
+        const students = allStudents.filter(s => {
+            if (!s.kelas) return false;
+            const cleanS = s.kelas.trim().toLowerCase().replace(/[\s\-_.]/g, '');
+            return cleanS === cleanCurrent || s.kelas.trim().toUpperCase() === this.currentAttendanceClass.trim().toUpperCase();
+        });
+        students.sort((a, b) => (a.no || 0) - (b.no || 0));
+
+        let sessions = StorageManager.getAllClassAttendances(this.currentAttendanceClass);
+        if (this.currentRekapFilterMonth) {
+            sessions = sessions.filter(s => {
+                if (!s.tanggal) return false;
+                const m = s.tanggal.split('-')[1];
+                return m === this.currentRekapFilterMonth;
+            });
+        }
+
+        const totalSesi = sessions.length;
+        let totalHadir = 0, totalIzin = 0, totalSakit = 0, totalAlpha = 0;
+        let totalPelanggaran = 0;
+
+        sessions.forEach(sess => {
+            const records = sess.records || {};
+            students.forEach(s => {
+                const rec = records[s.id] || { status: 'alpha' };
+                const st = (rec.status || 'alpha').toLowerCase();
+                if (st === 'hadir') totalHadir++;
+                else if (st === 'izin') totalIzin++;
+                else if (st === 'sakit') totalSakit++;
+                else totalAlpha++;
+
+                if (rec.rambut || rec.atribut || rec.makeup || rec.seragam) {
+                    totalPelanggaran++;
+                }
+            });
+        });
+
+        const totalEntries = totalSesi * (students.length || 1);
+        const persenKehadiran = totalEntries > 0 ? Math.round((totalHadir / totalEntries) * 100) : 100;
+
+        const kpiPersen = document.getElementById("rekapKpiPersenHadir");
+        if (kpiPersen) kpiPersen.textContent = `${persenKehadiran}%`;
+
+        const kpiSesi = document.getElementById("rekapKpiTotalSesi");
+        if (kpiSesi) kpiSesi.textContent = `${totalSesi} Hari`;
+
+        const kpiSiswa = document.getElementById("rekapKpiTotalSiswa");
+        if (kpiSiswa) kpiSiswa.textContent = `${students.length} Siswa`;
+
+        const kpiIzinSakit = document.getElementById("rekapKpiIzinSakit");
+        if (kpiIzinSakit) kpiIzinSakit.textContent = `${totalIzin} Izin • ${totalSakit} Sakit`;
+
+        const kpiAlphaDisiplin = document.getElementById("rekapKpiAlphaDisiplin");
+        if (kpiAlphaDisiplin) kpiAlphaDisiplin.textContent = `${totalAlpha} Alpha • ${totalPelanggaran} Disiplin`;
+
+        this.renderAttendanceHistoryTable();
+    },
+
+    renderAttendanceHistoryTable() {
+        const thead = document.getElementById("rekapTableHeader");
+        const tbody = document.getElementById("rekapTableBody");
+        const badgeInfo = document.getElementById("rekapTableInfoBadge");
+        if (!thead || !tbody) return;
+
+        const allStudents = StorageManager.getStudents();
+        const cleanCurrent = this.currentAttendanceClass.trim().toLowerCase().replace(/[\s\-_.]/g, '');
+        const students = allStudents.filter(s => {
+            if (!s.kelas) return false;
+            const cleanS = s.kelas.trim().toLowerCase().replace(/[\s\-_.]/g, '');
+            return cleanS === cleanCurrent || s.kelas.trim().toUpperCase() === this.currentAttendanceClass.trim().toUpperCase();
+        });
+        students.sort((a, b) => (a.no || 0) - (b.no || 0));
+
+        let sessions = StorageManager.getAllClassAttendances(this.currentAttendanceClass);
+        if (this.currentRekapFilterMonth) {
+            sessions = sessions.filter(s => {
+                if (!s.tanggal) return false;
+                const m = s.tanggal.split('-')[1];
+                return m === this.currentRekapFilterMonth;
+            });
+        }
+
+        const totalSesi = sessions.length;
+
+        if (this.currentRekapView === 'siswa') {
+            if (badgeInfo) badgeInfo.textContent = `Rekapitulasi Kehadiran Siswa Kelas ${this.currentAttendanceClass} (${totalSesi} Sesi Tercatat)`;
+
+            thead.innerHTML = `
+                <tr style="background: #f1f5f9; border-bottom: 2px solid #cbd5e1;">
+                    <th style="width: 45px; border-right: 1px solid #cbd5e1; padding: 8px 4px; font-weight: 800; font-size: 0.85rem;">No</th>
+                    <th style="width: 110px; border-right: 1px solid #cbd5e1; padding: 8px 6px; font-weight: 800; font-size: 0.85rem;">NIS / NISN</th>
+                    <th style="border-right: 1px solid #cbd5e1; text-align: left; padding: 8px 12px; font-weight: 800; font-size: 0.85rem; min-width: 200px;">Nama Siswa</th>
+                    <th style="width: 55px; border-right: 1px solid #cbd5e1; padding: 8px 4px; font-weight: 800; font-size: 0.825rem; color: #16a34a;" title="Hadir">H</th>
+                    <th style="width: 55px; border-right: 1px solid #cbd5e1; padding: 8px 4px; font-weight: 800; font-size: 0.825rem; color: #d97706;" title="Izin">I</th>
+                    <th style="width: 55px; border-right: 1px solid #cbd5e1; padding: 8px 4px; font-weight: 800; font-size: 0.825rem; color: #2563eb;" title="Sakit">S</th>
+                    <th style="width: 55px; border-right: 1px solid #cbd5e1; padding: 8px 4px; font-weight: 800; font-size: 0.825rem; color: #dc2626;" title="Alpha">A</th>
+                    <th style="width: 95px; border-right: 1px solid #cbd5e1; padding: 8px 4px; font-weight: 800; font-size: 0.825rem;">Disiplin</th>
+                    <th style="width: 100px; border-right: 1px solid #cbd5e1; padding: 8px 6px; font-weight: 800; font-size: 0.825rem;">% Hadir</th>
+                    <th style="width: 85px; padding: 8px 6px; font-weight: 800; font-size: 0.825rem;">Aksi</th>
+                </tr>
+            `;
+
+            if (students.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="10" style="padding: 2.5rem; color: var(--text-muted);">Belum ada data siswa untuk kelas ini.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = students.map((s, idx) => {
+                let hadir = 0, izin = 0, sakit = 0, alpha = 0;
+                let pelanggaran = 0;
+
+                sessions.forEach(sess => {
+                    const rec = (sess.records && sess.records[s.id]) || { status: 'alpha' };
+                    const st = (rec.status || 'alpha').toLowerCase();
+                    if (st === 'hadir') hadir++;
+                    else if (st === 'izin') izin++;
+                    else if (st === 'sakit') sakit++;
+                    else alpha++;
+
+                    if (rec.rambut || rec.atribut || rec.makeup || rec.seragam) {
+                        pelanggaran++;
+                    }
+                });
+
+                const persen = totalSesi > 0 ? Math.round((hadir / totalSesi) * 100) : 100;
+                let badgeColor = "#16a34a";
+                let badgeBg = "#dcfce7";
+                if (persen < 75) {
+                    badgeColor = "#dc2626";
+                    badgeBg = "#fee2e2";
+                } else if (persen < 90) {
+                    badgeColor = "#d97706";
+                    badgeBg = "#fef3c7";
+                }
+
+                return `
+                    <tr style="border-bottom: 1px solid #e2e8f0; transition: background 0.15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
+                        <td style="padding: 6px 4px; border-right: 1px solid #e2e8f0; font-weight: 700; color: var(--text-muted);">${s.no || (idx + 1)}</td>
+                        <td style="padding: 6px 6px; border-right: 1px solid #e2e8f0; font-size: 0.82rem; color: var(--text-muted);">${s.nis || s.nisn || '-'}</td>
+                        <td style="padding: 6px 12px; border-right: 1px solid #e2e8f0; text-align: left; font-weight: 700; color: var(--text-main); font-size: 0.88rem;">${this.escapeHtml(s.nama)}</td>
+                        <td style="padding: 6px 4px; border-right: 1px solid #e2e8f0; font-weight: 800; color: #16a34a;">${hadir}</td>
+                        <td style="padding: 6px 4px; border-right: 1px solid #e2e8f0; font-weight: 800; color: #d97706;">${izin}</td>
+                        <td style="padding: 6px 4px; border-right: 1px solid #e2e8f0; font-weight: 800; color: #2563eb;">${sakit}</td>
+                        <td style="padding: 6px 4px; border-right: 1px solid #e2e8f0; font-weight: 800; color: #dc2626;">${alpha}</td>
+                        <td style="padding: 6px 4px; border-right: 1px solid #e2e8f0; font-size: 0.82rem; font-weight: 700; color: ${pelanggaran > 0 ? '#b91c1c' : '#64748b'};">
+                            ${pelanggaran > 0 ? `⚠️ ${pelanggaran}` : '✓ Rapi'}
+                        </td>
+                        <td style="padding: 6px 4px; border-right: 1px solid #e2e8f0;">
+                            <span style="background: ${badgeBg}; color: ${badgeColor}; font-weight: 800; padding: 2px 8px; border-radius: 6px; font-size: 0.82rem;">${persen}%</span>
+                        </td>
+                        <td style="padding: 6px 4px;">
+                            <button class="btn btn-sm btn-outline" style="padding: 2px 8px; font-size: 0.75rem;" onclick="AdminPortal.selectTargetStudent('${s.id}'); AdminPortal.switchAdminTab('siswa');" title="Lihat Profil Siswa di Cari Siswa">
+                                🔍 Detail
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        } else {
+            // View Sesi Harian
+            if (badgeInfo) badgeInfo.textContent = `Daftar Sesi Presensi Harian Kelas ${this.currentAttendanceClass} (${totalSesi} Tanggal)`;
+
+            thead.innerHTML = `
+                <tr style="background: #f1f5f9; border-bottom: 2px solid #cbd5e1;">
+                    <th style="width: 45px; border-right: 1px solid #cbd5e1; padding: 8px 4px; font-weight: 800; font-size: 0.85rem;">No</th>
+                    <th style="width: 140px; border-right: 1px solid #cbd5e1; padding: 8px 6px; font-weight: 800; font-size: 0.85rem;">Tanggal</th>
+                    <th style="border-right: 1px solid #cbd5e1; text-align: left; padding: 8px 12px; font-weight: 800; font-size: 0.85rem;">Agenda Kegiatan</th>
+                    <th style="width: 75px; border-right: 1px solid #cbd5e1; padding: 8px 4px; font-weight: 800; font-size: 0.825rem; color: #16a34a;">Hadir</th>
+                    <th style="width: 65px; border-right: 1px solid #cbd5e1; padding: 8px 4px; font-weight: 800; font-size: 0.825rem; color: #d97706;">Izin</th>
+                    <th style="width: 65px; border-right: 1px solid #cbd5e1; padding: 8px 4px; font-weight: 800; font-size: 0.825rem; color: #2563eb;">Sakit</th>
+                    <th style="width: 65px; border-right: 1px solid #cbd5e1; padding: 8px 4px; font-weight: 800; font-size: 0.825rem; color: #dc2626;">Alpha</th>
+                    <th style="width: 90px; border-right: 1px solid #cbd5e1; padding: 8px 4px; font-weight: 800; font-size: 0.825rem;">Disiplin</th>
+                    <th style="width: 160px; padding: 8px 6px; font-weight: 800; font-size: 0.825rem;">Aksi</th>
+                </tr>
+            `;
+
+            if (sessions.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="9" style="padding: 2.5rem; color: var(--text-muted);">Belum ada riwayat presensi yang tercatat untuk periode ini.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = sessions.map((sess, idx) => {
+                let hadir = 0, izin = 0, sakit = 0, alpha = 0;
+                let violations = 0;
+
+                const records = sess.records || {};
+                students.forEach(s => {
+                    const rec = records[s.id] || { status: 'alpha' };
+                    const st = (rec.status || 'alpha').toLowerCase();
+                    if (st === 'hadir') hadir++;
+                    else if (st === 'izin') izin++;
+                    else if (st === 'sakit') sakit++;
+                    else alpha++;
+
+                    if (rec.rambut || rec.atribut || rec.makeup || rec.seragam) {
+                        violations++;
+                    }
+                });
+
+                return `
+                    <tr style="border-bottom: 1px solid #e2e8f0; transition: background 0.15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
+                        <td style="padding: 6px 4px; border-right: 1px solid #e2e8f0; font-weight: 700; color: var(--text-muted);">${idx + 1}</td>
+                        <td style="padding: 6px 8px; border-right: 1px solid #e2e8f0; font-weight: 700; color: var(--text-main); font-size: 0.85rem;">${sess.tanggal}</td>
+                        <td style="padding: 6px 12px; border-right: 1px solid #e2e8f0; text-align: left; font-weight: 600; font-size: 0.85rem;">
+                            <span class="badge-spmb-pill" style="font-size: 0.75rem;">${this.escapeHtml(sess.kegiatan || 'Presensi')}</span>
+                        </td>
+                        <td style="padding: 6px 4px; border-right: 1px solid #e2e8f0; font-weight: 800; color: #16a34a;">${hadir}</td>
+                        <td style="padding: 6px 4px; border-right: 1px solid #e2e8f0; font-weight: 800; color: #d97706;">${izin}</td>
+                        <td style="padding: 6px 4px; border-right: 1px solid #e2e8f0; font-weight: 800; color: #2563eb;">${sakit}</td>
+                        <td style="padding: 6px 4px; border-right: 1px solid #e2e8f0; font-weight: 800; color: #dc2626;">${alpha}</td>
+                        <td style="padding: 6px 4px; border-right: 1px solid #e2e8f0; font-weight: 700; color: ${violations > 0 ? '#b91c1c' : '#64748b'};">
+                            ${violations > 0 ? `⚠️ ${violations}` : '✓ Rapi'}
+                        </td>
+                        <td style="padding: 6px 8px;">
+                            <div style="display: flex; align-items: center; justify-content: center; gap: 4px;">
+                                <button class="btn btn-sm btn-outline" style="padding: 3px 8px; font-size: 0.75rem;" onclick="AdminPortal.openAttendanceDateFromHistory('${sess.tanggal}')" title="Buka dan Edit Presensi Tanggal Ini">
+                                    📝 Buka
+                                </button>
+                                <button class="btn btn-sm btn-outline" style="padding: 3px 8px; font-size: 0.75rem;" onclick="AdminPortal.printAttendanceDateFromHistory('${sess.tanggal}')" title="Cetak Blangko Presensi Tanggal Ini">
+                                    🖨️ Cetak
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+    },
+
+    openAttendanceDateFromHistory(dateStr) {
+        if (!dateStr) return;
+        this.currentAttendanceDate = dateStr;
+        const dateInput = document.getElementById("attFilterTanggal");
+        if (dateInput) dateInput.value = dateStr;
+        this.switchAdminTab('presensi');
+        App.showToast(`Membuka blangko presensi tanggal ${dateStr}`);
+    },
+
+    printAttendanceDateFromHistory(dateStr) {
+        if (!dateStr) return;
+        this.currentAttendanceDate = dateStr;
+        const dateInput = document.getElementById("attFilterTanggal");
+        if (dateInput) dateInput.value = dateStr;
+        this.printAttendanceSheet();
+    },
+
+    exportRekapRiwayatToExcel() {
+        const targetClass = this.currentAttendanceClass || 'X TKP';
+        const students = StorageManager.ensureStudentsForClass(targetClass);
+        students.sort((a, b) => (a.no || 0) - (b.no || 0));
+
+        let sessions = StorageManager.getAllClassAttendances(targetClass);
+        if (this.currentRekapFilterMonth) {
+            sessions = sessions.filter(s => {
+                if (!s.tanggal) return false;
+                const m = s.tanggal.split('-')[1];
+                return m === this.currentRekapFilterMonth;
+            });
+        }
+
+        const totalSesi = sessions.length;
+
+        const exportData = students.map((s, idx) => {
+            let hadir = 0, izin = 0, sakit = 0, alpha = 0;
+            let rambut = 0, atribut = 0, makeup = 0, seragam = 0;
+
+            sessions.forEach(sess => {
+                const rec = (sess.records && sess.records[s.id]) || { status: 'alpha' };
+                const st = (rec.status || 'alpha').toLowerCase();
+                if (st === 'hadir') hadir++;
+                else if (st === 'izin') izin++;
+                else if (st === 'sakit') sakit++;
+                else alpha++;
+
+                if (rec.rambut) rambut++;
+                if (rec.atribut) atribut++;
+                if (rec.makeup) makeup++;
+                if (rec.seragam) seragam++;
+            });
+
+            const totalPelanggaran = rambut + atribut + makeup + seragam;
+            const persen = totalSesi > 0 ? `${Math.round((hadir / totalSesi) * 100)}%` : '100%';
+
+            return {
+                "No": s.no || (idx + 1),
+                "NIS": s.nis || "-",
+                "NISN": s.nisn || "-",
+                "Nama Siswa": s.nama,
+                "Kelas": s.kelas || targetClass,
+                "Total Hari Presensi": totalSesi,
+                "Hadir (H)": hadir,
+                "Izin (I)": izin,
+                "Sakit (S)": sakit,
+                "Alpha (A)": alpha,
+                "% Kehadiran": persen,
+                "Pelanggaran Rambut": rambut,
+                "Pelanggaran Atribut": atribut,
+                "Pelanggaran Make up": makeup,
+                "Pelanggaran Seragam": seragam,
+                "Total Catatan Disiplin": totalPelanggaran
+            };
+        });
+
+        if (typeof XLSX === 'undefined') {
+            App.showToast("Pustaka SheetJS belum termuat. Periksa koneksi internet.");
+            return;
+        }
+
+        const worksheet = XLSX.utils.json_to_sheet(exportData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Rekap_Presensi");
+
+        const cleanClass = targetClass.replace(/[^a-zA-Z0-9]/g, '_');
+        const monthSuffix = this.currentRekapFilterMonth ? `_Bulan_${this.currentRekapFilterMonth}` : '_Semua_Riwayat';
+        const filename = `Rekap_Presensi_${cleanClass}${monthSuffix}.xlsx`;
+
+        XLSX.writeFile(workbook, filename);
+        App.showToast(`Berkas Excel (${filename}) berhasil diunduh!`);
+    },
+
+    printRekapRiwayat() {
+        const targetClass = this.currentAttendanceClass || 'X TKP';
+        const students = StorageManager.ensureStudentsForClass(targetClass);
+        students.sort((a, b) => (a.no || 0) - (b.no || 0));
+
+        let sessions = StorageManager.getAllClassAttendances(targetClass);
+        if (this.currentRekapFilterMonth) {
+            sessions = sessions.filter(s => {
+                if (!s.tanggal) return false;
+                const m = s.tanggal.split('-')[1];
+                return m === this.currentRekapFilterMonth;
+            });
+        }
+
+        const totalSesi = sessions.length;
+        const config = StorageManager.getConfig();
+        const template = StorageManager.getSuratTemplate();
+        const tahunAjaran = config.academicYear || "2026/2027";
+        const tanggalCetak = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+
+        const namaBulanMap = {
+            "01": "Januari", "02": "Februari", "03": "Maret", "04": "April",
+            "05": "Mei", "06": "Juni", "07": "Juli", "08": "Agustus",
+            "09": "September", "10": "Oktober", "11": "November", "12": "Desember"
+        };
+        const periodeLabel = this.currentRekapFilterMonth
+            ? `BULAN ${namaBulanMap[this.currentRekapFilterMonth] ? namaBulanMap[this.currentRekapFilterMonth].toUpperCase() : this.currentRekapFilterMonth} ${new Date().getFullYear()}`
+            : `KESELURUHAN RIWAYAT (TOTAL ${totalSesi} HARI PRESENSI)`;
+
+        const wakaNama = config.headOfStudentAffairs || template.pejabatNama || 'Morlan Purba Sibarani, S.Pd., M.Si.';
+        const wakaJabatan = template.pejabatJabatan || 'Wakasek Bidang Kesiswaan';
+        let wakaNip = config.headOfStudentAffairsNip || template.pejabatNip || 'NIP. 19740315 200501 1 004';
+        if (wakaNip && !wakaNip.toUpperCase().startsWith('NIP')) {
+            wakaNip = `NIP. ${wakaNip}`;
+        }
+
+        let namaWaliKelas = "-";
+        const currentUser = AuthManager.getCurrentUser();
+        if (currentUser && currentUser.roleLabel && currentUser.roleLabel.toLowerCase().includes("wali")) {
+            namaWaliKelas = currentUser.name;
+        } else if (typeof DAFTAR_WALI_KELAS_MASTER !== 'undefined') {
+            const foundWali = DAFTAR_WALI_KELAS_MASTER.find(w => w.kode === targetClass || (w.label && w.label.includes(targetClass)));
+            if (foundWali) namaWaliKelas = foundWali.nama;
+        }
+
+        const rowsHtml = students.map((s, idx) => {
+            let hadir = 0, izin = 0, sakit = 0, alpha = 0;
+            let pelanggaran = 0;
+
+            sessions.forEach(sess => {
+                const rec = (sess.records && sess.records[s.id]) || { status: 'alpha' };
+                const st = (rec.status || 'alpha').toLowerCase();
+                if (st === 'hadir') hadir++;
+                else if (st === 'izin') izin++;
+                else if (st === 'sakit') sakit++;
+                else alpha++;
+
+                if (rec.rambut || rec.atribut || rec.makeup || rec.seragam) {
+                    pelanggaran++;
+                }
+            });
+
+            const persen = totalSesi > 0 ? Math.round((hadir / totalSesi) * 100) : 100;
+
+            return `
+                <tr>
+                    <td style="border: 1px solid #000; text-align: center; padding: 4px;">${s.no || (idx + 1)}</td>
+                    <td style="border: 1px solid #000; text-align: center; padding: 4px;">${s.nis || s.nisn || '-'}</td>
+                    <td style="border: 1px solid #000; padding: 4px 8px; text-align: left;">${s.nama}</td>
+                    <td style="border: 1px solid #000; text-align: center; padding: 4px; font-weight: bold;">${hadir}</td>
+                    <td style="border: 1px solid #000; text-align: center; padding: 4px;">${izin}</td>
+                    <td style="border: 1px solid #000; text-align: center; padding: 4px;">${sakit}</td>
+                    <td style="border: 1px solid #000; text-align: center; padding: 4px; color: ${alpha > 0 ? '#b91c1c' : '#000'}; font-weight: ${alpha > 0 ? 'bold' : 'normal'};">${alpha}</td>
+                    <td style="border: 1px solid #000; text-align: center; padding: 4px;">${pelanggaran}</td>
+                    <td style="border: 1px solid #000; text-align: center; padding: 4px; font-weight: bold;">${persen}%</td>
+                </tr>
+            `;
+        }).join('');
+
+        const printContainer = document.getElementById("printRaporContainer");
+        if (!printContainer) return;
+
+        printContainer.innerHTML = `
+            <div style="font-family: Arial, sans-serif; font-size: 10pt; color: #000; padding: 1.5cm 1cm;">
+                ${StorageManager.getOfficialKopHtml()}
+
+                <div style="text-align: center; margin: 15px 0 20px 0;">
+                    <h2 style="margin: 0; font-size: 13pt; text-transform: uppercase; font-weight: 800; text-decoration: underline;">
+                        REKAPITULASI PRESENSI &amp; KEDISIPLINAN SISWA
+                    </h2>
+                    <h3 style="margin: 4px 0 0 0; font-size: 11pt; text-transform: uppercase;">
+                        KELAS ${targetClass} &bull; TAHUN AJARAN ${tahunAjaran}
+                    </h3>
+                    <div style="margin-top: 4px; font-size: 9.5pt; font-weight: 600; color: #333;">
+                        Periode: ${periodeLabel} &bull; Jumlah Siswa: ${students.length} Orang
+                    </div>
+                </div>
+
+                <table style="width: 100%; border-collapse: collapse; font-size: 9pt; text-align: center;">
+                    <thead>
+                        <tr style="background: #f1f5f9;">
+                            <th rowspan="2" style="border: 1px solid #000; width: 35px; padding: 5px; vertical-align: middle;">No</th>
+                            <th rowspan="2" style="border: 1px solid #000; width: 85px; padding: 5px; vertical-align: middle;">NIS / NISN</th>
+                            <th rowspan="2" style="border: 1px solid #000; text-align: left; padding: 5px 8px; vertical-align: middle;">Nama Siswa</th>
+                            <th colspan="4" style="border: 1px solid #000; padding: 4px; font-weight: bold;">Kehadiran (${totalSesi} Hari)</th>
+                            <th rowspan="2" style="border: 1px solid #000; width: 75px; padding: 5px; vertical-align: middle;">Catatan Disiplin</th>
+                            <th rowspan="2" style="border: 1px solid #000; width: 65px; padding: 5px; vertical-align: middle;">% Hadir</th>
+                        </tr>
+                        <tr style="background: #f8fafc;">
+                            <th style="border: 1px solid #000; width: 45px; padding: 4px;">H</th>
+                            <th style="border: 1px solid #000; width: 45px; padding: 4px;">I</th>
+                            <th style="border: 1px solid #000; width: 45px; padding: 4px;">S</th>
+                            <th style="border: 1px solid #000; width: 45px; padding: 4px;">A</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rowsHtml}
+                    </tbody>
+                </table>
+
+                <div style="margin-top: 2rem; display: flex; justify-content: space-between; page-break-inside: avoid; font-size: 10pt;">
+                    <div style="text-align: center; width: 260px;">
+                        Mengetahui,<br>
+                        ${wakaJabatan}
+                        <br><br><br><br>
+                        <strong>${wakaNama}</strong><br>
+                        ${wakaNip}
+                    </div>
+                    <div style="text-align: center; width: 260px;">
+                        Magelang, ${tanggalCetak}<br>
+                        Wali Kelas ${targetClass}
+                        <br><br><br><br>
+                        <strong>${namaWaliKelas}</strong>
                     </div>
                 </div>
             </div>
