@@ -448,7 +448,14 @@ const StorageManager = {
     // TEMPLATE SURAT PANGGILAN ORANG TUA (SUPER ADMIN)
     getSuratTemplate() {
         const data = this.getData();
-        return data.suratTemplate || DEFAULT_SURAT_TEMPLATE;
+        const t = data.suratTemplate || DEFAULT_SURAT_TEMPLATE;
+        // Sanitasi: Jika kopInstansi kosong, '-', atau dummy lama, kembalikan teks resmi SMKN 1 Magelang
+        if (!t.kopInstansi || t.kopInstansi.trim() === '-' || t.kopInstansi.includes('PEMERINTAH PROVINSI PENDIDIKAN')) {
+            t.kopInstansi = (typeof DEFAULT_SURAT_TEMPLATE !== 'undefined' && DEFAULT_SURAT_TEMPLATE.kopInstansi)
+                ? DEFAULT_SURAT_TEMPLATE.kopInstansi
+                : "PEMERINTAH PROVINSI JAWA TENGAH\nDINAS PENDIDIKAN DAN KEBUDAYAAN\nSMK NEGERI 1 MAGELANG";
+        }
+        return t;
     },
 
     updateSuratTemplate(newTemplate) {
@@ -456,6 +463,48 @@ const StorageManager = {
         data.suratTemplate = { ...(data.suratTemplate || DEFAULT_SURAT_TEMPLATE), ...newTemplate };
         this.saveData(data);
         return data.suratTemplate;
+    },
+
+    // KOP SURAT RESMI STANDAR (DIGUNAKAN SERAGAM UNTUK SP, RAPOR KARAKTER, & DOKUMEN CETAK)
+    getOfficialKopHtml() {
+        const template = this.getSuratTemplate();
+        const config = this.getConfig();
+
+        // 1. Jika Super Admin mengunggah gambar file kop surat resmi
+        if (template && template.kopImageUrl) {
+            return `
+                <div style="border-bottom: 3px double #000000; padding-bottom: 8px; margin-bottom: 18px; text-align: center;">
+                    <img src="${template.kopImageUrl}" alt="Kop Surat Resmi" style="width: 100%; max-height: 130px; object-fit: contain;">
+                </div>
+            `;
+        }
+
+        // 2. Format Teks Kop Resmi Standar SMK Negeri 1 Magelang
+        let kopText = (template && template.kopInstansi ? template.kopInstansi : "").trim();
+        if (!kopText || kopText === "-" || kopText.includes("PEMERINTAH PROVINSI PENDIDIKAN")) {
+            kopText = "PEMERINTAH PROVINSI JAWA TENGAH\nDINAS PENDIDIKAN DAN KEBUDAYAAN\nSMK NEGERI 1 MAGELANG";
+        }
+
+        const addressText = "Jl. Cawang No. 2, Magelang - Telp. (0293) 362249 • Website: smkn1magelang.sch.id";
+
+        const logoImg = (config.schoolLogoUrl && (config.schoolLogoUrl.startsWith("data:image") || config.schoolLogoUrl.startsWith("http")))
+            ? config.schoolLogoUrl
+            : ((config.logo && (config.logo.startsWith("data:image") || config.logo.startsWith("http"))) ? config.logo : null);
+        const logoEmoji = config.schoolLogo || config.logo || "🏫";
+
+        return `
+            <div style="border-bottom: 3px double #000000; padding-bottom: 12px; margin-bottom: 20px; text-align: center; display: flex; align-items: center; justify-content: center; gap: 15px;">
+                ${logoImg ? `
+                    <img src="${logoImg}" alt="Logo" style="width: 70px; height: 70px; object-fit: contain;">
+                ` : `
+                    <div style="font-size: 2.8rem; line-height: 1;">${logoEmoji}</div>
+                `}
+                <div style="text-align: center; flex: 1;">
+                    <h3 style="font-size: 11pt; margin: 0; font-weight: bold; text-transform: uppercase; color: #000; white-space: pre-line; line-height: 1.35;">${kopText}</h3>
+                    <p style="font-size: 8.5pt; margin: 3px 0 0 0; color: #333;">${addressText}</p>
+                </div>
+            </div>
+        `;
     },
 
     // CEK APAKAH SISWA SUDAH MENCAPAI BATAS KADAR SP UNTUK SURAT PANGGILAN ORTU (>= 31 Poin)

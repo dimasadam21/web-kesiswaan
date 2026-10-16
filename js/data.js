@@ -4,10 +4,10 @@
  */
 
 const DEFAULT_CONFIG = {
-    schoolName: "SMA NEGERI 1 KREASI BANGSA",
-    schoolMotto: "Berkarakter Unggul, Berprestasi Gemilang, Berbudaya Disiplin",
+    schoolName: "SMK NEGERI 1 MAGELANG",
+    schoolMotto: "Disiplin, Terampil, Mandiri, Berakhlak Mulia",
     headerBadgeText: "🛡️ Portal Kesiswaan & Kedisiplinan",
-    schoolAddress: "Jl. Ki Hajar Dewantara No. 101, Kota Pendidikan - Telp. (021) 7890-1234",
+    schoolAddress: "Jl. Cawang No. 2, Magelang - Telp. (0293) 362249 • Website: smkn1magelang.sch.id",
     schoolLogo: "🏫",
     schoolLogoUrl: "",
     logoSize: 46, // slider 36 - 80 px
@@ -22,7 +22,7 @@ const DEFAULT_CONFIG = {
     schoolFont: "'Plus Jakarta Sans', sans-serif",
     wallpaperEffect: "light",
     academicYear: "2025/2026",
-    headmaster: "Dr. H. Sulaiman Effendi, M.Pd",
+    headmaster: "Drs. H. Sri Waluyo, M.M.",
     headOfStudentAffairs: "Morlan Purba Sibarani, S.Pd., M.Si.",
     bkCoordinator: "Bambang Wijaya, S.Pd, M.Kons"
 };

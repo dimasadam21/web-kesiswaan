@@ -159,19 +159,8 @@ const SiswaPortal = {
         const nomorRapor = `421.5 / ${Math.floor(100 + Math.random() * 900)} / RAPOR-KRK / ${new Date().getFullYear()}`;
 
         return `
-            <!-- KOP SURAT RESMI -->
-            <div style="border-bottom: 3px double #000000; padding-bottom: 12px; margin-bottom: 20px; text-align: center; display: flex; align-items: center; justify-content: center; gap: 15px;">
-                ${config.logo && config.logo.startsWith("data:image") ? `
-                    <img src="${config.logo}" alt="Logo" style="width: 70px; height: 70px; object-fit: contain;">
-                ` : `
-                    <div style="font-size: 2.8rem; line-height: 1;">${config.logo || '🏫'}</div>
-                `}
-                <div style="text-align: center; flex: 1;">
-                    <h3 style="font-size: 13pt; margin: 0; font-weight: bold; text-transform: uppercase; color: #000;">${template.kopInstansi || 'PEMERINTAH PROVINSI PENDIDIKAN'}</h3>
-                    <h1 style="font-size: 17pt; margin: 3px 0; font-weight: 800; text-transform: uppercase; color: #000;">${config.schoolName}</h1>
-                    <p style="font-size: 9pt; margin: 0; color: #333;">${config.schoolAddress}</p>
-                </div>
-            </div>
+            <!-- KOP SURAT RESMI STANDAR (PERSIS KOP SP) -->
+            ${StorageManager.getOfficialKopHtml()}
 
             <!-- JUDUL DOKUMEN RAPOR -->
             <div style="text-align: center; margin-bottom: 20px;">

@@ -4202,23 +4202,7 @@ const Forms = {
 
         return `
             <!-- KOP SURAT RESMI (GAMBAR ATAU TEKS) -->
-            ${template.kopImageUrl ? `
-                <div style="border-bottom: 3px double #000000; padding-bottom: 8px; margin-bottom: 18px; text-align: center;">
-                    <img src="${template.kopImageUrl}" alt="Kop Surat Resmi" style="width: 100%; max-height: 130px; object-fit: contain;">
-                </div>
-            ` : `
-                <div style="border-bottom: 3px double #000000; padding-bottom: 12px; margin-bottom: 20px; text-align: center; display: flex; align-items: center; justify-content: center; gap: 15px;">
-                    ${config.logo && config.logo.startsWith("data:image") ? `
-                        <img src="${config.logo}" alt="Logo" style="width: 70px; height: 70px; object-fit: contain;">
-                    ` : `
-                        <div style="font-size: 2.8rem; line-height: 1;">${config.logo || '🏫'}</div>
-                    `}
-                    <div style="text-align: center; flex: 1;">
-                        <h3 style="font-size: 11pt; margin: 0; font-weight: bold; text-transform: uppercase; color: #000; white-space: pre-line;">${template.kopInstansi || 'PEMERINTAH PROVINSI JAWA TENGAH\nDINAS PENDIDIKAN DAN KEBUDAYAAN\nSMK NEGERI 1 MAGELANG'}</h3>
-                        <p style="font-size: 8.5pt; margin: 3px 0 0 0; color: #333;">Jl. Cawang No. 2, Magelang - Telp. (0293) 362249 • Website: smkn1magelang.sch.id</p>
-                    </div>
-                </div>
-            `}
+            ${StorageManager.getOfficialKopHtml()}
 
             <!-- NOMOR, LAMPIRAN, PERIHAL & TANGGAL -->
             <table style="width: 100%; margin-bottom: 18px; font-size: 11pt; border-collapse: collapse;">

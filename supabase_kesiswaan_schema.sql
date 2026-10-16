@@ -374,8 +374,8 @@ ON CONFLICT (username) DO NOTHING;
 
 -- C. TEMPLATE SURAT PANGGILAN ORANG TUA
 INSERT INTO public.surat_template (parameter, nilai, deskripsi) VALUES
-('kopInstansi', 'PEMERINTAH PROVINSI PENDIDIKAN', 'Kop instansi surat'),
-('nomorFormat', '421.3 / {NOMOR} / KESISWAAN / {TAHUN}', 'Format penomoran surat resmi'),
+('kopInstansi', E'PEMERINTAH PROVINSI JAWA TENGAH\nDINAS PENDIDIKAN DAN KEBUDAYAAN\nSMK NEGERI 1 MAGELANG', 'Kop instansi surat'),
+('nomorFormat', '421.3 / {NOMOR} / SMKN1.MGL / {TAHUN}', 'Format penomoran surat resmi'),
 ('perihal', 'PANGGILAN ORANG TUA / WALI SISWA', 'Perihal surat'),
 ('hariKerjaOffset', '2', 'Jeda hari pemanggilan'),
 ('waktu', 'Pukul 08.30 WIB s.d Selesai', 'Waktu menghadap'),
