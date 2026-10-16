@@ -33,17 +33,19 @@
     <header class="site-header">
         <div class="header-inner">
             <div class="logo-area" onclick="App.goToHome()">
-                <div class="logo-icon" id="headerLogoIcon">🏫</div>
+                <div class="logo-icon" id="headerLogoIcon" style="background: transparent;">
+                    <img src="logo-smk.png" alt="Logo SMK Negeri 1 Magelang" style="width: 100%; height: 100%; object-fit: contain;">
+                </div>
                 <div class="logo-title">
-                    <h1 id="headerSchoolName">SiKesiswaan</h1>
-                    <p id="headerSchoolMotto">SMA Negeri 1 Kreasi Bangsa</p>
+                    <h1 id="headerSchoolName">KESISWAAN SMK NEGERI 1 MAGELANG</h1>
+                    <p id="headerSchoolMotto">Disiplin, Terampil, Mandiri, Berakhlak Mulia</p>
                 </div>
             </div>
 
             <!-- Status Pengguna di Header -->
             <div class="header-user-status">
-                <div id="headerGuestPill" class="user-badge-pill" style="background: #f1f5f9; border-color: #e2e8f0; color: var(--text-muted);">
-                    <span id="headerGuestBadgeText">🛡️ Portal Kesiswaan & Kedisiplinan</span>
+                <div id="headerGuestPill" class="user-badge-pill" style="display: none; background: #f1f5f9; border-color: #e2e8f0; color: var(--text-muted);">
+                    <span id="headerGuestBadgeText"></span>
                 </div>
 
                 <div id="headerUserPill" style="display: none; align-items: center; gap: 0.6rem;">
@@ -890,6 +892,41 @@
                     </button>
                 </div>
 
+                <!-- KARTU SINKRONISASI OTOMATIS INSTAGRAM @smkn1magelang (PRESTASI) -->
+                <div class="ig-sync-card" id="igSyncPrestasiCard">
+                    <div class="ig-sync-left">
+                        <div class="ig-sync-icon-box">
+                            <span>📸</span>
+                        </div>
+                        <div>
+                            <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                                <h4 style="margin: 0; font-size: 0.98rem; color: #1e293b; font-weight: 700;">
+                                    Sinkronisasi Otomatis Instagram <strong>@smkn1magelang</strong>
+                                </h4>
+                                <span id="igSyncPrestasiBadge" class="badge-status-ig active">● Aktif Sinkron @smkn1magelang</span>
+                            </div>
+                            <p style="margin: 3px 0 0; font-size: 0.8rem; color: #64748b; line-height: 1.35;">
+                                Saat dinyalakan, setiap postingan kejuaraan, medali, & prestasi siswa di IG @smkn1magelang otomatis diposting beserta gambar & keterangannya.
+                            </p>
+                            <div style="font-size: 0.72rem; color: #94a3b8; margin-top: 3px;">
+                                Terakhir sinkron: <span id="igSyncPrestasiTime" style="font-weight: 600;">16 Oktober 2026, 11:35 WIB</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ig-sync-actions">
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span style="font-size: 0.8rem; font-weight: 600; color: #475569;">Otomatis:</span>
+                            <label class="switch-toggle" title="Nyalakan / Matikan Sinkronisasi Otomatis Instagram @smkn1magelang">
+                                <input type="checkbox" id="toggleIgSyncPrestasi" checked onchange="InstagramSync.handleToggleSync(this.checked)">
+                                <span class="slider-round"></span>
+                            </label>
+                        </div>
+                        <button type="button" id="btnManualSyncIgPrestasi" class="btn btn-outline btn-sm" onclick="InstagramSync.manualSyncNow()" style="background: #ffffff; font-weight: 600; border-color: #cbd5e1; display: inline-flex; align-items: center; gap: 0.35rem;" title="Ambil postingan terbaru sekarang">
+                            🔄 Sinkronkan Sekarang
+                        </button>
+                    </div>
+                </div>
+
                 <div id="adminPrestasiListContainer" class="prestasi-admin-grid">
                     <!-- Diisi via JavaScript -->
                 </div>
@@ -907,6 +944,41 @@
                     <button class="btn btn-primary" onclick="Forms.openActivityModal()">
                         📅 + Tambah Agenda Kegiatan
                     </button>
+                </div>
+
+                <!-- KARTU SINKRONISASI OTOMATIS INSTAGRAM @smkn1magelang (KEGIATAN) -->
+                <div class="ig-sync-card" id="igSyncKegiatanCard">
+                    <div class="ig-sync-left">
+                        <div class="ig-sync-icon-box" style="background: linear-gradient(135deg, #0284c7, #06b6d4, #10b981);">
+                            <span>📸</span>
+                        </div>
+                        <div>
+                            <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                                <h4 style="margin: 0; font-size: 0.98rem; color: #1e293b; font-weight: 700;">
+                                    Sinkronisasi Otomatis Kegiatan Siswa <strong>@smkn1magelang</strong>
+                                </h4>
+                                <span id="igSyncKegiatanBadge" class="badge-status-ig active">● Aktif Sinkron @smkn1magelang</span>
+                            </div>
+                            <p style="margin: 3px 0 0; font-size: 0.8rem; color: #64748b; line-height: 1.35;">
+                                Postingan agenda, apel kedisiplinan, upacara, dan kegiatan kesiswaan di IG @smkn1magelang otomatis masuk ke daftar agenda kegiatan sekolah.
+                            </p>
+                            <div style="font-size: 0.72rem; color: #94a3b8; margin-top: 3px;">
+                                Terakhir sinkron: <span id="igSyncKegiatanTime" style="font-weight: 600;">16 Oktober 2026, 11:35 WIB</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ig-sync-actions">
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span style="font-size: 0.8rem; font-weight: 600; color: #475569;">Otomatis:</span>
+                            <label class="switch-toggle" title="Nyalakan / Matikan Sinkronisasi Otomatis Instagram @smkn1magelang">
+                                <input type="checkbox" id="toggleIgSyncKegiatan" checked onchange="InstagramSync.handleToggleSync(this.checked)">
+                                <span class="slider-round"></span>
+                            </label>
+                        </div>
+                        <button type="button" id="btnManualSyncIgKegiatan" class="btn btn-outline btn-sm" onclick="InstagramSync.manualSyncNow()" style="background: #ffffff; font-weight: 600; border-color: #cbd5e1; display: inline-flex; align-items: center; gap: 0.35rem;" title="Ambil postingan terbaru sekarang">
+                            🔄 Sinkronkan Sekarang
+                        </button>
+                    </div>
                 </div>
 
                 <div id="adminKegiatanListContainer" class="kegiatan-admin-grid">
@@ -1633,6 +1705,9 @@
                         <button type="button" class="btn btn-primary btn-sm" onclick="Forms.openStudentModal(true)" style="height: 38px; display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 600;" title="Tambah Siswa Baru">
                             👤 + Siswa Baru
                         </button>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="Forms.restoreOfficialStudentsMaster()" style="height: 38px; display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 600; border-color: #3b82f6; color: #2563eb; background: #eff6ff;" title="Pulihkan / Sinkronkan kembali seluruh 2.107 data siswa resmi SMKN 1 Magelang (60 Kelas)">
+                            🔄 Pulihkan 2.107 Siswa
+                        </button>
                         <button type="button" class="btn btn-success btn-sm" onclick="Forms.exportFilteredStudentsToExcel()" style="height: 38px; display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 600;" title="Unduh data siswa yang tampil / seluruh siswa ke file Excel (.xlsx)">
                             📊 Ekspor Excel (.xlsx)
                         </button>
@@ -2344,104 +2419,160 @@
                 <button class="btn-outline btn-sm" onclick="Forms.closeAllModals()">&times; Tutup</button>
             </div>
             <div class="modal-card-body" style="max-height: 78vh; overflow-y: auto;">
-                <!-- FORM TAMBAH KATA MUTIARA -->
-                <form id="addQuoteForm" onsubmit="Forms.handleAddQuote(event)" style="margin-bottom: 1.25rem;">
-                    
-                    <div class="form-group-clean">
-                        <label>Tulis Kata Mutiara / Motivasi Baru *</label>
-                        <textarea id="newQuoteText" class="form-control-clean" rows="2" placeholder="Tulis kutipan yang menginspirasi siswa..." required oninput="Forms.updateQuoteLivePreview()"></textarea>
+                <!-- PILIHAN MODE: OTOMATIS (AI) VS MANUAL -->
+                <div style="background: #f8fafc; border-radius: 12px; padding: 0.85rem; margin-bottom: 1.15rem; border: 1px solid var(--border);">
+                    <label style="font-size: 0.82rem; font-weight: 700; color: var(--text-main); display: block; margin-bottom: 0.5rem;">
+                        ⚙️ Sumber Kata Mutiara & Motivasi Dasbor:
+                    </label>
+                    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                        <label style="display: flex; align-items: center; gap: 0.45rem; cursor: pointer; font-size: 0.86rem; font-weight: 600; background: #ffffff; padding: 7px 14px; border-radius: 8px; border: 1.5px solid #3b82f6; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+                            <input type="radio" name="quoteMode" value="ai" id="quoteModeAi" checked onchange="Forms.handleQuoteModeChange(this.value)">
+                            <span>🤖 Otomatis (AI Kata Mutiara Tokoh) <span class="badge" style="background: #dbeafe; color: #1e40af; font-size: 0.68rem; font-weight: 700; padding: 2px 7px; border-radius: 4px; margin-left: 2px;">Default</span></span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.45rem; cursor: pointer; font-size: 0.86rem; font-weight: 600; background: #ffffff; padding: 7px 14px; border-radius: 8px; border: 1px solid #cbd5e1;">
+                            <input type="radio" name="quoteMode" value="manual" id="quoteModeManual" onchange="Forms.handleQuoteModeChange(this.value)">
+                            <span>✍️ Manual (Ditulis Sendiri)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- BOX MODE OTOMATIS (AI) -->
+                <div id="quoteAiSettingsBox" style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 1.1rem; margin-bottom: 1.25rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 0.6rem; margin-bottom: 0.85rem;">
+                        <div>
+                            <div style="font-weight: 700; color: #1e40af; font-size: 0.95rem; display: flex; align-items: center; gap: 0.4rem;">
+                                <span>🤖 Mode Otomatis AI Berjalan</span>
+                                <span class="badge" style="background: #10b981; color: #ffffff; font-size: 0.68rem; padding: 2px 8px; border-radius: 99px;">Aktif</span>
+                            </div>
+                            <div style="font-size: 0.78rem; color: #2563eb; margin-top: 3px; line-height: 1.4;">
+                                Memuat kutipan singkat, padat, berbobot & menginspirasi dengan mengutamakan <strong>Tokoh Indonesia</strong> (Ki Hajar Dewantara, B.J. Habibie, Soekarno, Hatta, Kartini, Gus Dur, Buya Hamka, Tan Malaka, Pramoedya, Sri Mulyani, Najwa Shihab) dan tokoh dunia.
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-primary btn-sm" onclick="Forms.generateNextAiQuotePreview()" style="font-size: 0.8rem; display: inline-flex; align-items: center; gap: 0.35rem; font-weight: 600;">
+                            🔄 Acak / Ganti Kutipan AI
+                        </button>
                     </div>
 
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
                         <div class="form-group-clean">
-                            <label>Tokoh / Sumber Kutipan *</label>
-                            <input type="text" id="newQuoteAuthor" class="form-control-clean" placeholder="Contoh: Ki Hajar Dewantara / B.J. Habibie" required oninput="Forms.updateQuoteLivePreview()">
+                            <label style="font-size: 0.8rem; font-weight: 700; color: #1e3a8a;">⏱️ Ganti Otomatis Setiap:</label>
+                            <select id="quoteAiInterval" class="form-control-clean" onchange="Forms.handleQuoteIntervalChange(this.value)" style="background: #ffffff; font-weight: 600;">
+                                <option value="1">1 Menit (Cepat)</option>
+                                <option value="3">3 Menit</option>
+                                <option value="5" selected>5 Menit (Rekomendasi Default)</option>
+                                <option value="10">10 Menit</option>
+                                <option value="15">15 Menit</option>
+                                <option value="30">30 Menit</option>
+                                <option value="0">Hanya saat refresh halaman</option>
+                            </select>
                         </div>
                         <div class="form-group-clean">
-                            <label>Lencana / Kategori Motivasi</label>
-                            <select id="newQuoteKategori" class="form-control-clean" onchange="Forms.updateQuoteLivePreview()">
-                                <option value="💡 Kata Mutiara & Motivasi Hari Ini">💡 Kata Mutiara & Motivasi</option>
-                                <option value="🌟 Motivasi Berkarakter">🌟 Motivasi Berkarakter</option>
-                                <option value="🏆 Semangat Juara & Prestasi">🏆 Semangat Juara & Prestasi</option>
-                                <option value="💎 Nilai Budi Pekerti">💎 Nilai Budi Pekerti</option>
-                                <option value="📜 Nasihat Bijak Kehidupan">📜 Nasihat Bijak Kehidupan</option>
-                                <option value="🚀 Cita-cita & Sukses Masa Depan">🚀 Cita-cita Masa Depan</option>
+                            <label style="font-size: 0.8rem; font-weight: 700; color: #1e3a8a;">🇮🇩 Preferensi Tokoh:</label>
+                            <select id="quoteAiFilter" class="form-control-clean" onchange="Forms.handleQuoteFilterChange(this.value)" style="background: #ffffff; font-weight: 600;">
+                                <option value="all" selected>🇮🇩 Utama Tokoh Indonesia & Dunia</option>
+                                <option value="indo">🇮🇩 Khusus Tokoh Indonesia</option>
+                                <option value="world">🌍 Tokoh Dunia</option>
                             </select>
                         </div>
                     </div>
+                </div>
 
-                    <!-- KUSTOMISASI: WARNA, FONT, EFEK LAINNYA -->
-                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; margin-top: 0.25rem;">
-                        <!-- 1. WARNA & TEMA -->
+                <!-- BOX MODE MANUAL (DITULIS SENDIRI) -->
+                <div id="quoteManualSettingsBox" style="display: none;">
+                    <form id="addQuoteForm" onsubmit="Forms.handleAddQuote(event)" style="margin-bottom: 1.25rem;">
                         <div class="form-group-clean">
-                            <label>🎨 Warna & Tema Kartu</label>
-                            <select id="newQuoteWarna" class="form-control-clean" onchange="Forms.handleQuoteThemeChange()">
-                                <option value="ocean">🌊 Deep Ocean (Biru Samudra)</option>
-                                <option value="gold">👑 Royal Gold (Emas Juara)</option>
-                                <option value="emerald">🌿 Emerald (Hijau Karakter)</option>
-                                <option value="purple">🔮 Amethyst (Ungu Ningrat)</option>
-                                <option value="ruby">🍷 Crimson (Merah Semangat)</option>
-                                <option value="sunset">🌅 Sunset (Jingga Senja)</option>
-                                <option value="dark">🌌 Midnight (Hitam Pekat)</option>
-                                <option value="glass">💎 Frosted Glass (Kaca Transparan)</option>
-                                <option value="custom">🎨 Warna Kustom Bebas...</option>
-                            </select>
-                            <input type="color" id="newQuoteCustomColor" value="#1e3a8a" title="Pilih warna latar kustom" style="display: none; width: 100%; height: 36px; margin-top: 4px; padding: 2px; border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer;" oninput="Forms.updateQuoteLivePreview()">
+                            <label>Tulis Kata Mutiara / Motivasi Baru *</label>
+                            <textarea id="newQuoteText" class="form-control-clean" rows="2" placeholder="Tulis kutipan yang menginspirasi siswa..." oninput="Forms.updateQuoteLivePreview()"></textarea>
                         </div>
 
-                        <!-- 2. FONT -->
-                        <div class="form-group-clean">
-                            <label>✒️ Gaya Tulisan (Font)</label>
-                            <select id="newQuoteFont" class="form-control-clean" onchange="Forms.updateQuoteLivePreview()">
-                                <option value="playfair">📜 Playfair Display (Serif Mewah)</option>
-                                <option value="caveat">✒️ Caveat (Tulisan Tangan Indah)</option>
-                                <option value="merriweather">📖 Merriweather (Literasi Klasik)</option>
-                                <option value="cinzel">🏛️ Cinzel (Monumen Formal)</option>
-                                <option value="outfit">💎 Outfit (Modern Geometris)</option>
-                                <option value="jakarta">🎯 Plus Jakarta Sans (Bersih)</option>
-                            </select>
-                        </div>
-
-                        <!-- 3. EFEK LAINNYA -->
-                        <div class="form-group-clean">
-                            <label>✨ Efek Visual Lainnya</label>
-                            <select id="newQuoteEfek" class="form-control-clean" onchange="Forms.updateQuoteLivePreview()">
-                                <option value="all">🌟 Efek Komplet (Glow+Watermark+Shimmer)</option>
-                                <option value="glow">✨ Radiant Glow (Pendar Kilau)</option>
-                                <option value="watermark">❝ ❞ Watermark Petik Raksasa</option>
-                                <option value="shimmer">💫 Animasi Shimmer Cahaya</option>
-                                <option value="float">🪟 Kaca Melayang (3D Hover)</option>
-                                <option value="neon">⚡ Neon Accent Border</option>
-                                <option value="none">🚫 Tanpa Efek Tambahan</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- KOTAK PRATINJAU LANGSUNG (LIVE PREVIEW) -->
-                    <div style="margin: 0.85rem 0 1rem 0;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
-                            <span style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em;">
-                                👁️ Pratinjau Tampilan Langsung (Live Preview)
-                            </span>
-                            <span style="font-size: 0.72rem; color: var(--text-light);">Tampilan yang akan terlihat di dasbor utama</span>
-                        </div>
-                        <div id="quoteLivePreviewCard" class="quote-card quote-theme-ocean quote-fx-all" style="margin-bottom: 0; min-height: 95px; padding: 1.15rem 1.35rem;">
-                            <div class="quote-watermark">“</div>
-                            <div class="quote-shimmer-beam"></div>
-                            <div class="quote-content" style="max-width: 100%;">
-                                <div id="prevQuoteBadge" class="quote-badge">💡 Kata Mutiara & Motivasi Hari Ini</div>
-                                <div id="prevQuoteText" class="quote-text quote-font-playfair">
-                                    "Disiplin adalah jembatan antara cita-cita mulia dan pencapaian yang nyata."
-                                </div>
-                                <div id="prevQuoteAuthor" class="quote-author">— Ki Hajar Dewantara</div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                            <div class="form-group-clean">
+                                <label>Tokoh / Sumber Kutipan *</label>
+                                <input type="text" id="newQuoteAuthor" class="form-control-clean" placeholder="Contoh: Ki Hajar Dewantara / B.J. Habibie" oninput="Forms.updateQuoteLivePreview()">
+                            </div>
+                            <div class="form-group-clean">
+                                <label>Lencana / Kategori Motivasi</label>
+                                <select id="newQuoteKategori" class="form-control-clean" onchange="Forms.updateQuoteLivePreview()">
+                                    <option value="💡 Kata Mutiara & Motivasi Hari Ini">💡 Kata Mutiara & Motivasi</option>
+                                    <option value="🌟 Motivasi Berkarakter">🌟 Motivasi Berkarakter</option>
+                                    <option value="🏆 Semangat Juara & Prestasi">🏆 Semangat Juara & Prestasi</option>
+                                    <option value="💎 Nilai Budi Pekerti">💎 Nilai Budi Pekerti</option>
+                                    <option value="📜 Nasihat Bijak Kehidupan">📜 Nasihat Bijak Kehidupan</option>
+                                    <option value="🚀 Cita-cita & Sukses Masa Depan">🚀 Cita-cita Masa Depan</option>
+                                </select>
                             </div>
                         </div>
-                    </div>
 
-                    <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 0.65rem; font-weight: 600;">
-                        + Tambah Kata Mutiara Berdesain
-                    </button>
-                </form>
+                        <!-- KUSTOMISASI: WARNA, FONT, EFEK LAINNYA -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; margin-top: 0.25rem;">
+                            <div class="form-group-clean">
+                                <label>🎨 Warna & Tema Kartu</label>
+                                <select id="newQuoteWarna" class="form-control-clean" onchange="Forms.handleQuoteThemeChange()">
+                                    <option value="ocean">🌊 Deep Ocean (Biru Samudra)</option>
+                                    <option value="gold">👑 Royal Gold (Emas Juara)</option>
+                                    <option value="emerald">🌿 Emerald (Hijau Karakter)</option>
+                                    <option value="purple">🔮 Amethyst (Ungu Ningrat)</option>
+                                    <option value="ruby">🍷 Crimson (Merah Semangat)</option>
+                                    <option value="sunset">🌅 Sunset (Jingga Senja)</option>
+                                    <option value="dark">🌌 Midnight (Hitam Pekat)</option>
+                                    <option value="glass">💎 Frosted Glass (Kaca Transparan)</option>
+                                    <option value="custom">🎨 Warna Kustom Bebas...</option>
+                                </select>
+                                <input type="color" id="newQuoteCustomColor" value="#1e3a8a" title="Pilih warna latar kustom" style="display: none; width: 100%; height: 36px; margin-top: 4px; padding: 2px; border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer;" oninput="Forms.updateQuoteLivePreview()">
+                            </div>
+
+                            <div class="form-group-clean">
+                                <label>✒️ Gaya Tulisan (Font)</label>
+                                <select id="newQuoteFont" class="form-control-clean" onchange="Forms.updateQuoteLivePreview()">
+                                    <option value="playfair">📜 Playfair Display (Serif Mewah)</option>
+                                    <option value="caveat">✒️ Caveat (Tulisan Tangan Indah)</option>
+                                    <option value="merriweather">📖 Merriweather (Literasi Klasik)</option>
+                                    <option value="cinzel">🏛️ Cinzel (Monumen Formal)</option>
+                                    <option value="outfit">💎 Outfit (Modern Geometris)</option>
+                                    <option value="jakarta">🎯 Plus Jakarta Sans (Bersih)</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group-clean">
+                                <label>✨ Efek Visual Lainnya</label>
+                                <select id="newQuoteEfek" class="form-control-clean" onchange="Forms.updateQuoteLivePreview()">
+                                    <option value="all">🌟 Efek Komplet (Glow+Watermark+Shimmer)</option>
+                                    <option value="glow">✨ Radiant Glow (Pendar Kilau)</option>
+                                    <option value="watermark">❝ ❞ Watermark Petik Raksasa</option>
+                                    <option value="shimmer">💫 Animasi Shimmer Cahaya</option>
+                                    <option value="float">🪟 Kaca Melayang (3D Hover)</option>
+                                    <option value="neon">⚡ Neon Accent Border</option>
+                                    <option value="none">🚫 Tanpa Efek Tambahan</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 0.65rem; font-weight: 600; margin-top: 0.5rem;">
+                            💾 Simpan & Tambahkan Kata Mutiara Manual
+                        </button>
+                    </form>
+                </div>
+
+                <!-- KOTAK PRATINJAU LANGSUNG (LIVE PREVIEW) -->
+                <div style="margin: 0.85rem 0 1rem 0;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                        <span style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em;">
+                            👁️ Pratinjau Tampilan Langsung (Live Preview)
+                        </span>
+                        <span style="font-size: 0.72rem; color: var(--text-light);">Tampilan yang akan terlihat di dasbor utama</span>
+                    </div>
+                    <div id="quoteLivePreviewCard" class="quote-card quote-theme-ocean quote-fx-all" style="margin-bottom: 0; min-height: 95px; padding: 1.15rem 1.35rem;">
+                        <div class="quote-watermark">“</div>
+                        <div class="quote-shimmer-beam"></div>
+                        <div class="quote-content" style="max-width: 100%;">
+                            <div id="prevQuoteBadge" class="quote-badge">💡 Kata Mutiara & Motivasi Hari Ini</div>
+                            <div id="prevQuoteText" class="quote-text quote-font-playfair">
+                                "Disiplin adalah jembatan antara cita-cita mulia dan pencapaian yang nyata."
+                            </div>
+                            <div id="prevQuoteAuthor" class="quote-author">— Ki Hajar Dewantara (Bapak Pendidikan Nasional)</div>
+                        </div>
+                    </div>
+                </div>
 
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.25rem; margin-bottom: 0.4rem;">
                     <strong>Daftar Kata Mutiara Aktif:</strong>
@@ -3242,10 +3373,12 @@
     <!-- SCRIPTS -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="js/data.js"></script>
+    <script src="js/students-master.js"></script>
     <script src="js/storage.js"></script>
     <script src="js/supabase-client.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/siswa-portal.js"></script>
+    <script src="js/instagram-sync.js"></script>
     <script src="js/admin-portal.js"></script>
     <script src="js/forms.js"></script>
     <script src="js/app.js"></script>

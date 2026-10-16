@@ -4,12 +4,12 @@
  */
 
 const DEFAULT_CONFIG = {
-    schoolName: "SMK NEGERI 1 MAGELANG",
+    schoolName: "KESISWAAN SMK NEGERI 1 MAGELANG",
     schoolMotto: "Disiplin, Terampil, Mandiri, Berakhlak Mulia",
-    headerBadgeText: "🛡️ Portal Kesiswaan & Kedisiplinan",
+    headerBadgeText: "",
     schoolAddress: "Jl. Cawang No. 2, Magelang - Telp. (0293) 362249 • Website: smkn1magelang.sch.id",
     schoolLogo: "🏫",
-    schoolLogoUrl: "",
+    schoolLogoUrl: "logo-smk.png",
     logoSize: 46, // slider 36 - 80 px
     logoShape: "rounded", // "rounded", "circle", "squircle", "square"
     logoBg: "white", // "white", "theme", "transparent"
@@ -67,40 +67,327 @@ const DEFAULT_SURAT_TEMPLATE = {
     pejabatKananNama: "Morlan Purba Sibarani, S.Pd., M.Si."
 };
 
-const DEFAULT_QUOTES = [
+const DEFAULT_QUOTE_CONFIG = {
+    mode: "ai", // "ai" (otomatis) atau "manual"
+    intervalMinutes: 5, // Ganti setiap 5 menit (1, 3, 5, 10, 15, 30)
+    filterPref: "all", // "all", "indo", "world"
+    currentIndex: 0
+};
+
+// MASTER KOLEKSI KATA MUTIARA OTOMATIS (AI) - SINGKAT, PADAT, BERBOBOT, & MENGINSPIRASI
+const MASTER_AI_QUOTES = [
+    // --- TOKOH INSPIRATIF INDONESIA (UTAMA) ---
     {
         quote: "Disiplin adalah jembatan antara cita-cita mulia dan pencapaian yang nyata.",
         tokoh: "Ki Hajar Dewantara",
+        asal: "Bapak Pendidikan Nasional",
+        kategori: "💡 Kata Mutiara & Motivasi Hari Ini",
         warna: "ocean",
         font: "playfair",
-        efek: "all",
-        kategori: "💡 Kata Mutiara & Motivasi Hari Ini"
+        efek: "all"
     },
     {
-        quote: "Keberhasilan bukanlah sebuah kebetulan, melainkan buah dari kerja keras, ketekunan, dan akhlak yang mulia.",
+        quote: "Gagal hanya terjadi jika kita menyerah dan berhenti mencoba.",
         tokoh: "B.J. Habibie",
+        asal: "Presiden RI ke-3 & Teknokrat",
+        kategori: "🌟 Motivasi Berkarakter",
+        warna: "gold",
+        font: "outfit",
+        efek: "all"
+    },
+    {
+        quote: "Bermimpilah setinggi langit. Jika engkau jatuh, engkau akan jatuh di antara bintang-bintang.",
+        tokoh: "Ir. Soekarno",
+        asal: "Proklamator & Presiden RI ke-1",
+        kategori: "🚀 Cita-cita Masa Depan",
+        warna: "ruby",
+        font: "cinzel",
+        efek: "all"
+    },
+    {
+        quote: "Kurang cerdas dapat diperbaiki dengan belajar, namun tidak jujur itu sulit diperbaiki.",
+        tokoh: "Mohammad Hatta",
+        asal: "Proklamator & Tokoh Integritas",
+        kategori: "💎 Nilai Budi Pekerti",
+        warna: "emerald",
+        font: "merriweather",
+        efek: "glow"
+    },
+    {
+        quote: "Tahukah engkau semboyanku? 'Aku mau!' Dua kata ringkas penakluk segala rintangan.",
+        tokoh: "R.A. Kartini",
+        asal: "Pahlawan Emansipasi",
+        kategori: "🌟 Motivasi Berkarakter",
+        warna: "purple",
+        font: "caveat",
+        efek: "shimmer"
+    },
+    {
+        quote: "Menyesali nasib takkan mengubah keadaan. Terus berkarya dan bekerjalah yang membuat kita berharga.",
+        tokoh: "K.H. Abdurrahman Wahid (Gus Dur)",
+        asal: "Presiden RI ke-4 & Tokoh Kemanusiaan",
+        kategori: "📜 Nasihat Bijak Kehidupan",
+        warna: "emerald",
+        font: "playfair",
+        efek: "float"
+    },
+    {
+        quote: "Jangan takut jatuh, karena yang tidak pernah memanjatlah yang tidak pernah jatuh.",
+        tokoh: "Buya Hamka",
+        asal: "Ulama & Pujangga Besar",
+        kategori: "💡 Kata Mutiara & Motivasi Hari Ini",
+        warna: "ocean",
+        font: "merriweather",
+        efek: "all"
+    },
+    {
+        quote: "Kemewahan terakhir yang dimiliki oleh seorang pemuda adalah idealismenya.",
+        tokoh: "Tan Malaka",
+        asal: "Pahlawan Nasional & Pemikir",
+        kategori: "🌟 Motivasi Berkarakter",
+        warna: "ruby",
+        font: "outfit",
+        efek: "glow"
+    },
+    {
+        quote: "Hanya mereka yang berani melangkah yang berpeluang sampai ke puncak tujuan.",
+        tokoh: "Najwa Shihab",
+        asal: "Jurnalis & Tokoh Inspiratif",
+        kategori: "🚀 Cita-cita Masa Depan",
+        warna: "sunset",
+        font: "jakarta",
+        efek: "all"
+    },
+    {
+        quote: "Jangan pernah lelah mencintai negeri ini dengan terus belajar, berprestasi, dan berintegritas.",
+        tokoh: "Sri Mulyani Indrawati",
+        asal: "Tokoh Ekonomi Dunia & Tokoh Bangsa",
+        kategori: "🏆 Semangat Juara & Prestasi",
+        warna: "gold",
+        font: "playfair",
+        efek: "all"
+    },
+    {
+        quote: "Lawan kemalasan dan ketakutanmu, masa depan tidak pernah menunggu orang yang ragu.",
+        tokoh: "Ki Hajar Dewantara",
+        asal: "Pahlawan Nasional",
+        kategori: "💡 Kata Mutiara & Motivasi Hari Ini",
+        warna: "ocean",
+        font: "cinzel",
+        efek: "all"
+    },
+    {
+        quote: "Jadilah mata air yang jernih, yang memberikan kehidupan dan kemanfaatan bagi sekitarmu.",
+        tokoh: "B.J. Habibie",
+        asal: "Presiden RI ke-3",
+        kategori: "💎 Nilai Budi Pekerti",
+        warna: "emerald",
+        font: "caveat",
+        efek: "watermark"
+    },
+    {
+        quote: "Tahu kau mengapa aku sayangi kau? Karena kau terus berkarya. Suaramu takkan padam ditelan zaman.",
+        tokoh: "Pramoedya Ananta Toer",
+        asal: "Sastrawan Legendaris Indonesia",
+        kategori: "📜 Nasihat Bijak Kehidupan",
+        warna: "dark",
+        font: "merriweather",
+        efek: "glow"
+    },
+    {
+        quote: "Jangan mudah gelisah ketika menemui kesulitan, karena perjuangan butuh keteguhan hati.",
+        tokoh: "Jenderal Soedirman",
+        asal: "Panglima Besar TNI",
+        kategori: "🌟 Motivasi Berkarakter",
+        warna: "ruby",
+        font: "cinzel",
+        efek: "all"
+    },
+    {
+        quote: "Sebagai anak muda dan penerus bangsa, kita tidak boleh tunduk pada keputusasaan.",
+        tokoh: "Cut Nyak Dien",
+        asal: "Pahlawan Nasional",
+        kategori: "🌟 Motivasi Berkarakter",
+        warna: "purple",
+        font: "playfair",
+        efek: "shimmer"
+    },
+    {
+        quote: "Jadilah manusia yang bermanfaat bagi manusia lain, sebaik-baik insan adalah yang menebar kebaikan.",
+        tokoh: "K.H. Ahmad Dahlan",
+        asal: "Tokoh Pembaharu Pendidikan",
+        kategori: "💎 Nilai Budi Pekerti",
+        warna: "emerald",
+        font: "merriweather",
+        efek: "all"
+    },
+    {
+        quote: "Ilmu yang tidak diamalkan bagaikan pohon rindang yang tak menghasilkan buah manis.",
+        tokoh: "K.H. Hasyim Asy'ari",
+        asal: "Ulama Besar & Tokoh Bangsa",
+        kategori: "💎 Nilai Budi Pekerti",
+        warna: "ocean",
+        font: "playfair",
+        efek: "glow"
+    },
+    {
+        quote: "Pendidikan adalah lentera yang menuntun generasi muda menuju kemuliaan dan martabat sejati.",
+        tokoh: "Dewi Sartika",
+        asal: "Pelopor Pendidikan Wanita",
+        kategori: "💡 Kata Mutiara & Motivasi Hari Ini",
         warna: "gold",
         font: "caveat",
-        efek: "all",
-        kategori: "🌟 Motivasi Berkarakter"
+        efek: "watermark"
     },
     {
-        quote: "Juara sejati tidak hanya unggul dalam prestasi, namun juga rendah hati dan berkarakter terpuji.",
-        tokoh: "Pesan Kesiswaan",
-        warna: "emerald",
+        quote: "Hidup yang tidak dipertaruhkan dengan kerja keras tidak akan pernah dimenangkan.",
+        tokoh: "Sutan Sjahrir",
+        asal: "Perdana Menteri Pertama RI",
+        kategori: "🚀 Cita-cita Masa Depan",
+        warna: "dark",
         font: "outfit",
-        efek: "all",
-        kategori: "🏆 Semangat Juara & Prestasi"
+        efek: "neon"
     },
     {
-        quote: "Pendidikan adalah senjata paling ampuh untuk mengubah masa depan menjadi lebih gemilang.",
+        quote: "Anak muda hebat adalah yang sibuk mencari solusi, bukan mereka yang meratapi masalah.",
+        tokoh: "Ridwan Kamil",
+        asal: "Arsitek & Tokoh Publik",
+        kategori: "🏆 Semangat Juara & Prestasi",
+        warna: "sunset",
+        font: "jakarta",
+        efek: "all"
+    },
+    {
+        quote: "Bekerjalah dengan hati, berdisiplin tinggi, dan jangan pernah takut untuk bermimpi besar.",
+        tokoh: "Susi Pudjiastuti",
+        asal: "Tokoh Maritim & Wirausaha",
+        kategori: "🌟 Motivasi Berkarakter",
+        warna: "ocean",
+        font: "playfair",
+        efek: "shimmer"
+    },
+    {
+        quote: "Ketekunan dan konsistensi mengalahkan bakat yang malas diasah.",
+        tokoh: "B.J. Habibie",
+        asal: "Teknokrat Indonesia",
+        kategori: "🏆 Semangat Juara & Prestasi",
+        warna: "gold",
+        font: "outfit",
+        efek: "all"
+    },
+    {
+        quote: "Ing ngarsa sung tuladha, ing madya mangun karsa, tut wuri handayani.",
+        tokoh: "Ki Hajar Dewantara",
+        asal: "Semboyan Pendidikan Nasional",
+        kategori: "💎 Nilai Budi Pekerti",
+        warna: "emerald",
+        font: "cinzel",
+        efek: "all"
+    },
+
+    // --- TOKOH INSPIRATIF DUNIA ---
+    {
+        quote: "Pendidikan adalah senjata paling ampuh yang dapat kamu gunakan untuk mengubah dunia.",
         tokoh: "Nelson Mandela",
+        asal: "Tokoh Perdamaian Dunia",
+        kategori: "📜 Nasihat Bijak Kehidupan",
         warna: "purple",
+        font: "playfair",
+        efek: "all"
+    },
+    {
+        quote: "Di tengah setiap kesulitan dan tantangan, selalu tersimpan kesempatan emas.",
+        tokoh: "Albert Einstein",
+        asal: "Fisikawan & Ilmuwan Dunia",
+        kategori: "💡 Kata Mutiara & Motivasi Hari Ini",
+        warna: "ocean",
         font: "merriweather",
-        efek: "glow",
-        kategori: "📜 Nasihat Bijak Kehidupan"
+        efek: "glow"
+    },
+    {
+        quote: "Satu-satunya cara melakukan pekerjaan hebat adalah mencintai apa yang kamu kerjakan.",
+        tokoh: "Steve Jobs",
+        asal: "Inovator Teknologi Dunia",
+        kategori: "🚀 Cita-cita Masa Depan",
+        warna: "dark",
+        font: "outfit",
+        efek: "shimmer"
+    },
+    {
+        quote: "Masa depan adalah milik mereka yang percaya pada keindahan mimpi-mimpinya.",
+        tokoh: "Eleanor Roosevelt",
+        asal: "Tokoh Kemanusiaan Dunia",
+        kategori: "🌟 Motivasi Berkarakter",
+        warna: "gold",
+        font: "caveat",
+        efek: "all"
+    },
+    {
+        quote: "Hari esok adalah milik orang-orang yang bersungguh-sungguh mempersiapkannya hari ini.",
+        tokoh: "Malcolm X",
+        asal: "Tokoh Inspiratif Dunia",
+        kategori: "🚀 Cita-cita Masa Depan",
+        warna: "ruby",
+        font: "cinzel",
+        efek: "float"
+    },
+    {
+        quote: "Investasi terbaik dengan keuntungan paling abadi adalah investasi pada ilmu pengetahuan.",
+        tokoh: "Benjamin Franklin",
+        asal: "Ilmuwan & Negarawan",
+        kategori: "💎 Nilai Budi Pekerti",
+        warna: "emerald",
+        font: "playfair",
+        efek: "all"
+    },
+    {
+        quote: "Jika kamu tidak bisa terbang, berlarilah. Yang terpenting, jangan pernah berhenti melangkah maju.",
+        tokoh: "Martin Luther King Jr.",
+        asal: "Pejuang Keadilan & Kesetaraan",
+        kategori: "🏆 Semangat Juara & Prestasi",
+        warna: "ocean",
+        font: "jakarta",
+        efek: "all"
+    },
+    {
+        quote: "Optimisme adalah keyakinan teguh yang menuntun manusia pada pencapaian nyata.",
+        tokoh: "Helen Keller",
+        asal: "Penulis & Pendidik Dunia",
+        kategori: "🌟 Motivasi Berkarakter",
+        warna: "sunset",
+        font: "merriweather",
+        efek: "shimmer"
+    },
+    {
+        quote: "Orang yang mampu memindahkan gunung memulainya dengan memindahkan batu-batu kecil.",
+        tokoh: "Confucius",
+        asal: "Filsuf Kebijaksanaan",
+        kategori: "📜 Nasihat Bijak Kehidupan",
+        warna: "emerald",
+        font: "cinzel",
+        efek: "watermark"
+    },
+    {
+        quote: "Banyak kegagalan terjadi karena orang tidak sadar betapa dekatnya mereka dengan keberhasilan saat menyerah.",
+        tokoh: "Thomas Alva Edison",
+        asal: "Penemu & Tokoh Inovasi",
+        kategori: "💡 Kata Mutiara & Motivasi Hari Ini",
+        warna: "gold",
+        font: "outfit",
+        efek: "glow"
+    },
+    {
+        quote: "Semua impian kita dapat menjadi kenyataan, jika kita memiliki keberanian untuk mengejarnya.",
+        tokoh: "Walt Disney",
+        asal: "Pelopor Kreativitas Dunia",
+        kategori: "🚀 Cita-cita Masa Depan",
+        warna: "purple",
+        font: "caveat",
+        efek: "all"
     }
 ];
+
+const DEFAULT_QUOTES = MASTER_AI_QUOTES.slice(0, 5);
 
 // DAFTAR RESMI PEMBINA ORGANISASI & EKSTRAKURIKULER
 const DEFAULT_PEMBINA_LIST = [

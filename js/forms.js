@@ -1530,6 +1530,46 @@ const Forms = {
         this.openModal("modalExportStudents");
     },
 
+    restoreOfficialStudentsMaster() {
+        const masterSource = (typeof MASTER_STUDENTS_LIST !== 'undefined' && Array.isArray(MASTER_STUDENTS_LIST) && MASTER_STUDENTS_LIST.length > 0)
+            ? MASTER_STUDENTS_LIST
+            : (typeof window !== 'undefined' && window.MASTER_STUDENTS_LIST ? window.MASTER_STUDENTS_LIST : null);
+
+        if (!masterSource || masterSource.length === 0) {
+            alert("File master 2.107 siswa belum selesai dimuat. Harap refresh halaman lalu coba kembali.");
+            return;
+        }
+
+        const confirmRestore = confirm(`Apakah Anda ingin memulihkan dan menyinkronkan seluruh ${masterSource.length} data siswa resmi SMKN 1 Magelang (60 Kelas)?\n\nCatatan: Riwayat pelanggaran dan prestasi yang sudah dicatat sebelumnya tetap dipertahankan.`);
+        if (!confirmRestore) return;
+
+        try {
+            const current = StorageManager.getStudents() || [];
+            const merged = StorageManager.mergeWithMasterStudents(masterSource, current);
+            StorageManager.saveStudents(merged, true);
+
+            this.populateExportStudentClassFilter();
+            this.renderExportStudentsTable();
+
+            if (window.App && typeof App.renderAll === "function") {
+                App.renderAll();
+            }
+
+            if (window.AdminPortal && typeof AdminPortal.renderTeacherAllStudents === "function") {
+                AdminPortal.renderTeacherAllStudents();
+            }
+
+            if (window.App && typeof App.showToast === "function") {
+                App.showToast(`Berhasil memulihkan ${merged.length} data siswa resmi SMKN 1 Magelang!`);
+            } else {
+                alert(`Berhasil memulihkan ${merged.length} data siswa resmi SMKN 1 Magelang!`);
+            }
+        } catch (e) {
+            console.error("Gagal memulihkan master siswa:", e);
+            alert("Terjadi kesalahan saat memulihkan siswa: " + e.message);
+        }
+    },
+
     populateExportStudentClassFilter() {
         const select = document.getElementById("exportStudentFilterKelas");
         if (!select) return;
@@ -3289,9 +3329,100 @@ const Forms = {
 
     // 6. SUPER ADMIN: KELOLA KATA MUTIARA
     openManageQuotesModal() {
+        const cfg = StorageManager.getQuoteConfig();
+        const radioAi = document.getElementById("quoteModeAi");
+        const radioManual = document.getElementById("quoteModeManual");
+        const intervalSelect = document.getElementById("quoteAiInterval");
+        const filterSelect = document.getElementById("quoteAiFilter");
+        const boxAi = document.getElementById("quoteAiSettingsBox");
+        const boxManual = document.getElementById("quoteManualSettingsBox");
+
+        if (radioAi && radioManual) {
+            radioAi.checked = (cfg.mode === "ai");
+            radioManual.checked = (cfg.mode === "manual");
+        }
+        if (intervalSelect) {
+            intervalSelect.value = String(cfg.intervalMinutes !== undefined ? cfg.intervalMinutes : 5);
+        }
+        if (filterSelect) {
+            filterSelect.value = cfg.filterPref || "all";
+        }
+        if (boxAi && boxManual) {
+            boxAi.style.display = (cfg.mode === "ai") ? "block" : "none";
+            boxManual.style.display = (cfg.mode === "manual") ? "block" : "none";
+        }
+
         this.renderQuotesList();
         this.updateQuoteLivePreview();
         this.openModal("modalManageQuotes");
+    },
+
+    handleQuoteModeChange(mode) {
+        const cfg = StorageManager.getQuoteConfig();
+        cfg.mode = mode;
+        StorageManager.saveQuoteConfig(cfg);
+
+        const boxAi = document.getElementById("quoteAiSettingsBox");
+        const boxManual = document.getElementById("quoteManualSettingsBox");
+        if (boxAi && boxManual) {
+            boxAi.style.display = (mode === "ai") ? "block" : "none";
+            boxManual.style.display = (mode === "manual") ? "block" : "none";
+        }
+
+        if (window.App) {
+            if (typeof App.initQuoteTimer === "function") App.initQuoteTimer();
+            if (typeof App.displayQuote === "function") App.displayQuote();
+        }
+
+        this.updateQuoteLivePreview();
+
+        if (window.App && typeof App.showToast === "function") {
+            if (mode === "ai") {
+                App.showToast("🤖 Mode Otomatis (AI Kata Mutiara Tokoh) diaktifkan!");
+            } else {
+                App.showToast("✍️ Mode Manual diaktifkan. Anda dapat menulis kutipan sendiri.");
+            }
+        }
+    },
+
+    handleQuoteIntervalChange(mins) {
+        const cfg = StorageManager.getQuoteConfig();
+        cfg.intervalMinutes = parseInt(mins, 10);
+        StorageManager.saveQuoteConfig(cfg);
+
+        if (window.App && typeof App.initQuoteTimer === "function") {
+            App.initQuoteTimer();
+        }
+
+        if (window.App && typeof App.showToast === "function") {
+            if (cfg.intervalMinutes > 0) {
+                App.showToast(`⏱️ Kata mutiara akan berganti otomatis setiap ${cfg.intervalMinutes} menit.`);
+            } else {
+                App.showToast("⏱️ Kata mutiara hanya berganti saat halaman dimuat/direfresh.");
+            }
+        }
+    },
+
+    handleQuoteFilterChange(filterVal) {
+        const cfg = StorageManager.getQuoteConfig();
+        cfg.filterPref = filterVal;
+        StorageManager.saveQuoteConfig(cfg);
+
+        if (window.App) {
+            if (typeof App.displayQuote === "function") App.displayQuote();
+        }
+        this.updateQuoteLivePreview();
+
+        if (window.App && typeof App.showToast === "function") {
+            App.showToast("Preferensi tokoh berhasil diperbarui.");
+        }
+    },
+
+    generateNextAiQuotePreview() {
+        if (window.App && typeof App.nextQuote === "function") {
+            App.nextQuote();
+        }
+        this.updateQuoteLivePreview();
     },
 
     handleQuoteThemeChange() {
@@ -3309,6 +3440,47 @@ const Forms = {
     },
 
     updateQuoteLivePreview() {
+        const previewCard = document.getElementById("quoteLivePreviewCard");
+        const prevBadge = document.getElementById("prevQuoteBadge");
+        const prevText = document.getElementById("prevQuoteText");
+        const prevAuthor = document.getElementById("prevQuoteAuthor");
+
+        if (!previewCard || !prevText || !prevAuthor) return;
+
+        const cfg = StorageManager.getQuoteConfig();
+
+        if (cfg.mode === "ai" && window.App && typeof App.getActiveQuoteList === "function") {
+            const list = App.getActiveQuoteList();
+            const idx = (App.quoteIndex || 0) % list.length;
+            const item = list[idx] || list[0];
+
+            if (item) {
+                prevText.textContent = `"${item.quote}"`;
+                prevAuthor.textContent = `— ${item.tokoh}${item.asal ? ` (${item.asal})` : ''}`;
+                if (prevBadge) prevBadge.textContent = item.kategori || "💡 Kata Mutiara & Motivasi Hari Ini";
+
+                previewCard.className = "quote-card";
+                prevText.className = "quote-text";
+
+                const warnaVal = item.warna || "ocean";
+                const fontVal = item.font || "playfair";
+                const efekVal = item.efek || "all";
+
+                previewCard.style.background = "";
+                previewCard.style.border = "";
+                previewCard.classList.add(`quote-theme-${warnaVal}`);
+                prevText.classList.add(`quote-font-${fontVal}`);
+
+                if (efekVal === "all") {
+                    previewCard.classList.add("quote-fx-all", "quote-fx-glow", "quote-fx-shimmer", "quote-fx-float");
+                } else if (efekVal !== "none") {
+                    previewCard.classList.add(`quote-fx-${efekVal}`);
+                }
+                return;
+            }
+        }
+
+        // Mode Manual
         const textElem = document.getElementById("newQuoteText");
         const authorElem = document.getElementById("newQuoteAuthor");
         const kategoriElem = document.getElementById("newQuoteKategori");
@@ -3316,13 +3488,6 @@ const Forms = {
         const customColorElem = document.getElementById("newQuoteCustomColor");
         const fontElem = document.getElementById("newQuoteFont");
         const efekElem = document.getElementById("newQuoteEfek");
-
-        const previewCard = document.getElementById("quoteLivePreviewCard");
-        const prevBadge = document.getElementById("prevQuoteBadge");
-        const prevText = document.getElementById("prevQuoteText");
-        const prevAuthor = document.getElementById("prevQuoteAuthor");
-
-        if (!previewCard || !prevText || !prevAuthor) return;
 
         const textVal = (textElem && textElem.value.trim()) || "Disiplin adalah jembatan antara cita-cita mulia dan pencapaian yang nyata.";
         const authorVal = (authorElem && authorElem.value.trim()) || "Ki Hajar Dewantara";
@@ -3335,11 +3500,9 @@ const Forms = {
         prevAuthor.textContent = `— ${authorVal}`;
         if (prevBadge) prevBadge.textContent = kategoriVal;
 
-        // Reset classes
         previewCard.className = "quote-card";
         prevText.className = "quote-text";
 
-        // Apply theme color
         if (warnaVal === "custom" && customColorElem) {
             previewCard.style.background = customColorElem.value;
             previewCard.style.border = "1px solid rgba(255, 255, 255, 0.35)";
@@ -3349,10 +3512,8 @@ const Forms = {
             previewCard.classList.add(`quote-theme-${warnaVal}`);
         }
 
-        // Apply font
         prevText.classList.add(`quote-font-${fontVal}`);
 
-        // Apply effects
         if (efekVal === "all") {
             previewCard.classList.add("quote-fx-all", "quote-fx-glow", "quote-fx-shimmer", "quote-fx-float");
         } else if (efekVal !== "none") {

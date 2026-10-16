@@ -52,10 +52,14 @@ const StorageManager = {
                 const getReq = store.get("all_students");
                 getReq.onsuccess = () => {
                     if (getReq.result && Array.isArray(getReq.result.data) && getReq.result.data.length > 0) {
-                        // Jika localStorage kosong atau jumlah siswa di IDB lebih banyak, pulihkan dari IDB
-                        if (!this._studentsCache || this._studentsCache.length < getReq.result.data.length) {
-                            this._studentsCache = getReq.result.data;
-                            this.saveStudents(getReq.result.data, false);
+                        const idbData = getReq.result.data;
+                        // Pulihkan dari IDB jika IDB memiliki data lengkap (>= 2000 siswa) dan memori belum lengkap
+                        if (idbData.length >= 2000 && (!this._studentsCache || this._studentsCache.length < idbData.length)) {
+                            this._studentsCache = idbData;
+                            this.saveStudents(idbData, false);
+                        } else if ((!this._studentsCache || this._studentsCache.length < 2000) && idbData.length < 2000) {
+                            // Jika IDB maupun cache sempat terpotong (< 2000), panggil getStudents() untuk memulihkan master 2.107 siswa
+                            this.getStudents();
                         }
                     }
                 };
@@ -136,6 +140,12 @@ const StorageManager = {
         if (!config.dashboardBgUrl || config.dashboardBgUrl === "none" || config.dashboardBgUrl.trim() === "" || config.dashboardBgUrl.includes("photo-1541829070764-84a7d30dd3f3")) {
             config.dashboardBgUrl = DEFAULT_CONFIG.dashboardBgUrl;
         }
+        if (!config.schoolLogoUrl || config.schoolLogoUrl.trim() === "" || config.schoolLogoUrl === "🏫") {
+            config.schoolLogoUrl = "logo-smk.png";
+        }
+        if (!config.schoolName || config.schoolName === "SMK NEGERI 1 MAGELANG" || config.schoolName === "SiKesiswaan") {
+            config.schoolName = "KESISWAAN SMK NEGERI 1 MAGELANG";
+        }
         return config;
     },
 
@@ -150,6 +160,28 @@ const StorageManager = {
     },
 
     // KATA-KATA MUTIARA / MOTIVASI (SUPER ADMIN)
+    getQuoteConfig() {
+        const defaultCfg = (typeof DEFAULT_QUOTE_CONFIG !== 'undefined') ? DEFAULT_QUOTE_CONFIG : {
+            mode: "ai",
+            intervalMinutes: 5,
+            filterPref: "all",
+            currentIndex: 0
+        };
+        try {
+            const raw = localStorage.getItem("KESISWAAN_QUOTE_CONFIG");
+            if (raw) return { ...defaultCfg, ...JSON.parse(raw) };
+        } catch (e) {}
+        return defaultCfg;
+    },
+
+    saveQuoteConfig(cfg) {
+        try {
+            localStorage.setItem("KESISWAAN_QUOTE_CONFIG", JSON.stringify(cfg));
+        } catch (e) {
+            console.error("Gagal menyimpan quote config:", e);
+        }
+    },
+
     getQuotes() {
         return this.getData().quotes || DEFAULT_QUOTES;
     },
@@ -600,10 +632,60 @@ const StorageManager = {
     },
 
     // DATA SISWA
+    mergeWithMasterStudents(masterList, currentStudents = []) {
+        if (!Array.isArray(masterList)) return [];
+        const result = masterList.map(s => ({
+            ...s,
+            pelanggaran: Array.isArray(s.pelanggaran) ? [...s.pelanggaran] : [],
+            prestasi: Array.isArray(s.prestasi) ? [...s.prestasi] : []
+        }));
+
+        if (Array.isArray(currentStudents) && currentStudents.length > 0) {
+            const currentMap = new Map();
+            currentStudents.forEach(cs => {
+                if (cs.id) currentMap.set(String(cs.id).toLowerCase(), cs);
+                if (cs.nis) currentMap.set(String(cs.nis).toLowerCase(), cs);
+                if (cs.nisn) currentMap.set(String(cs.nisn).toLowerCase(), cs);
+            });
+
+            result.forEach(s => {
+                const cur = (s.id && currentMap.get(String(s.id).toLowerCase())) ||
+                            (s.nis && currentMap.get(String(s.nis).toLowerCase())) ||
+                            (s.nisn && currentMap.get(String(s.nisn).toLowerCase()));
+                if (cur) {
+                    if (Array.isArray(cur.pelanggaran) && cur.pelanggaran.length > 0) {
+                        s.pelanggaran = cur.pelanggaran;
+                    }
+                    if (Array.isArray(cur.prestasi) && cur.prestasi.length > 0) {
+                        s.prestasi = cur.prestasi;
+                    }
+                    if (cur.status) s.status = cur.status;
+                    if (cur.skorPelanggaran !== undefined) s.skorPelanggaran = cur.skorPelanggaran;
+                    if (cur.totalPoinPrestasi !== undefined) s.totalPoinPrestasi = cur.totalPoinPrestasi;
+                }
+            });
+
+            // Siswa buatan manual yang tidak ada di master tetap dipertahankan
+            currentStudents.forEach(cs => {
+                const inMaster = result.some(r => 
+                    (cs.id && r.id && String(cs.id).toLowerCase() === String(r.id).toLowerCase()) ||
+                    (cs.nis && r.nis && String(cs.nis).toLowerCase() === String(r.nis).toLowerCase())
+                );
+                if (!inMaster && cs.nama && cs.kelas) {
+                    result.push(cs);
+                }
+            });
+        }
+
+        return result;
+    },
+
     getStudents() {
-        if (this._studentsCache && Array.isArray(this._studentsCache) && this._studentsCache.length > 0) {
+        if (this._studentsCache && Array.isArray(this._studentsCache) && this._studentsCache.length >= 2000) {
             return this._studentsCache;
         }
+
+        let loadedStudents = [];
 
         // 1. Baca dari chunked storage di localStorage
         try {
@@ -621,9 +703,11 @@ const StorageManager = {
                             }
                         }
                     }
-                    if (all.length > 0) {
+                    if (all.length >= 2000) {
                         this._studentsCache = all;
                         return all;
+                    } else if (all.length > 0) {
+                        loadedStudents = all;
                     }
                 }
             }
@@ -632,25 +716,43 @@ const StorageManager = {
         }
 
         // 2. Fallback baca dari legacy STORAGE_KEY
-        try {
-            const raw = localStorage.getItem(STORAGE_KEY);
-            if (raw) {
-                const parsed = JSON.parse(raw);
-                if (parsed && Array.isArray(parsed.students) && parsed.students.length > 0) {
-                    this._studentsCache = parsed.students;
-                    setTimeout(() => {
-                        this.saveStudents(parsed.students);
-                    }, 50);
-                    return parsed.students;
+        if (loadedStudents.length === 0) {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    if (parsed && Array.isArray(parsed.students) && parsed.students.length > 0) {
+                        if (parsed.students.length >= 2000) {
+                            this._studentsCache = parsed.students;
+                            setTimeout(() => {
+                                this.saveStudents(parsed.students);
+                            }, 50);
+                            return parsed.students;
+                        } else {
+                            loadedStudents = parsed.students;
+                        }
+                    }
                 }
+            } catch (e) {
+                console.warn("Gagal membaca legacy student storage:", e);
             }
-        } catch (e) {
-            console.warn("Gagal membaca legacy student storage:", e);
         }
 
-        // 3. Fallback default INITIAL_STUDENTS
-        const initial = (typeof INITIAL_STUDENTS !== 'undefined' && Array.isArray(INITIAL_STUDENTS)) ? INITIAL_STUDENTS : [];
-        this._studentsCache = JSON.parse(JSON.stringify(initial));
+        // 3. Fallback master resmi 2.107 siswa SMKN 1 Magelang
+        // Jika data siswa < 2000 (misal terpotong menjadi 382 siswa), sinkronkan otomatis
+        // dengan master 2.107 siswa tanpa menghilangkan catatan pelanggaran / prestasi yang ada.
+        const masterSource = (typeof MASTER_STUDENTS_LIST !== 'undefined' && Array.isArray(MASTER_STUDENTS_LIST) && MASTER_STUDENTS_LIST.length > 0)
+            ? MASTER_STUDENTS_LIST
+            : ((typeof INITIAL_STUDENTS !== 'undefined' && Array.isArray(INITIAL_STUDENTS)) ? INITIAL_STUDENTS : []);
+
+        if (masterSource.length > 0) {
+            const merged = this.mergeWithMasterStudents(masterSource, loadedStudents.length > 0 ? loadedStudents : (this._studentsCache || []));
+            this._studentsCache = merged;
+            this.saveStudents(merged, true);
+            return merged;
+        }
+
+        this._studentsCache = loadedStudents;
         return this._studentsCache;
     },
 
@@ -1412,147 +1514,15 @@ const StorageManager = {
 
     ensureStudentsForClass(kelasTarget) {
         if (!kelasTarget) return [];
-        const data = this.getData();
-        if (!data.students) data.students = [];
-
+        const allStudents = this.getStudents();
         const cleanTarget = kelasTarget.trim().toLowerCase().replace(/[\s\-_.]/g, '');
-        let classStudents = data.students.filter(s => {
+        let classStudents = allStudents.filter(s => {
             if (!s.kelas) return false;
             const cleanS = s.kelas.trim().toLowerCase().replace(/[\s\-_.]/g, '');
             return cleanS === cleanTarget || s.kelas.trim().toUpperCase() === kelasTarget.trim().toUpperCase();
         });
         
-        if (classStudents.length > 0) {
-            return classStudents;
-        }
-
-        // 1. Khusus jika kelas X TKP belum ada siswanya, daftarkan 33 siswa resmi
-        if (kelasTarget.toUpperCase() === "X TKP" && typeof OFFICIAL_X_TKP_STUDENTS !== 'undefined') {
-            OFFICIAL_X_TKP_STUDENTS.forEach((nama, idx) => {
-                const no = idx + 1;
-                const paddedNo = String(no).padStart(2, '0');
-                const isPutri = /(putri|safira|rahayu|adelia|afifah|panitis|azzahra|aliefa|aksan|izati|azizah|rafiqi|abidah|asiva|arseti|khoirotunhisan)/i.test(nama);
-                const gender = isPutri ? "P" : "L";
-                const student = {
-                    id: `SIS-XTKP-${paddedNo}`,
-                    no: no,
-                    foto: gender === "P" 
-                        ? "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=300&q=80" 
-                        : "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=300&q=80",
-                    nis: `2601${paddedNo}`,
-                    nisn: `00912345${paddedNo}`,
-                    nama: nama,
-                    gender: gender,
-                    kelas: "X TKP",
-                    jurusan: "Teknik Konstruksi dan Perumahan",
-                    waliKelas: "Hafida Kholifatul Janah, S.Pd",
-                    nomorHp: `0812-3401-20${paddedNo}`,
-                    alamat: `Jl. Magelang - Purworejo KM ${no}, Magelang`,
-                    mapsAlamat: "https://maps.google.com/?q=-7.4705,110.2178",
-                    namaOrtuBapak: `Bapak ${nama.split(' ')[0]}`,
-                    namaOrtuIbu: `Ibu ${nama.split(' ')[0]}`,
-                    noHpBapak: `0813-8899-10${paddedNo}`,
-                    noHpIbu: `0813-7766-20${paddedNo}`,
-                    inputSpmb: `SPMB-2026-REG-${paddedNo}`,
-                    prestasi: [],
-                    pelanggaran: []
-                };
-                data.students.push(student);
-            });
-            this.saveData(data);
-            return data.students.filter(s => s.kelas === "X TKP");
-        }
-
-        // 2. Untuk seluruh kelas lainnya di SMK Negeri 1 Magelang (termasuk XI FL, X DPIB, X TPM, dsb):
-        // Otomatis buatkan daftar presensi 32 siswa resmi agar wali kelas dapat langsung mencatat presensi
-        let waliNama = "Wali Kelas";
-        let jurusan = "Program Keahlian";
-        if (typeof DAFTAR_WALI_KELAS_MASTER !== 'undefined') {
-            const foundWali = DAFTAR_WALI_KELAS_MASTER.find(w => 
-                w.kode.toUpperCase() === kelasTarget.toUpperCase() || 
-                w.label.toUpperCase().includes(kelasTarget.toUpperCase()) ||
-                w.kode.replace(/\s+/g, '').toUpperCase() === cleanTarget.toUpperCase()
-            );
-            if (foundWali) {
-                waliNama = foundWali.nama;
-                jurusan = foundWali.label || foundWali.kode;
-            }
-        }
-
-        const ROSTER_NAMES = [
-            { nama: "Achmad Zulfikar", gender: "L" },
-            { nama: "Adelia Rahmawati", gender: "P" },
-            { nama: "Aditya Pratama Putra", gender: "L" },
-            { nama: "Ageng Nugroho", gender: "L" },
-            { nama: "Ahmad Dani Setiawan", gender: "L" },
-            { nama: "Anisa Nur Aini", gender: "P" },
-            { nama: "Arga Dwi Saputra", gender: "L" },
-            { nama: "Bagas Kurniawan", gender: "L" },
-            { nama: "Cantika Putri Maharani", gender: "P" },
-            { nama: "Danang Tri Wibowo", gender: "L" },
-            { nama: "Dendi Ariyanto", gender: "L" },
-            { nama: "Dinda Ayu Lestari", gender: "P" },
-            { nama: "Fajar Ramadhani", gender: "L" },
-            { nama: "Farhan Maulana", gender: "L" },
-            { nama: "Gilang Ramadhan", gender: "L" },
-            { nama: "Hana Safitri", gender: "P" },
-            { nama: "Hendra Gunawan", gender: "L" },
-            { nama: "Ilham Budi Santoso", gender: "L" },
-            { nama: "Intan Permata Sari", gender: "P" },
-            { nama: "Lukman Hakim", gender: "L" },
-            { nama: "Muhammad Rizky Pratama", gender: "L" },
-            { nama: "Nabila Syaharani Putri", gender: "P" },
-            { nama: "Noval Aditya", gender: "L" },
-            { nama: "Raditya Mahesa", gender: "L" },
-            { nama: "Raka Pratama Wijaya", gender: "L" },
-            { nama: "Rendi Saputra", gender: "L" },
-            { nama: "Rina Sulistiawati", gender: "P" },
-            { nama: "Satria Bagus Panuntun", gender: "L" },
-            { nama: "Siti Aisyah Azzahra", gender: "P" },
-            { nama: "Tegar Prasetyo", gender: "L" },
-            { nama: "Wahyu Hidayat", gender: "L" },
-            { nama: "Zahra Aulia Putri", gender: "P" }
-        ];
-
-        const cleanK = kelasTarget.toUpperCase().replace(/[^A-Z0-9]/g, '');
-        const prefixNis = kelasTarget.toUpperCase().startsWith("X ") ? "260" : (kelasTarget.toUpperCase().startsWith("XI ") ? "250" : "240");
-
-        ROSTER_NAMES.forEach((item, idx) => {
-            const no = idx + 1;
-            const paddedNo = String(no).padStart(2, '0');
-            const student = {
-                id: `SIS-${cleanK}-${paddedNo}`,
-                no: no,
-                foto: item.gender === "P" 
-                    ? "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=300&q=80" 
-                    : "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=300&q=80",
-                nis: `${prefixNis}${paddedNo}`,
-                nisn: `00812345${paddedNo}`,
-                nama: item.nama,
-                gender: item.gender,
-                kelas: kelasTarget,
-                jurusan: jurusan,
-                waliKelas: waliNama,
-                nomorHp: `0812-5501-${paddedNo}`,
-                alamat: `Jl. Magelang - Purworejo KM ${no}, Magelang`,
-                mapsAlamat: "https://maps.google.com/?q=-7.4705,110.2178",
-                namaOrtuBapak: `Bapak ${item.nama.split(' ')[0]}`,
-                namaOrtuIbu: `Ibu ${item.nama.split(' ')[0]}`,
-                noHpBapak: `0813-8899-${paddedNo}`,
-                noHpIbu: `0813-7766-${paddedNo}`,
-                inputSpmb: `SPMB-2026-${cleanK}-${paddedNo}`,
-                prestasi: [],
-                pelanggaran: []
-            };
-            data.students.push(student);
-        });
-
-        this.saveData(data);
-        return data.students.filter(s => {
-            if (!s.kelas) return false;
-            const cleanS = s.kelas.trim().toLowerCase().replace(/[\s\-_.]/g, '');
-            return cleanS === cleanTarget || s.kelas.trim().toUpperCase() === kelasTarget.trim().toUpperCase();
-        });
+        return classStudents;
     },
 
     resetToDefault() {

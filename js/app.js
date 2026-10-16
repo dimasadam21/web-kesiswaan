@@ -24,6 +24,10 @@ const App = {
         this.applyConfigBranding();
         this.renderPublicDashboard();
         this.updateViewBasedOnAuth();
+        this.initQuoteTimer();
+        if (window.InstagramSync && typeof InstagramSync.init === "function") {
+            InstagramSync.init();
+        }
 
         // Pantau status login
         AuthManager.onAuthChange((user) => {
@@ -158,13 +162,21 @@ const App = {
         if (footerName) footerName.textContent = config.schoolName || "SiKesiswaan";
 
         // Terapkan Teks Label Portal Header (Pill)
-        const badgeText = config.headerBadgeText || "🛡️ Portal Kesiswaan & Kedisiplinan";
+        let badgeText = (config.headerBadgeText || "").trim();
+        if (badgeText === "🛡️ Portal Kesiswaan & Kedisiplinan") {
+            badgeText = "";
+            config.headerBadgeText = "";
+            StorageManager.saveConfig(config);
+        }
         if (headerGuestBadge) {
             headerGuestBadge.textContent = badgeText;
         } else if (headerGuestPill) {
             const span = headerGuestPill.querySelector("span");
             if (span) span.textContent = badgeText;
             else headerGuestPill.textContent = badgeText;
+        }
+        if (headerGuestPill) {
+            headerGuestPill.style.display = badgeText ? "flex" : "none";
         }
 
         // 4. Terapkan Skala Ukuran Huruf Header (Judul, Motto, dan Badge)
@@ -219,20 +231,12 @@ const App = {
             else if (config.logoBg === "theme") bgStyle = config.themeColor || "var(--primary)";
             else bgStyle = "#ffffff";
 
-            if (config.schoolLogoUrl) {
-                headerLogo.innerHTML = `<img src="${config.schoolLogoUrl}" alt="Logo Sekolah" style="width: 100%; height: 100%; object-fit: contain; border-radius: inherit; display: block;">`;
-                headerLogo.style.background = bgStyle;
-                headerLogo.style.border = config.logoBg === "transparent" ? "none" : "1px solid var(--border)";
-                headerLogo.style.padding = config.logoBg === "transparent" ? "0" : "3px";
-                headerLogo.style.boxShadow = "0 2px 6px rgba(0, 0, 0, 0.08)";
-            } else {
-                const emojiFontSize = Math.max(18, Math.round(logoSize * 0.52));
-                headerLogo.innerHTML = `<span style="font-size: ${emojiFontSize}px; line-height: 1; display: inline-flex; align-items: center; justify-content: center;">${config.schoolLogo || "🏫"}</span>`;
-                headerLogo.style.background = config.logoBg === "white" ? "#f8fafc" : (config.logoBg === "theme" ? (config.themeColor || "var(--primary)") : "transparent");
-                headerLogo.style.border = config.logoBg === "transparent" ? "none" : "1px solid var(--border)";
-                headerLogo.style.padding = "0";
-                headerLogo.style.boxShadow = "0 2px 6px rgba(0, 0, 0, 0.08)";
-            }
+            const logoImgSrc = (config.schoolLogoUrl && config.schoolLogoUrl.trim() && config.schoolLogoUrl !== "🏫") ? config.schoolLogoUrl : "logo-smk.png";
+            headerLogo.innerHTML = `<img src="${logoImgSrc}" alt="Logo SMK Negeri 1 Magelang" style="width: 100%; height: 100%; object-fit: contain; border-radius: inherit; display: block;">`;
+            headerLogo.style.background = bgStyle;
+            headerLogo.style.border = config.logoBg === "transparent" ? "none" : "1px solid var(--border)";
+            headerLogo.style.padding = config.logoBg === "transparent" ? "0" : "3px";
+            headerLogo.style.boxShadow = "0 2px 6px rgba(0, 0, 0, 0.08)";
         }
 
         // Terapkan Wallpaper Tema Latar Belakang (Penuh Sampai Pojok Layar)
@@ -298,12 +302,41 @@ const App = {
         this.renderDashboardAgendaTerdekat();
         this.renderDashboardSekbid(0);
     },
+    initQuoteTimer() {
+        if (this._quoteIntervalTimer) {
+            clearInterval(this._quoteIntervalTimer);
+            this._quoteIntervalTimer = null;
+        }
+
+        const cfg = StorageManager.getQuoteConfig();
+        const mins = parseInt(cfg.intervalMinutes, 10);
+        if (cfg.mode === "ai" && mins > 0) {
+            this._quoteIntervalTimer = setInterval(() => {
+                this.nextQuote();
+            }, mins * 60 * 1000);
+        }
+    },
+
+    getActiveQuoteList() {
+        const cfg = StorageManager.getQuoteConfig();
+        if (cfg.mode === "ai" && typeof MASTER_AI_QUOTES !== 'undefined' && Array.isArray(MASTER_AI_QUOTES) && MASTER_AI_QUOTES.length > 0) {
+            if (cfg.filterPref === "indo") {
+                const indo = MASTER_AI_QUOTES.filter(q => q.asal && !q.asal.includes("Dunia"));
+                if (indo.length > 0) return indo;
+            } else if (cfg.filterPref === "world") {
+                const world = MASTER_AI_QUOTES.filter(q => q.asal && q.asal.includes("Dunia"));
+                if (world.length > 0) return world;
+            }
+            return MASTER_AI_QUOTES;
+        }
+        return StorageManager.getQuotes();
+    },
 
     displayQuote(specifiedIndex = null) {
-        const quotes = StorageManager.getQuotes();
+        const quotes = this.getActiveQuoteList();
         if (!quotes || quotes.length === 0) return;
 
-        if (specifiedIndex !== null && specifiedIndex >= 0 && specifiedIndex < quotes.length) {
+        if (specifiedIndex !== null) {
             this.quoteIndex = specifiedIndex;
         }
 
@@ -312,13 +345,33 @@ const App = {
         const aElem = document.getElementById("quoteAuthor");
         const bElem = document.getElementById("quoteBadge");
 
-        const item = quotes[this.quoteIndex % quotes.length];
-        if (qElem && aElem) {
-            qElem.textContent = `"${item.quote}"`;
-            aElem.textContent = `— ${item.tokoh}`;
-        }
-        if (bElem) {
-            bElem.textContent = item.kategori || "💡 Kata Mutiara & Motivasi Hari Ini";
+        const item = quotes[(this.quoteIndex || 0) % quotes.length];
+        if (!item) return;
+
+        // Efek transisi halus saat berganti kutipan
+        if (qCard) {
+            qCard.style.transition = "opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)";
+            qCard.style.opacity = "0.75";
+            qCard.style.transform = "scale(0.99)";
+            setTimeout(() => {
+                if (qElem && aElem) {
+                    qElem.textContent = `"${item.quote}"`;
+                    aElem.textContent = `— ${item.tokoh}${item.asal ? ` (${item.asal})` : ''}`;
+                }
+                if (bElem) {
+                    bElem.textContent = item.kategori || "💡 Kata Mutiara & Motivasi Hari Ini";
+                }
+                qCard.style.opacity = "1";
+                qCard.style.transform = "scale(1)";
+            }, 120);
+        } else {
+            if (qElem && aElem) {
+                qElem.textContent = `"${item.quote}"`;
+                aElem.textContent = `— ${item.tokoh}${item.asal ? ` (${item.asal})` : ''}`;
+            }
+            if (bElem) {
+                bElem.textContent = item.kategori || "💡 Kata Mutiara & Motivasi Hari Ini";
+            }
         }
 
         if (qCard) {
@@ -355,8 +408,11 @@ const App = {
     },
 
     nextQuote() {
-        const quotes = StorageManager.getQuotes();
-        this.quoteIndex = (this.quoteIndex + 1) % quotes.length;
+        const quotes = this.getActiveQuoteList();
+        this.quoteIndex = ((this.quoteIndex || 0) + 1) % quotes.length;
+        const cfg = StorageManager.getQuoteConfig();
+        cfg.currentIndex = this.quoteIndex;
+        StorageManager.saveQuoteConfig(cfg);
         this.displayQuote();
     },
 
@@ -874,7 +930,8 @@ const App = {
             if (viewSiswa) viewSiswa.style.display = "none";
             if (viewGuru) viewGuru.style.display = "none";
 
-            if (headerGuest) headerGuest.style.display = "flex";
+            const hasBadge = config.headerBadgeText && config.headerBadgeText.trim() && config.headerBadgeText.trim() !== "🛡️ Portal Kesiswaan & Kedisiplinan";
+            if (headerGuest) headerGuest.style.display = hasBadge ? "flex" : "none";
             if (headerUser) headerUser.style.display = "none";
             if (superAdminToolbar) superAdminToolbar.style.display = "none";
             if (btnTambahSiswa) btnTambahSiswa.style.display = "none";

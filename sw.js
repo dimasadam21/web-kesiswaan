@@ -1,16 +1,19 @@
 // Service Worker untuk Sistem Kesiswaan PWA
-const CACHE_NAME = 'kesiswaan-app-v36';
+const CACHE_NAME = 'kesiswaan-app-v38';
 const STATIC_ASSETS = [
   './',
   './index.html',
   './manifest.json',
+  './logo-smk.png',
   './css/style.css',
   './css/print.css',
   './js/data.js',
+  './js/students-master.js',
   './js/storage.js',
   './js/supabase-client.js',
   './js/auth.js',
   './js/siswa-portal.js',
+  './js/instagram-sync.js',
   './js/admin-portal.js',
   './js/forms.js',
   './js/app.js',

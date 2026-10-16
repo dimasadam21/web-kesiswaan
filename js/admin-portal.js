@@ -636,6 +636,10 @@ const AdminPortal = {
         const container = document.getElementById("adminPrestasiListContainer");
         if (!container) return;
 
+        if (window.InstagramSync && typeof InstagramSync.updateUI === "function") {
+            InstagramSync.updateUI();
+        }
+
         const achievements = StorageManager.getAllAchievements();
         this.updateAdminBadgeCounts();
 
@@ -701,6 +705,10 @@ const AdminPortal = {
     renderAdminKegiatanList() {
         const container = document.getElementById("adminKegiatanListContainer");
         if (!container) return;
+
+        if (window.InstagramSync && typeof InstagramSync.updateUI === "function") {
+            InstagramSync.updateUI();
+        }
 
         const activities = StorageManager.getActivities();
         this.updateAdminBadgeCounts();

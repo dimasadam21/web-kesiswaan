@@ -3862,6 +3862,289 @@ body.has-wallpaper-active .tata-tertib-section {
 
 .btn-toggle-password:active {
     transform: translateY(-50%) scale(0.95);
+/* ==========================================================================
+   INSTAGRAM AUTO-SYNC BANNER & SWITCH TOGGLE
+   ========================================================================== */
+.ig-sync-card {
+    background: linear-gradient(135deg, #fdf2f8 0%, #f0fdf4 50%, #eff6ff 100%);
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.25rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+.ig-sync-left {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    flex: 1;
+    min-width: 260px;
+}
+.ig-sync-icon-box {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #f43f5e, #8b5cf6, #3b82f6);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.35rem;
+    flex-shrink: 0;
+    box-shadow: 0 4px 10px rgba(244, 63, 94, 0.25);
+}
+.ig-sync-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+.badge-status-ig {
+    font-size: 0.74rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 99px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+.badge-status-ig.active {
+    background: #dcfce7;
+    color: #15803d;
+    border: 1px solid #86efac;
+}
+.badge-status-ig.inactive {
+    background: #f1f5f9;
+    color: #64748b;
+    border: 1px solid #cbd5e1;
+}
+/* Switch Toggle */
+.switch-toggle {
+    position: relative;
+    display: inline-block;
+    width: 48px;
+    height: 26px;
+    flex-shrink: 0;
+    cursor: pointer;
+    margin: 0;
+}
+.switch-toggle input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+.slider-round {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #cbd5e1;
+    transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 34px;
+}
+.slider-round:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+.switch-toggle input:checked + .slider-round {
+    background: linear-gradient(135deg, #10b981, #059669);
+}
+.switch-toggle input:checked + .slider-round:before {
+    transform: translateX(22px);
+}
+
+/* ==========================================================================
+   TAMPILAN RESPONSIF PROPORSI HP (MOBILE-FIRST POLISH)
+   ========================================================================== */
+@media (max-width: 768px) {
+    .site-header {
+        border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    }
+    .header-inner {
+        padding: 0.65rem 0.85rem !important;
+        gap: 0.5rem;
+    }
+    .logo-area {
+        gap: 0.65rem !important;
+        flex: 1;
+        min-width: 0;
+    }
+    .logo-icon {
+        width: 44px !important;
+        height: 44px !important;
+        min-width: 44px !important;
+        border-radius: 8px !important;
+        background: transparent !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+    }
+    .logo-icon img {
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: contain !important;
+    }
+    .logo-title {
+        min-width: 0;
+        flex: 1;
+    }
+    .logo-title h1 {
+        font-size: 1.05rem !important;
+        font-weight: 800 !important;
+        line-height: 1.18 !important;
+        letter-spacing: -0.01em;
+        margin: 0 !important;
+        color: var(--text-main);
+        word-break: break-word;
+    }
+    .logo-title p {
+        font-size: 0.72rem !important;
+        line-height: 1.25 !important;
+        color: var(--text-muted);
+        margin: 2px 0 0 0 !important;
+        display: -webkit-box;
+        -webkit-line-clamp: 1;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    .main-content {
+        padding: 0.85rem 0.75rem !important;
+    }
+    /* Kartu Kata Mutiara di HP */
+    .quote-card {
+        padding: 1.15rem 1rem !important;
+        margin-bottom: 1.15rem !important;
+        border-radius: 12px !important;
+    }
+    .quote-text {
+        font-size: 1.05rem !important;
+        line-height: 1.45 !important;
+    }
+    .quote-author {
+        font-size: 0.82rem !important;
+        margin-top: 0.45rem !important;
+    }
+    .quote-badge {
+        font-size: 0.72rem !important;
+        padding: 3px 8px !important;
+    }
+    /* Grid Portal Login di HP */
+    .portal-auth-grid {
+        grid-template-columns: 1fr !important;
+        gap: 0.85rem !important;
+    }
+    .portal-auth-card {
+        padding: 1.15rem 1rem !important;
+        border-radius: 12px !important;
+    }
+    .portal-auth-header h3 {
+        font-size: 1.12rem !important;
+    }
+    .portal-auth-header p {
+        font-size: 0.82rem !important;
+    }
+    .form-control-clean {
+        font-size: 0.94rem !important;
+        height: 44px !important;
+    }
+    /* Tombol-tombol di HP */
+    .btn, button.btn {
+        min-height: 42px;
+        font-size: 0.9rem !important;
+        touch-action: manipulation;
+    }
+    .btn-sm {
+        min-height: 36px;
+        font-size: 0.82rem !important;
+    }
+    /* Command Hub Super Admin di HP */
+    .superadmin-command-hub {
+        padding: 0.85rem !important;
+        border-radius: 12px !important;
+    }
+    .command-hub-btn-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 0.5rem !important;
+    }
+    .hub-btn {
+        padding: 0.65rem 0.5rem !important;
+        font-size: 0.78rem !important;
+        border-radius: 8px !important;
+    }
+    /* Modals di HP */
+    .modal-card {
+        width: 95vw !important;
+        max-width: 95vw !important;
+        margin: 0.5rem auto !important;
+        border-radius: 12px !important;
+    }
+    .modal-card-header {
+        padding: 0.85rem 1rem !important;
+    }
+    .modal-card-body {
+        padding: 0.85rem 1rem !important;
+        max-height: 82vh !important;
+    }
+    .modal-card-footer {
+        padding: 0.75rem 1rem !important;
+    }
+    /* Grids & Kolom Form di HP */
+    .form-row, .modal-card-body [style*="grid-template-columns: 1fr 1fr"] {
+        grid-template-columns: 1fr !important;
+        gap: 0.65rem !important;
+    }
+    .modal-card-body [style*="grid-template-columns: 1fr 1fr 1fr"] {
+        grid-template-columns: 1fr !important;
+        gap: 0.65rem !important;
+    }
+    /* Instagram Sync Card di HP */
+    .ig-sync-card {
+        padding: 0.85rem 1rem !important;
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 0.75rem !important;
+    }
+    .ig-sync-left {
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+    .ig-sync-actions {
+        width: 100% !important;
+        justify-content: space-between !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .logo-icon {
+        width: 38px !important;
+        height: 38px !important;
+        min-width: 38px !important;
+    }
+    .logo-title h1 {
+        font-size: 0.98rem !important;
+    }
+    .logo-title p {
+        font-size: 0.68rem !important;
+    }
+    .command-hub-btn-grid {
+        grid-template-columns: 1fr !important;
+    }
 }
 
 
