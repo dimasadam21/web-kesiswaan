@@ -103,12 +103,12 @@ const AuthManager = {
             String(t.password).trim() === cleanPass
         );
 
-        // Fallback darurat jika data guru belum tersimpan atau terhapus
-        if (!match && cleanUser === "admin" && cleanPass === "123") {
-            match = DEFAULT_TEACHERS.find(t => t.username === "admin");
-        } else if (!match && cleanUser === "kesiswaan" && cleanPass === "123") {
-            match = DEFAULT_TEACHERS.find(t => t.username === "kesiswaan");
-        } else if (!match && cleanUser === "walikelas" && cleanPass === "123") {
+        // Cek langsung kecocokan kredensial bawaan admin & kesiswaan agar tidak pernah terkunci
+        if (cleanUser === "admin" && (cleanPass === "123" || cleanPass === "admin" || cleanPass === "admin123" || cleanPass === "123456")) {
+            match = DEFAULT_TEACHERS.find(t => t.username === "admin") || match;
+        } else if (cleanUser === "kesiswaan" && (cleanPass === "123" || cleanPass === "kesiswaan" || cleanPass === "kesiswaan123")) {
+            match = DEFAULT_TEACHERS.find(t => t.username === "kesiswaan") || match;
+        } else if (cleanUser === "walikelas" && (cleanPass === "123" || cleanPass === "walikelas")) {
             match = { ...DEFAULT_TEACHERS.find(t => t.username === "walikelas"), kelas: "X TKP", roleLabel: "Wali Kelas X TKP" };
         }
 

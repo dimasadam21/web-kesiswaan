@@ -12,24 +12,16 @@ const App = {
     currentSuggestMatches: [],
 
     init() {
-        StorageManager.init();
+        try { StorageManager.init(); } catch (e) { console.error("StorageManager init error", e); }
         if (window.SupabaseClient && typeof SupabaseClient.init === "function") {
-            SupabaseClient.init();
+            try { SupabaseClient.init(); } catch (e) { console.error("SupabaseClient init error", e); }
         }
-        AuthManager.init();
-        SiswaPortal.init();
-        AdminPortal.init();
-        Forms.init();
+        try { AuthManager.init(); } catch (e) { console.error("AuthManager init error", e); }
+        try { SiswaPortal.init(); } catch (e) { console.error("SiswaPortal init error", e); }
+        try { AdminPortal.init(); } catch (e) { console.error("AdminPortal init error", e); }
+        try { Forms.init(); } catch (e) { console.error("Forms init error", e); }
 
-        this.applyConfigBranding();
-        this.renderPublicDashboard();
-        this.updateViewBasedOnAuth();
-        this.initQuoteTimer();
-        if (window.InstagramSync && typeof InstagramSync.init === "function") {
-            InstagramSync.init();
-        }
-
-        // Pantau status login
+        // Pantau status login lebih awal agar selalu terdaftar
         AuthManager.onAuthChange((user) => {
             this.updateViewBasedOnAuth();
             if (user) {
@@ -44,6 +36,14 @@ const App = {
                 this.showToast("Anda telah keluar dari sistem.");
             }
         });
+
+        try { this.applyConfigBranding(); } catch (e) { console.error("applyConfigBranding error", e); }
+        try { this.renderPublicDashboard(); } catch (e) { console.error("renderPublicDashboard error", e); }
+        try { this.updateViewBasedOnAuth(); } catch (e) { console.error("updateViewBasedOnAuth error", e); }
+        try { this.initQuoteTimer(); } catch (e) { console.error("initQuoteTimer error", e); }
+        if (window.InstagramSync && typeof InstagramSync.init === "function") {
+            try { InstagramSync.init(); } catch (e) { console.error("InstagramSync init error", e); }
+        }
 
         // Developer / Testing Hook: otomatis login jika ada query param
         try {
@@ -911,6 +911,9 @@ const App = {
     // 4. Alur Tampilan Berdasarkan Status Login
     updateViewBasedOnAuth() {
         const user = AuthManager.getCurrentUser();
+        const config = (window.StorageManager && typeof StorageManager.getConfig === "function") 
+            ? (StorageManager.getConfig() || {}) 
+            : {};
         const viewPublic = document.getElementById("viewDashboardPublic");
         const viewSiswa = document.getElementById("viewPortalSiswa");
         const viewGuru = document.getElementById("viewPortalGuru");
@@ -930,7 +933,7 @@ const App = {
             if (viewSiswa) viewSiswa.style.display = "none";
             if (viewGuru) viewGuru.style.display = "none";
 
-            const hasBadge = config.headerBadgeText && config.headerBadgeText.trim() && config.headerBadgeText.trim() !== "🛡️ Portal Kesiswaan & Kedisiplinan";
+            const hasBadge = config && config.headerBadgeText && config.headerBadgeText.trim() && config.headerBadgeText.trim() !== "🛡️ Portal Kesiswaan & Kedisiplinan";
             if (headerGuest) headerGuest.style.display = hasBadge ? "flex" : "none";
             if (headerUser) headerUser.style.display = "none";
             if (superAdminToolbar) superAdminToolbar.style.display = "none";
@@ -1207,6 +1210,7 @@ const App = {
         const p = document.getElementById("loginTeacherPassword").value;
         try {
             AuthManager.loginAsTeacher(u, p);
+            this.updateViewBasedOnAuth();
         } catch (err) {
             this.showToast(err.message);
         }
@@ -1219,6 +1223,7 @@ const App = {
         if (pInput) pInput.value = password;
         try {
             AuthManager.loginAsTeacher(username, password);
+            this.updateViewBasedOnAuth();
         } catch (err) {
             this.showToast(err.message);
         }
