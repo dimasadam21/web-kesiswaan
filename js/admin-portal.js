@@ -1276,6 +1276,15 @@ const AdminPortal = {
         const dayOfWeek = this.getDayOfWeek(this.currentAttendanceDate);
         const isNoRambut = (dayOfWeek === 3 || dayOfWeek === 5);
 
+        const template = StorageManager.getSuratTemplate();
+        const config = StorageManager.getConfig();
+        const wakaNama = config.headOfStudentAffairs || template.pejabatNama || 'Morlan Purba Sibarani, S.Pd., M.Si.';
+        const wakaJabatan = template.pejabatJabatan || 'Waka Kesiswaan SMKN 1 Magelang';
+        let wakaNip = config.headOfStudentAffairsNip || template.pejabatNip || 'NIP. 19740315 200501 1 004';
+        if (wakaNip && !wakaNip.toUpperCase().startsWith('NIP')) {
+            wakaNip = `NIP. ${wakaNip}`;
+        }
+
         const printContainer = document.getElementById("printRaporContainer");
         if (!printContainer) return;
 
@@ -1326,14 +1335,14 @@ const AdminPortal = {
                 </table>
 
                 <div style="margin-top: 2rem; display: flex; justify-content: space-between; page-break-inside: avoid;">
-                    <div style="text-align: center; width: 220px;">
+                    <div style="text-align: center; width: 250px;">
                         <br>
-                        Waka Kesiswaan SMKN 1 Magelang
+                        ${wakaJabatan}
                         <br><br><br><br>
-                        <strong>Morlan Purba Sibarani, S.Pd., M.Si.</strong><br>
-                        NIP. 19740315 200501 1 004
+                        <strong>${wakaNama}</strong><br>
+                        ${wakaNip}
                     </div>
-                    <div style="text-align: center; width: 220px;">
+                    <div style="text-align: center; width: 250px;">
                         Magelang, ${this.currentAttendanceDate}<br>
                         Wali Kelas ${this.currentAttendanceClass}
                         <br><br><br><br>

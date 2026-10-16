@@ -167,6 +167,14 @@ const SiswaPortal = {
         }
         if (!namaWaliKelas) namaWaliKelas = student.waliKelas || "-";
 
+        // Data Pejabat Tertinggi Pengesahan: Wakasek Kesiswaan (Tersinkron dengan Super Admin)
+        const wakaNama = config.headOfStudentAffairs || template.pejabatNama || 'Morlan Purba Sibarani, S.Pd., M.Si.';
+        const wakaJabatan = template.pejabatJabatan || 'Wakasek Bidang Kesiswaan';
+        let wakaNip = config.headOfStudentAffairsNip || template.pejabatNip || 'NIP. 19740315 200501 1 004';
+        if (wakaNip && !wakaNip.toUpperCase().startsWith('NIP')) {
+            wakaNip = `NIP. ${wakaNip}`;
+        }
+
         return `
             <!-- KOP SURAT RESMI STANDAR (PERSIS KOP SP) -->
             ${StorageManager.getOfficialKopHtml()}
@@ -307,38 +315,39 @@ const SiswaPortal = {
                 </p>
             </div>
 
-            <!-- TANDA TANGAN RESMI 4 PIHAK -->
+            <!-- TANDA TANGAN RESMI PENGESAHAN (TERTINGGI: WAKA KESISWAAN) -->
             <table style="width: 100%; border-collapse: collapse; margin-top: 30px; font-size: 10pt; text-align: center; page-break-inside: avoid;">
                 <tr>
-                    <td style="width: 50%; padding-bottom: 60px;">
+                    <td style="width: 50%; vertical-align: top; padding-bottom: 50px;">
                         Orang Tua / Wali Siswa,
-                    </td>
-                    <td style="width: 50%; padding-bottom: 60px;">
-                        Wali Kelas,
-                    </td>
-                </tr>
-                <tr>
-                    <td>
+                        <div style="height: 50px;"></div>
                         <strong style="text-decoration: underline;">( ${student.namaOrtuBapak || student.namaOrtuIbu || '....................................................'} )</strong>
                     </td>
-                    <td>
-                        <strong style="text-decoration: underline;">${student.waliKelas}</strong>
+                    <td style="width: 50%; vertical-align: top; padding-bottom: 50px;">
+                        Magelang, ${tanggalCetak}<br>
+                        Wali Kelas <strong>${student.kelas}</strong>,
+                        <div style="height: 50px;"></div>
+                        <strong style="text-decoration: underline;">${namaWaliKelas}</strong><br>
+                        <span style="font-size: 9pt; color: #444;">NIP. -</span>
                     </td>
                 </tr>
                 <tr>
-                    <td style="padding-top: 30px; padding-bottom: 60px;">
-                        Wakasek Bidang Kesiswaan,
-                    </td>
-                    <td style="padding-top: 30px; padding-bottom: 60px;">
-                        Mengetahui,<br>Kepala Sekolah
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <strong style="text-decoration: underline;">${config.headOfStudentAffairs || 'Dra. Hj. Siti Rahma'}</strong>
-                    </td>
-                    <td>
-                        <strong style="text-decoration: underline;">${config.headmaster || 'Dr. H. Muhammad Ilyas, M.Pd'}</strong>
+                    <td colspan="2" style="padding-top: 15px; text-align: center; vertical-align: top;">
+                        <p style="margin: 0 0 4px 0; font-size: 10pt; font-weight: 600;">
+                            Mengetahui,<br>
+                            <span>${wakaJabatan}</span>
+                        </p>
+                        <div style="height: 65px; display: flex; align-items: center; justify-content: center; margin: 4px 0;">
+                            ${template.ttdImageUrl ? `
+                                <img src="${template.ttdImageUrl}" alt="Tanda Tangan" style="max-height: 60px; max-width: 170px; object-fit: contain;">
+                            ` : `
+                                <div style="height: 50px;"></div>
+                            `}
+                        </div>
+                        <p style="margin: 0; font-weight: bold; text-decoration: underline; font-size: 10.5pt;">
+                            ${wakaNama}
+                        </p>
+                        <span style="font-size: 9.5pt; color: #222;">${wakaNip}</span>
                     </td>
                 </tr>
             </table>

@@ -24,6 +24,7 @@ const DEFAULT_CONFIG = {
     academicYear: "2026/2027",
     headmaster: "Drs. H. Sri Waluyo, M.M.",
     headOfStudentAffairs: "Morlan Purba Sibarani, S.Pd., M.Si.",
+    headOfStudentAffairsNip: "NIP. 19740315 200501 1 004",
     bkCoordinator: "Bambang Wijaya, S.Pd, M.Kons"
 };
 

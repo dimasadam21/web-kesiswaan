@@ -2089,6 +2089,12 @@ const Forms = {
         if (headmasterInput) headmasterInput.value = config.headmaster || "";
         if (headOfStudentInput) headOfStudentInput.value = config.headOfStudentAffairs || "";
 
+        const headOfStudentNipInput = document.getElementById("setHeadOfStudentNip");
+        const suratTemplate = StorageManager.getSuratTemplate();
+        if (headOfStudentNipInput) {
+            headOfStudentNipInput.value = config.headOfStudentAffairsNip || suratTemplate.pejabatNip || "NIP. 19740315 200501 1 004";
+        }
+
         // 2. Data Ukuran & Bentuk Logo
         const logoSizeInput = document.getElementById("setSchoolLogoSize");
         if (logoSizeInput) logoSizeInput.value = config.logoSize || 46;
@@ -2227,10 +2233,20 @@ const Forms = {
             wallpaperEffect: document.getElementById("setWallpaperEffect") ? document.getElementById("setWallpaperEffect").value : "light",
             schoolAddress: (document.getElementById("setSchoolAddress")?.value.trim()) || "",
             headmaster: (document.getElementById("setHeadmaster")?.value.trim()) || "",
-            headOfStudentAffairs: (document.getElementById("setHeadOfStudent")?.value.trim()) || ""
+            headOfStudentAffairs: (document.getElementById("setHeadOfStudent")?.value.trim()) || "",
+            headOfStudentAffairsNip: (document.getElementById("setHeadOfStudentNip")?.value.trim()) || "NIP. 19740315 200501 1 004"
         };
 
         StorageManager.updateConfig(newConfig);
+
+        // Sinkronisasi otomatis ke Surat Template agar NIP & Nama Waka selalu seragam
+        if (newConfig.headOfStudentAffairs || newConfig.headOfStudentAffairsNip) {
+            StorageManager.updateSuratTemplate({
+                pejabatNama: newConfig.headOfStudentAffairs || undefined,
+                pejabatNip: newConfig.headOfStudentAffairsNip || undefined
+            });
+        }
+
         App.applyConfigBranding();
         this.closeAllModals();
         App.showToast("🎉 Pengaturan tulisan, font, logo & tema berhasil disimpan!");
@@ -4095,6 +4111,13 @@ const Forms = {
         };
 
         StorageManager.updateSuratTemplate(updated);
+
+        // Sinkronisasi otomatis ke konfigurasi profil sekolah
+        StorageManager.updateConfig({
+            headOfStudentAffairs: updated.pejabatNama,
+            headOfStudentAffairsNip: updated.pejabatNip
+        });
+
         App.showToast("Format Surat Panggilan SP 1 s/d SP 4 dan Kop/TTD berhasil disimpan!");
     },
 
