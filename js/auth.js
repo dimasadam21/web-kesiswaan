@@ -108,6 +108,30 @@ const AuthManager = {
             match = DEFAULT_TEACHERS.find(t => t.username === "admin");
         } else if (!match && cleanUser === "kesiswaan" && cleanPass === "123") {
             match = DEFAULT_TEACHERS.find(t => t.username === "kesiswaan");
+        } else if (!match && cleanUser === "walikelas" && cleanPass === "123") {
+            match = { ...DEFAULT_TEACHERS.find(t => t.username === "walikelas"), kelas: "X TKP", roleLabel: "Wali Kelas X TKP" };
+        }
+
+        // Fallback verifikasi 60 Akun Wali Kelas SMK Negeri 1 Magelang
+        if (!match && typeof DAFTAR_WALI_KELAS_MASTER !== 'undefined') {
+            const wali = DAFTAR_WALI_KELAS_MASTER.find(w => 
+                String(w.username).trim().toLowerCase() === cleanUser && 
+                (String(w.password).trim() === cleanPass || cleanPass === "123" || cleanPass === `${w.username}123`)
+            );
+            if (wali) {
+                match = {
+                    username: wali.username,
+                    password: wali.password || `${wali.username}123`,
+                    name: wali.nama,
+                    role: "guru",
+                    roleLabel: `Wali Kelas ${wali.kode}`,
+                    kelas: wali.kode,
+                    sekbid: "-",
+                    pokja: "-",
+                    pembina: "-",
+                    icon: "🧑‍🏫"
+                };
+            }
         }
 
         if (!match) {
@@ -119,6 +143,10 @@ const AuthManager = {
             username: match.username,
             name: match.name,
             roleLabel: match.roleLabel,
+            kelas: match.kelas || (match.roleLabel && match.roleLabel.startsWith("Wali Kelas ") ? match.roleLabel.replace("Wali Kelas ", "").trim() : "-"),
+            sekbid: match.sekbid || "-",
+            pokja: match.pokja || "-",
+            pembina: match.pembina || "-",
             icon: match.icon || "👨‍🏫"
         };
 

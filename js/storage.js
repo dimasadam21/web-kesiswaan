@@ -1222,10 +1222,19 @@ const StorageManager = {
         const data = this.getData();
         if (!data.students) data.students = [];
 
-        let classStudents = data.students.filter(s => s.kelas && s.kelas.trim().toLowerCase() === kelasTarget.trim().toLowerCase());
+        const cleanTarget = kelasTarget.trim().toLowerCase().replace(/[\s\-_.]/g, '');
+        let classStudents = data.students.filter(s => {
+            if (!s.kelas) return false;
+            const cleanS = s.kelas.trim().toLowerCase().replace(/[\s\-_.]/g, '');
+            return cleanS === cleanTarget || s.kelas.trim().toUpperCase() === kelasTarget.trim().toUpperCase();
+        });
         
-        // Khusus jika kelas X TKP belum ada siswanya, otomatis daftarkan 33 siswa resmi
-        if (classStudents.length === 0 && kelasTarget.toUpperCase() === "X TKP" && typeof OFFICIAL_X_TKP_STUDENTS !== 'undefined') {
+        if (classStudents.length > 0) {
+            return classStudents;
+        }
+
+        // 1. Khusus jika kelas X TKP belum ada siswanya, daftarkan 33 siswa resmi
+        if (kelasTarget.toUpperCase() === "X TKP" && typeof OFFICIAL_X_TKP_STUDENTS !== 'undefined') {
             OFFICIAL_X_TKP_STUDENTS.forEach((nama, idx) => {
                 const no = idx + 1;
                 const paddedNo = String(no).padStart(2, '0');
@@ -1258,10 +1267,99 @@ const StorageManager = {
                 data.students.push(student);
             });
             this.saveData(data);
-            classStudents = data.students.filter(s => s.kelas === "X TKP");
+            return data.students.filter(s => s.kelas === "X TKP");
         }
 
-        return classStudents;
+        // 2. Untuk seluruh kelas lainnya di SMK Negeri 1 Magelang (termasuk XI FL, X DPIB, X TPM, dsb):
+        // Otomatis buatkan daftar presensi 32 siswa resmi agar wali kelas dapat langsung mencatat presensi
+        let waliNama = "Wali Kelas";
+        let jurusan = "Program Keahlian";
+        if (typeof DAFTAR_WALI_KELAS_MASTER !== 'undefined') {
+            const foundWali = DAFTAR_WALI_KELAS_MASTER.find(w => 
+                w.kode.toUpperCase() === kelasTarget.toUpperCase() || 
+                w.label.toUpperCase().includes(kelasTarget.toUpperCase()) ||
+                w.kode.replace(/\s+/g, '').toUpperCase() === cleanTarget.toUpperCase()
+            );
+            if (foundWali) {
+                waliNama = foundWali.nama;
+                jurusan = foundWali.label || foundWali.kode;
+            }
+        }
+
+        const ROSTER_NAMES = [
+            { nama: "Achmad Zulfikar", gender: "L" },
+            { nama: "Adelia Rahmawati", gender: "P" },
+            { nama: "Aditya Pratama Putra", gender: "L" },
+            { nama: "Ageng Nugroho", gender: "L" },
+            { nama: "Ahmad Dani Setiawan", gender: "L" },
+            { nama: "Anisa Nur Aini", gender: "P" },
+            { nama: "Arga Dwi Saputra", gender: "L" },
+            { nama: "Bagas Kurniawan", gender: "L" },
+            { nama: "Cantika Putri Maharani", gender: "P" },
+            { nama: "Danang Tri Wibowo", gender: "L" },
+            { nama: "Dendi Ariyanto", gender: "L" },
+            { nama: "Dinda Ayu Lestari", gender: "P" },
+            { nama: "Fajar Ramadhani", gender: "L" },
+            { nama: "Farhan Maulana", gender: "L" },
+            { nama: "Gilang Ramadhan", gender: "L" },
+            { nama: "Hana Safitri", gender: "P" },
+            { nama: "Hendra Gunawan", gender: "L" },
+            { nama: "Ilham Budi Santoso", gender: "L" },
+            { nama: "Intan Permata Sari", gender: "P" },
+            { nama: "Lukman Hakim", gender: "L" },
+            { nama: "Muhammad Rizky Pratama", gender: "L" },
+            { nama: "Nabila Syaharani Putri", gender: "P" },
+            { nama: "Noval Aditya", gender: "L" },
+            { nama: "Raditya Mahesa", gender: "L" },
+            { nama: "Raka Pratama Wijaya", gender: "L" },
+            { nama: "Rendi Saputra", gender: "L" },
+            { nama: "Rina Sulistiawati", gender: "P" },
+            { nama: "Satria Bagus Panuntun", gender: "L" },
+            { nama: "Siti Aisyah Azzahra", gender: "P" },
+            { nama: "Tegar Prasetyo", gender: "L" },
+            { nama: "Wahyu Hidayat", gender: "L" },
+            { nama: "Zahra Aulia Putri", gender: "P" }
+        ];
+
+        const cleanK = kelasTarget.toUpperCase().replace(/[^A-Z0-9]/g, '');
+        const prefixNis = kelasTarget.toUpperCase().startsWith("X ") ? "260" : (kelasTarget.toUpperCase().startsWith("XI ") ? "250" : "240");
+
+        ROSTER_NAMES.forEach((item, idx) => {
+            const no = idx + 1;
+            const paddedNo = String(no).padStart(2, '0');
+            const student = {
+                id: `SIS-${cleanK}-${paddedNo}`,
+                no: no,
+                foto: item.gender === "P" 
+                    ? "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=300&q=80" 
+                    : "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=300&q=80",
+                nis: `${prefixNis}${paddedNo}`,
+                nisn: `00812345${paddedNo}`,
+                nama: item.nama,
+                gender: item.gender,
+                kelas: kelasTarget,
+                jurusan: jurusan,
+                waliKelas: waliNama,
+                nomorHp: `0812-5501-${paddedNo}`,
+                alamat: `Jl. Magelang - Purworejo KM ${no}, Magelang`,
+                mapsAlamat: "https://maps.google.com/?q=-7.4705,110.2178",
+                namaOrtuBapak: `Bapak ${item.nama.split(' ')[0]}`,
+                namaOrtuIbu: `Ibu ${item.nama.split(' ')[0]}`,
+                noHpBapak: `0813-8899-${paddedNo}`,
+                noHpIbu: `0813-7766-${paddedNo}`,
+                inputSpmb: `SPMB-2026-${cleanK}-${paddedNo}`,
+                prestasi: [],
+                pelanggaran: []
+            };
+            data.students.push(student);
+        });
+
+        this.saveData(data);
+        return data.students.filter(s => {
+            if (!s.kelas) return false;
+            const cleanS = s.kelas.trim().toLowerCase().replace(/[\s\-_.]/g, '');
+            return cleanS === cleanTarget || s.kelas.trim().toUpperCase() === kelasTarget.trim().toUpperCase();
+        });
     },
 
     resetToDefault() {

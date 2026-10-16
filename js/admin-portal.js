@@ -785,31 +785,43 @@ const AdminPortal = {
 
     populateAttendanceClassOptions() {
         const select = document.getElementById("attFilterKelas");
-        if (!select) return;
+        const selectWrap = document.getElementById("attFilterKelasWrap");
+        const waliIndicator = document.getElementById("attWaliKelasIndicator");
+        const waliBadgeText = document.getElementById("attWaliKelasBadgeText");
 
-        // Kumpulan semua kelas dari DAFTAR_WALI_KELAS_MASTER atau default
+        const currentUser = AuthManager.getCurrentUser();
+        const isSuperAdmin = AuthManager.isSuperAdmin();
+        const hasAssignedClass = currentUser && currentUser.kelas && currentUser.kelas !== "-";
+        const isWaliKelas = !isSuperAdmin && hasAssignedClass;
+
+        if (isWaliKelas) {
+            // Otomatiskan ke kelas wali kelas yang diampu dan hilangkan dropdown pilihan kelas
+            this.currentAttendanceClass = currentUser.kelas;
+            if (selectWrap) selectWrap.style.display = "none";
+            if (waliIndicator) {
+                waliIndicator.style.display = "flex";
+                if (waliBadgeText) waliBadgeText.textContent = currentUser.kelas;
+            }
+            return;
+        }
+
+        // Tampilkan dropdown kelas untuk Super Admin & Guru Kesiswaan umum
+        if (selectWrap) selectWrap.style.display = "flex";
+        if (waliIndicator) waliIndicator.style.display = "none";
+
+        if (!select) return;
+        select.disabled = false;
+
         const classes = (typeof DAFTAR_WALI_KELAS_MASTER !== 'undefined')
             ? DAFTAR_WALI_KELAS_MASTER.map(w => w.kode)
             : ["X TKP", "X DPIB", "XI BA", "XII BA"];
 
         const uniqueClasses = Array.from(new Set(classes));
-        const currentUser = AuthManager.getCurrentUser();
-        const isSuperAdmin = AuthManager.isSuperAdmin();
 
         select.innerHTML = uniqueClasses.map(cls => {
             const selected = cls === this.currentAttendanceClass ? 'selected' : '';
             return `<option value="${cls}" ${selected}>${cls}</option>`;
         }).join('');
-
-        // Jika Wali Kelas dan bukan Super Admin, kunci ke kelas miliknya
-        const wrap = document.getElementById("attFilterKelasWrap");
-        if (wrap) {
-            if (!isSuperAdmin && currentUser && currentUser.kelas && currentUser.kelas !== "-") {
-                select.disabled = true;
-            } else {
-                select.disabled = false;
-            }
-        }
     },
 
     handleAttendanceDateChange(val) {
@@ -828,12 +840,24 @@ const AdminPortal = {
         const tbody = document.getElementById("attTableBody");
         if (!tbody) return;
 
+        const currentUser = AuthManager.getCurrentUser();
+        const isSuperAdmin = AuthManager.isSuperAdmin();
+        const hasAssignedClass = currentUser && currentUser.kelas && currentUser.kelas !== "-";
+        const isWaliKelas = !isSuperAdmin && hasAssignedClass;
+
+        // Otomatiskan ke kelas yang diampu wali kelas
+        if (isWaliKelas) {
+            this.currentAttendanceClass = currentUser.kelas;
+        } else if (!this.currentAttendanceClass) {
+            this.currentAttendanceClass = hasAssignedClass ? currentUser.kelas : "X TKP";
+        }
+
+        // Tampilkan / sembunyikan kontrol kelas sesuai hak akses
+        this.populateAttendanceClassOptions();
+
         // Otomatiskan tanggal presensi sesuai hari lokal saat ini jika belum ditentukan
         if (!this.currentAttendanceDate) {
             this.currentAttendanceDate = this.getTodayDate();
-        }
-        if (!this.currentAttendanceClass) {
-            this.currentAttendanceClass = "X TKP";
         }
 
         const dateInput = document.getElementById("attFilterTanggal");
@@ -875,7 +899,12 @@ const AdminPortal = {
         StorageManager.ensureStudentsForClass(this.currentAttendanceClass);
 
         const allStudents = StorageManager.getStudents();
-        const students = allStudents.filter(s => s.kelas && s.kelas.trim().toUpperCase() === this.currentAttendanceClass.trim().toUpperCase());
+        const cleanCurrent = this.currentAttendanceClass.trim().toLowerCase().replace(/[\s\-_.]/g, '');
+        const students = allStudents.filter(s => {
+            if (!s.kelas) return false;
+            const cleanS = s.kelas.trim().toLowerCase().replace(/[\s\-_.]/g, '');
+            return cleanS === cleanCurrent || s.kelas.trim().toUpperCase() === this.currentAttendanceClass.trim().toUpperCase();
+        });
 
         // Urutkan berdasarkan no absen / nama
         students.sort((a, b) => {
@@ -1182,7 +1211,12 @@ const AdminPortal = {
 
     exportAttendanceToExcel() {
         const allStudents = StorageManager.getStudents();
-        const students = allStudents.filter(s => s.kelas && s.kelas.trim().toUpperCase() === this.currentAttendanceClass.trim().toUpperCase());
+        const cleanCurrent = this.currentAttendanceClass.trim().toLowerCase().replace(/[\s\-_.]/g, '');
+        const students = allStudents.filter(s => {
+            if (!s.kelas) return false;
+            const cleanS = s.kelas.trim().toLowerCase().replace(/[\s\-_.]/g, '');
+            return cleanS === cleanCurrent || s.kelas.trim().toUpperCase() === this.currentAttendanceClass.trim().toUpperCase();
+        });
         students.sort((a, b) => (a.no || 0) - (b.no || 0));
 
         const attData = StorageManager.getClassAttendance(this.currentAttendanceClass, this.currentAttendanceDate);
@@ -1228,7 +1262,12 @@ const AdminPortal = {
 
     printAttendanceSheet() {
         const allStudents = StorageManager.getStudents();
-        const students = allStudents.filter(s => s.kelas && s.kelas.trim().toUpperCase() === this.currentAttendanceClass.trim().toUpperCase());
+        const cleanCurrent = this.currentAttendanceClass.trim().toLowerCase().replace(/[\s\-_.]/g, '');
+        const students = allStudents.filter(s => {
+            if (!s.kelas) return false;
+            const cleanS = s.kelas.trim().toLowerCase().replace(/[\s\-_.]/g, '');
+            return cleanS === cleanCurrent || s.kelas.trim().toUpperCase() === this.currentAttendanceClass.trim().toUpperCase();
+        });
         students.sort((a, b) => (a.no || 0) - (b.no || 0));
 
         const attData = StorageManager.getClassAttendance(this.currentAttendanceClass, this.currentAttendanceDate);
