@@ -156,7 +156,8 @@ const SiswaPortal = {
         const template = StorageManager.getSuratTemplate();
 
         const tanggalCetak = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
-        const nomorRapor = `421.5 / ${Math.floor(100 + Math.random() * 900)} / RAPOR-KRK / ${new Date().getFullYear()}`;
+        const nomorRapor = StorageManager.getFormattedRaporNumber(new Date());
+        const tahunAjaran = config.academicYear || "2026/2027";
 
         return `
             <!-- KOP SURAT RESMI STANDAR (PERSIS KOP SP) -->
@@ -164,11 +165,15 @@ const SiswaPortal = {
 
             <!-- JUDUL DOKUMEN RAPOR -->
             <div style="text-align: center; margin-bottom: 20px;">
-                <h2 style="font-size: 14pt; font-weight: bold; text-decoration: underline; margin: 0; text-transform: uppercase;">
-                    RAPOR CAPAIAN KARAKTER, PRESTASI & CATATAN KEDISIPLINAN SISWA
+                <h2 style="font-size: 13.5pt; font-weight: 800; text-decoration: underline; margin: 0; text-transform: uppercase; line-height: 1.35; letter-spacing: 0.5px; color: #000;">
+                    RAPOR CAPAIAN KARAKTER, PRESTASI &amp; CATATAN KEDISIPLINAN<br>
+                    SISWA SMKN 1 MAGELANG
                 </h2>
-                <div style="font-size: 10pt; margin-top: 4px; color: #333;">
-                    Nomor: ${nomorRapor} • Tahun Ajaran: 2025/2026 • Tanggal Terbit: ${tanggalCetak}
+                <div style="font-size: 11pt; font-weight: 700; margin-top: 5px; text-transform: uppercase; color: #000; letter-spacing: 0.5px;">
+                    TAHUN AJARAN ${tahunAjaran}
+                </div>
+                <div style="font-size: 10pt; margin-top: 5px; color: #222; font-weight: 600;">
+                    No. ${nomorRapor} &bull; Tanggal Terbit: ${tanggalCetak}
                 </div>
             </div>
 

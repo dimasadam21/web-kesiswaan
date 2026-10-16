@@ -21,7 +21,7 @@ const DEFAULT_CONFIG = {
     themeColor: "#2563eb", // Biru Royal Default
     schoolFont: "'Plus Jakarta Sans', sans-serif",
     wallpaperEffect: "light",
-    academicYear: "2025/2026",
+    academicYear: "2026/2027",
     headmaster: "Drs. H. Sri Waluyo, M.M.",
     headOfStudentAffairs: "Morlan Purba Sibarani, S.Pd., M.Si.",
     bkCoordinator: "Bambang Wijaya, S.Pd, M.Kons"

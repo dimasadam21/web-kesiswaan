@@ -727,7 +727,7 @@ const App = {
                     <h5 style="margin: 0; font-size: 0.95rem; font-weight: 700; color: var(--text-main);">
                         📋 Agenda & Program Kerja Unggulan (${cur.programKerja.length} Program):
                     </h5>
-                    <span style="font-size: 0.775rem; color: var(--text-muted);">Tahun Ajaran 2025/2026</span>
+                    <span style="font-size: 0.775rem; color: var(--text-muted);">Tahun Ajaran ${StorageManager.getConfig().academicYear || '2026/2027'}</span>
                 </div>
 
                 <div class="program-card-grid">

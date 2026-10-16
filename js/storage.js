@@ -507,6 +507,58 @@ const StorageManager = {
         `;
     },
 
+    // REGISTRY NOMOR SURAT RAPOR KARAKTER HARIAN (1 NOMOR PER HARI CETAK, GANTI HARI GANTI NOMOR)
+    getRaporDailyNumber(date = new Date()) {
+        const year = date.getFullYear();
+        const y = String(year);
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const d = String(date.getDate()).padStart(2, '0');
+        const dateKey = `${y}-${m}-${d}`;
+
+        const STORAGE_KEY = "kesiswaan_rapor_number_registry";
+        let registry = {};
+        try {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (raw) registry = JSON.parse(raw);
+        } catch (e) {
+            console.error("Gagal membaca registry nomor rapor:", e);
+        }
+
+        if (!registry[y] || typeof registry[y] !== "object") {
+            registry[y] = {
+                dates: {},
+                maxNumber: 0
+            };
+        }
+
+        if (registry[y].dates && registry[y].dates[dateKey]) {
+            return registry[y].dates[dateKey];
+        }
+
+        const nextNum = (registry[y].maxNumber || 0) + 1;
+        if (!registry[y].dates) registry[y].dates = {};
+        registry[y].dates[dateKey] = nextNum;
+        registry[y].maxNumber = nextNum;
+
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(registry));
+        } catch (e) {
+            console.error("Gagal menyimpan registry nomor rapor:", e);
+        }
+
+        return nextNum;
+    },
+
+    getFormattedRaporNumber(date = new Date()) {
+        const num = this.getRaporDailyNumber(date);
+        const paddedNum = String(num).padStart(3, '0');
+        const ROMAN_MONTHS = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"];
+        const romanMonth = ROMAN_MONTHS[date.getMonth()] || "I";
+        const year = date.getFullYear();
+
+        return `421.7 / ${paddedNum} / ${romanMonth} / RAPOR-KRK / ${year}`;
+    },
+
     // CEK APAKAH SISWA SUDAH MENCAPAI BATAS KADAR SP UNTUK SURAT PANGGILAN ORTU (>= 31 Poin)
     isStudentEligibleForSummons(student) {
         if (!student) return false;
