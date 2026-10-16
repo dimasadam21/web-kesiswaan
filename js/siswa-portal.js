@@ -159,6 +159,14 @@ const SiswaPortal = {
         const nomorRapor = StorageManager.getFormattedRaporNumber(new Date());
         const tahunAjaran = config.academicYear || "2026/2027";
 
+        // Dapatkan nama wali kelas otomatis jika belum ada di data siswa
+        let namaWaliKelas = student.waliKelas && student.waliKelas !== "-" ? student.waliKelas : "";
+        if (!namaWaliKelas && typeof DAFTAR_WALI_KELAS_MASTER !== 'undefined') {
+            const foundWali = DAFTAR_WALI_KELAS_MASTER.find(w => w.kode === student.kelas || (w.label && w.label.includes(student.kelas)));
+            if (foundWali) namaWaliKelas = foundWali.nama;
+        }
+        if (!namaWaliKelas) namaWaliKelas = student.waliKelas || "-";
+
         return `
             <!-- KOP SURAT RESMI STANDAR (PERSIS KOP SP) -->
             ${StorageManager.getOfficialKopHtml()}
@@ -202,9 +210,9 @@ const SiswaPortal = {
                     <td style="padding: 5px 8px; font-weight: 600;">No. HP Siswa</td>
                     <td>:</td>
                     <td style="padding: 5px 8px;">${student.nomorHp || '-'}</td>
-                    <td style="padding: 5px 8px; font-weight: 600;">Jalur / SPMB</td>
+                    <td style="padding: 5px 8px; font-weight: 600;">Wali Kelas</td>
                     <td>:</td>
-                    <td style="padding: 5px 8px;">${student.inputSpmb || '-'}</td>
+                    <td style="padding: 5px 8px;"><strong>${namaWaliKelas}</strong></td>
                 </tr>
                 <tr>
                     <td style="padding: 5px 8px; font-weight: 600;">Orang Tua (Ayah)</td>
@@ -218,11 +226,6 @@ const SiswaPortal = {
                     <td style="padding: 5px 8px; font-weight: 600;">Alamat Lengkap</td>
                     <td>:</td>
                     <td style="padding: 5px 8px;" colspan="4">${student.alamat || '-'}</td>
-                </tr>
-                <tr>
-                    <td style="padding: 5px 8px; font-weight: 600;">Wali Kelas</td>
-                    <td>:</td>
-                    <td style="padding: 5px 8px;" colspan="4">${student.waliKelas || '-'}</td>
                 </tr>
                 <tr style="background: #f1f5f9; border-top: 1px solid #cbd5e1;">
                     <td style="padding: 6px 8px; font-weight: 600;">Akumulasi Pelanggaran</td>
