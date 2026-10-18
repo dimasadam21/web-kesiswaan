@@ -4679,6 +4679,14 @@ const Forms = {
     openEditAttendanceScheduleModal() {
         const schedule = StorageManager.getAttendanceSchedule();
 
+        // 0. Pengaturan Cek List Rambut
+        const attSettings = StorageManager.getAttendanceSettings();
+        const elRambutMode = document.getElementById("schedRambutMode");
+        if (elRambutMode) {
+            elRambutMode.value = attSettings.rambutMode || "first_monday";
+        }
+        this.updateRambutModePreview();
+
         // Senin
         const act1 = schedule[1] || { nama: "Presensi Upacara", kode: "SENIN UPACARA", aktif: true };
         const elActive1 = document.getElementById("schedActive1");
@@ -4709,9 +4717,89 @@ const Forms = {
         this.openModal("modalEditAttendanceSchedule");
     },
 
+    updateRambutModePreview() {
+        const elMode = document.getElementById("schedRambutMode");
+        const pill = document.getElementById("schedRambutStatusPill");
+        const help = document.getElementById("schedRambutModeHelp");
+        const mode = elMode ? elMode.value : "first_monday";
+
+        if (pill) {
+            if (mode === "first_monday") {
+                pill.className = "status-pill pill-green";
+                pill.textContent = "Default: Senin Minggu Ke-1";
+            } else if (mode === "always") {
+                pill.className = "status-pill pill-blue";
+                pill.textContent = "Selalu Aktif";
+            } else {
+                pill.className = "status-pill pill-red";
+                pill.textContent = "Nonaktif";
+            }
+        }
+
+        if (help) {
+            if (mode === "first_monday") {
+                help.textContent = "Sesuai ketentuan, kolom cek list rambut hanya akan keluar otomatis ketika hari Senin minggu pertama di setiap bulan.";
+            } else if (mode === "always") {
+                help.textContent = "Kolom cek list rambut akan selalu dimunculkan pada setiap blangko presensi harian siswa.";
+            } else {
+                help.textContent = "Kolom cek list rambut disembunyikan sepenuhnya dari blangko presensi harian siswa.";
+            }
+        }
+
+        // Preview status tanggal terpilih saat ini
+        const curDate = (window.AdminPortal && AdminPortal.currentAttendanceDate) ? AdminPortal.currentAttendanceDate : StorageManager.getTodayDate ? StorageManager.getTodayDate() : "";
+        const dateLabel = document.getElementById("schedRambutDateLabel");
+        const dateDesc = document.getElementById("schedRambutDateDesc");
+        if (curDate && dateLabel && dateDesc) {
+            const isActiveToday = StorageManager.isRambutChecklistActive(curDate);
+            const isFirstMon = StorageManager.isFirstMondayOfMonth(curDate);
+            const settings = StorageManager.getAttendanceSettings();
+            const hasOverride = settings.rambutOverrides && typeof settings.rambutOverrides[curDate] === "boolean";
+
+            dateLabel.innerHTML = `Tanggal Presensi Dibuka: <strong>${curDate}</strong> &nbsp;<span style="color: ${isActiveToday ? '#16a34a' : '#dc2626'}; font-weight: 700;">(${isActiveToday ? 'Aktif' : 'Nonaktif'})</span>`;
+            if (hasOverride) {
+                dateDesc.innerHTML = `<span style="color: #0284c7; font-weight: 600;">⚡ Override Super Admin aktif:</span> Tanggal ini dipaksa <strong>${isActiveToday ? 'Aktif' : 'Nonaktif'}</strong>.`;
+            } else {
+                dateDesc.innerHTML = `Mengikuti aturan mode <em>${mode === 'first_monday' ? 'Senin Minggu Pertama' : (mode === 'always' ? 'Selalu Aktif' : 'Nonaktif')}</em> (${isFirstMon ? 'Hari ini adalah Senin ke-1' : 'Bukan Senin ke-1'}).`;
+            }
+        }
+    },
+
+    setRambutOverrideForCurrentDate(isActive) {
+        const curDate = (window.AdminPortal && AdminPortal.currentAttendanceDate) ? AdminPortal.currentAttendanceDate : "";
+        if (!curDate) {
+            App.showToast("Tanggal presensi belum ditentukan.");
+            return;
+        }
+
+        StorageManager.setRambutOverrideForDate(curDate, isActive);
+        this.updateRambutModePreview();
+
+        if (window.AdminPortal) {
+            AdminPortal.renderClassAttendance();
+            AdminPortal.updateRambutToggleButton();
+        }
+
+        if (isActive === true) {
+            App.showToast(`Cek list rambut berhasil DITAMBAHKAN untuk tanggal ${curDate}`);
+        } else if (isActive === false) {
+            App.showToast(`Cek list rambut berhasil DINONAKTIFKAN untuk tanggal ${curDate}`);
+        } else {
+            App.showToast(`Cek list rambut dikembalikan ke aturan default untuk tanggal ${curDate}`);
+        }
+    },
+
     handleSaveAttendanceSchedule(e) {
         e.preventDefault();
         const schedule = StorageManager.getAttendanceSchedule();
+
+        // 0. Simpan Mode Cek List Rambut
+        const elRambutMode = document.getElementById("schedRambutMode");
+        if (elRambutMode) {
+            StorageManager.saveAttendanceSettings({
+                rambutMode: elRambutMode.value
+            });
+        }
 
         // Senin
         schedule[1] = {
@@ -4742,9 +4830,10 @@ const Forms = {
 
         if (window.AdminPortal) {
             AdminPortal.renderClassAttendance();
+            AdminPortal.updateRambutToggleButton();
         }
 
-        App.showToast("Jadwal kegiatan presensi kesiswaan berhasil diperbarui!");
+        App.showToast("Pengaturan jadwal presensi & cek list rambut berhasil disimpan!");
     }
 };
 

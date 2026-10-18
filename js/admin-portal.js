@@ -108,6 +108,12 @@ const AdminPortal = {
             btnEditJadwal.style.display = isSuperAdmin ? "inline-flex" : "none";
         }
 
+        const btnToggleRambut = document.getElementById("btnToggleRambutSuperAdmin");
+        if (btnToggleRambut) {
+            btnToggleRambut.style.display = (isSuperAdmin || isAdminKesiswaan) ? "inline-flex" : "none";
+            this.updateRambutToggleButton();
+        }
+
         // Tampilkan siswa pertama sebagai contoh awal di tab siswa
         const students = StorageManager.getStudents();
         if (students.length > 0) {
@@ -951,7 +957,9 @@ const AdminPortal = {
         }
 
         const dayOfWeek = this.getDayOfWeek(this.currentAttendanceDate);
-        const isNoRambut = (dayOfWeek === 3 || dayOfWeek === 5); // Khusus Rabu (3) dan Jumat (5) tidak ada instrumen rambut
+        const isRambutActive = StorageManager.isRambutChecklistActive(this.currentAttendanceDate);
+        const isNoRambut = !isRambutActive; // Default hanya keluar pada Senin Minggu Pertama atau jika diatur aktif oleh Super Admin
+        this.updateRambutToggleButton();
 
         const bannerText = this.getHariKegiatanText(this.currentAttendanceDate);
         const headerBanner = document.getElementById("attHeaderBannerText");
@@ -1289,6 +1297,55 @@ const AdminPortal = {
         App.showToast(`Seluruh siswa kelas ${this.currentAttendanceClass} berhasil ditandai Hadir!`);
     },
 
+    updateRambutToggleButton() {
+        const btn = document.getElementById("btnToggleRambutSuperAdmin");
+        if (!btn) return;
+
+        const isSuperAdmin = AuthManager.isSuperAdmin();
+        const isAdminKesiswaan = AuthManager.isAdminKesiswaan();
+        if (!isSuperAdmin && !isAdminKesiswaan) {
+            btn.style.display = "none";
+            return;
+        }
+
+        btn.style.display = "inline-flex";
+        const date = this.currentAttendanceDate || this.getTodayDate();
+        const isActive = StorageManager.isRambutChecklistActive(date);
+        const isFirstMonday = StorageManager.isFirstMondayOfMonth(date);
+        const settings = StorageManager.getAttendanceSettings();
+        const isOverridden = settings.rambutOverrides && typeof settings.rambutOverrides[date] === "boolean";
+
+        if (isActive) {
+            btn.style.background = "#f0fdf4";
+            btn.style.borderColor = "#86efac";
+            btn.style.color = "#15803d";
+            btn.innerHTML = `💇 Cek Rambut: <strong>Aktif</strong>${isOverridden ? ' ⚡' : (isFirstMonday ? ' (Senin Ke-1)' : '')}`;
+            btn.title = `Cek list rambut AKTIF untuk tanggal ${date}. Klik untuk menonaktifkan.`;
+        } else {
+            btn.style.background = "#ffffff";
+            btn.style.borderColor = "#cbd5e1";
+            btn.style.color = "#64748b";
+            btn.innerHTML = `💇 Cek Rambut: <strong>Nonaktif</strong>${isOverridden ? ' ⚡' : ''}`;
+            btn.title = `Cek list rambut NONAKTIF untuk tanggal ${date} (Hanya aktif otomatis pada Senin Minggu Pertama). Klik untuk mengaktifkan.`;
+        }
+    },
+
+    quickToggleRambutSuperAdmin() {
+        if (!AuthManager.isSuperAdmin() && !AuthManager.isAdminKesiswaan()) {
+            App.showToast("Hanya Super Admin yang dapat mengubah instrumen cek list rambut.");
+            return;
+        }
+        const date = this.currentAttendanceDate || this.getTodayDate();
+        const isCurrentlyActive = StorageManager.isRambutChecklistActive(date);
+        const newActive = !isCurrentlyActive;
+        StorageManager.setRambutOverrideForDate(date, newActive);
+        this.renderClassAttendance();
+        this.updateRambutToggleButton();
+        App.showToast(newActive 
+            ? `💇 Cek List Rambut berhasil DITAMBAHKAN (Aktif) untuk tanggal ${date}` 
+            : `💇 Cek List Rambut berhasil DIHAPUS (Nonaktif) untuk tanggal ${date}`);
+    },
+
     exportAttendanceToExcel() {
         const allStudents = StorageManager.getStudents();
         const cleanCurrent = this.currentAttendanceClass.trim().toLowerCase().replace(/[\s\-_.]/g, '');
@@ -1303,7 +1360,7 @@ const AdminPortal = {
         const records = (attData && attData.records) ? attData.records : {};
         const bannerText = this.getHariKegiatanText(this.currentAttendanceDate);
         const dayOfWeek = this.getDayOfWeek(this.currentAttendanceDate);
-        const isNoRambut = (dayOfWeek === 3 || dayOfWeek === 5);
+        const isNoRambut = !StorageManager.isRambutChecklistActive(this.currentAttendanceDate);
 
         const exportData = students.map((s, idx) => {
             const rec = records[s.id] || { status: 'alpha', rambut: false, atribut: false, makeup: false, seragam: false };
@@ -1354,7 +1411,7 @@ const AdminPortal = {
         const records = (attData && attData.records) ? attData.records : {};
         const bannerText = this.getHariKegiatanText(this.currentAttendanceDate);
         const dayOfWeek = this.getDayOfWeek(this.currentAttendanceDate);
-        const isNoRambut = (dayOfWeek === 3 || dayOfWeek === 5);
+        const isNoRambut = !StorageManager.isRambutChecklistActive(this.currentAttendanceDate);
 
         const template = StorageManager.getSuratTemplate();
         const config = StorageManager.getConfig();

@@ -1451,6 +1451,78 @@ const StorageManager = {
         return schedule;
     },
 
+    getAttendanceSettings() {
+        const data = this.getData();
+        const defaultSettings = {
+            rambutMode: "first_monday", // "first_monday" (default: hanya Senin minggu ke-1), "always", "disabled"
+            rambutOverrides: {} // override per-tanggal khusus: { "YYYY-MM-DD": true/false }
+        };
+        if (!data.attendanceSettings || typeof data.attendanceSettings !== "object") {
+            data.attendanceSettings = defaultSettings;
+            this.saveData(data);
+        }
+        return {
+            ...defaultSettings,
+            ...data.attendanceSettings
+        };
+    },
+
+    saveAttendanceSettings(settings) {
+        const data = this.getData();
+        data.attendanceSettings = {
+            ...this.getAttendanceSettings(),
+            ...settings
+        };
+        this.saveData(data);
+        return data.attendanceSettings;
+    },
+
+    isFirstMondayOfMonth(dateStr) {
+        if (!dateStr) return false;
+        const parts = String(dateStr).split('-');
+        let dt, d;
+        if (parts.length === 3) {
+            const y = parseInt(parts[0], 10);
+            const m = parseInt(parts[1], 10) - 1;
+            d = parseInt(parts[2], 10);
+            dt = new Date(y, m, d);
+        } else {
+            dt = new Date(dateStr + "T00:00:00");
+            d = dt.getDate();
+        }
+        return dt.getDay() === 1 && d >= 1 && d <= 7;
+    },
+
+    isRambutChecklistActive(dateStr) {
+        if (!dateStr) return false;
+        const settings = this.getAttendanceSettings();
+
+        // 1. Cek override khusus per tanggal jika ditentukan Super Admin
+        if (settings.rambutOverrides && typeof settings.rambutOverrides[dateStr] === "boolean") {
+            return settings.rambutOverrides[dateStr];
+        }
+
+        // 2. Cek mode umum
+        const mode = settings.rambutMode || "first_monday";
+        if (mode === "always") return true;
+        if (mode === "disabled") return false;
+
+        // 3. Default: Hanya hari Senin minggu pertama
+        return this.isFirstMondayOfMonth(dateStr);
+    },
+
+    setRambutOverrideForDate(dateStr, isActive) {
+        if (!dateStr) return null;
+        const settings = this.getAttendanceSettings();
+        if (!settings.rambutOverrides) settings.rambutOverrides = {};
+        if (isActive === null || isActive === undefined) {
+            delete settings.rambutOverrides[dateStr];
+        } else {
+            settings.rambutOverrides[dateStr] = !!isActive;
+        }
+        return this.saveAttendanceSettings(settings);
+    },
+
     getClassAttendance(kelas, tanggal) {
         const data = this.getData();
         if (!data.classAttendances) data.classAttendances = {};
