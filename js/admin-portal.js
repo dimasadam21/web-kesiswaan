@@ -976,6 +976,7 @@ const AdminPortal = {
     handleAttendanceDateChange(val) {
         if (!val) return;
         this.currentAttendanceDate = val;
+        this._attendanceDirty = false;
         this.updateAttendanceDayDisplay(val);
         this.renderClassAttendance();
     },
@@ -983,6 +984,7 @@ const AdminPortal = {
     handleAttendanceClassChange(val) {
         if (!val) return;
         this.currentAttendanceClass = val;
+        this._attendanceDirty = false;
         this.renderClassAttendance();
     },
 
@@ -1143,6 +1145,15 @@ const AdminPortal = {
         if (stats) {
             stats.innerHTML = `Rekap: <strong>${students.length} Siswa</strong> • Hadir: <span style="color: #16a34a; font-weight:800;">${countHadir}</span> • Izin: <span style="color: #d97706; font-weight:800;">${countIzin}</span> • Sakit: <span style="color: #2563eb; font-weight:800;">${countSakit}</span> • Alpha: <span style="color: #dc2626; font-weight:800;">${countAlpha}</span>`;
         }
+
+        // Perbarui status tombol simpan (Merah jika belum disimpan / ada perubahan, Hijau jika sudah tersimpan)
+        if (this._attendanceDirty) {
+            this.updateSaveButtonUI('unsaved', attData ? (attData.savedAt || attData.updatedAt) : null);
+        } else if (attData && attData.isSaved) {
+            this.updateSaveButtonUI('saved', attData.savedAt || attData.updatedAt);
+        } else {
+            this.updateSaveButtonUI('unsaved', attData ? (attData.savedAt || attData.updatedAt) : null);
+        }
     },
 
     toggleStudentAttendance(studentId) {
@@ -1194,6 +1205,8 @@ const AdminPortal = {
             }
         }
 
+        this._attendanceDirty = true;
+        attData.isSaved = false;
         attData.records[studentId] = currentRec;
         StorageManager.saveClassAttendance(this.currentAttendanceClass, this.currentAttendanceDate, attData);
         this.renderClassAttendance();
@@ -1244,6 +1257,8 @@ const AdminPortal = {
             }
         }
 
+        this._attendanceDirty = true;
+        attData.isSaved = false;
         attData.records[studentId] = currentRec;
         StorageManager.saveClassAttendance(this.currentAttendanceClass, this.currentAttendanceDate, attData);
         this.renderClassAttendance();
@@ -1312,6 +1327,8 @@ const AdminPortal = {
             }
         }
 
+        this._attendanceDirty = true;
+        attData.isSaved = false;
         attData.records[studentId] = currentRec;
         StorageManager.saveClassAttendance(this.currentAttendanceClass, this.currentAttendanceDate, attData);
         this.renderClassAttendance();
@@ -1346,9 +1363,172 @@ const AdminPortal = {
             }
         });
 
+        this._attendanceDirty = true;
+        attData.isSaved = false;
         StorageManager.saveClassAttendance(this.currentAttendanceClass, this.currentAttendanceDate, attData);
         this.renderClassAttendance();
-        App.showToast(`Seluruh siswa kelas ${this.currentAttendanceClass} berhasil ditandai Hadir!`);
+        App.showToast(`Seluruh siswa kelas ${this.currentAttendanceClass} berhasil ditandai Hadir! Klik tombol SIMPAN untuk menyimpan data.`);
+    },
+
+    // SIMPAN RESMI PRESENSI KELAS (DENGAN FEEDBACK TOMBOL MERAH -> HIJAU)
+    saveCurrentAttendance() {
+        const attData = StorageManager.getClassAttendance(this.currentAttendanceClass, this.currentAttendanceDate) || {
+            records: {},
+            kegiatan: this.getHariKegiatanText(this.currentAttendanceDate)
+        };
+        if (!attData.records) attData.records = {};
+
+        const students = StorageManager.ensureStudentsForClass(this.currentAttendanceClass);
+        students.forEach(s => {
+            if (!attData.records[s.id]) {
+                attData.records[s.id] = {
+                    status: 'alpha',
+                    rambut: false,
+                    atribut: false,
+                    makeup: false,
+                    seragam: false,
+                    violations: {}
+                };
+            }
+        });
+
+        const nowIso = new Date().toISOString();
+        attData.isSaved = true;
+        attData.savedAt = nowIso;
+        attData.updatedAt = nowIso;
+        attData.kegiatan = this.getHariKegiatanText(this.currentAttendanceDate);
+
+        StorageManager.saveClassAttendance(this.currentAttendanceClass, this.currentAttendanceDate, attData);
+        this._attendanceDirty = false;
+        this.attendanceSaveState = 'saved';
+        this.attendanceSavedAt = nowIso;
+
+        // Perbarui tampilan tombol jadi HIJAU
+        this.updateSaveButtonUI('saved', nowIso);
+
+        // Mainkan audio chime konfirmasi
+        this.playSaveSound();
+
+        // Haptic feedback untuk perangkat sentuh
+        if (typeof navigator !== 'undefined' && navigator.vibrate) {
+            try { navigator.vibrate(40); } catch(e) {}
+        }
+
+        App.showToast(`✅ Data presensi kelas ${this.currentAttendanceClass} tanggal ${this.currentAttendanceDate} berhasil disimpan!`);
+    },
+
+    updateSaveButtonUI(state, isoTimestamp) {
+        const btnLarge = document.getElementById("btnSaveAttendanceLarge");
+        const iconWrap = document.getElementById("attSaveLargeIcon");
+        const titleEl = document.getElementById("attSaveLargeTitle");
+        const subEl = document.getElementById("attSaveLargeSub");
+        const statusBadge = document.getElementById("attSaveStatusBadge");
+        const statusText = document.getElementById("attSaveStatusText");
+        const timestampText = document.getElementById("attSaveTimestampText");
+
+        const btnHeader = document.getElementById("btnSaveAttendanceHeader");
+        const headerIcon = document.getElementById("attSaveHeaderIcon");
+        const headerTitle = document.getElementById("attSaveHeaderTitle");
+
+        const timeStr = this.formatSavedTimestamp(isoTimestamp);
+
+        if (state === 'saved') {
+            this.attendanceSaveState = 'saved';
+
+            if (btnLarge) {
+                btnLarge.className = "att-save-btn att-save-btn-saved att-save-pop";
+                setTimeout(() => {
+                    if (btnLarge) btnLarge.classList.remove('att-save-pop');
+                }, 400);
+            }
+            if (iconWrap) {
+                iconWrap.innerHTML = `
+                    <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                `;
+            }
+            if (titleEl) titleEl.textContent = "PRESENSI BERHASIL DISIMPAN";
+            if (subEl) subEl.textContent = `Tersimpan aman pada ${timeStr} • Siap diekspor atau dicetak`;
+
+            if (statusBadge) {
+                statusBadge.className = "att-save-status-badge badge-saved";
+            }
+            if (statusText) statusText.textContent = "Data Tersimpan & Tersinkron";
+            if (timestampText) timestampText.innerHTML = `Terakhir disimpan: <strong>${timeStr}</strong>`;
+
+            if (btnHeader) {
+                btnHeader.className = "btn-save-header att-header-saved";
+            }
+            if (headerIcon) headerIcon.textContent = "✅";
+            if (headerTitle) headerTitle.textContent = "Tersimpan";
+        } else {
+            this.attendanceSaveState = 'unsaved';
+
+            if (btnLarge) {
+                btnLarge.className = "att-save-btn att-save-btn-unsaved";
+            }
+            if (iconWrap) {
+                iconWrap.innerHTML = `
+                    <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                        <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                        <polyline points="7 3 7 8 15 8"></polyline>
+                    </svg>
+                `;
+            }
+            if (titleEl) titleEl.textContent = "SIMPAN PRESENSI KELAS";
+            if (subEl) subEl.textContent = "Klik setelah selesai mengisi untuk menyimpan data presensi";
+
+            if (statusBadge) {
+                statusBadge.className = "att-save-status-badge badge-unsaved";
+            }
+            if (statusText) statusText.textContent = "Ada perubahan belum disimpan";
+            if (timestampText) {
+                timestampText.innerHTML = (isoTimestamp && isoTimestamp !== "null")
+                    ? `Terakhir disimpan: <strong>${timeStr}</strong> (ada perubahan)`
+                    : `Terakhir disimpan: <em>Belum disimpan</em>`;
+            }
+
+            if (btnHeader) {
+                btnHeader.className = "btn-save-header att-header-unsaved";
+            }
+            if (headerIcon) headerIcon.textContent = "💾";
+            if (headerTitle) headerTitle.textContent = "Simpan Presensi";
+        }
+    },
+
+    formatSavedTimestamp(isoStr) {
+        if (!isoStr || isoStr === "null") return "Belum disimpan";
+        try {
+            const d = new Date(isoStr);
+            if (isNaN(d.getTime())) return "Belum disimpan";
+            const h = String(d.getHours()).padStart(2, '0');
+            const m = String(d.getMinutes()).padStart(2, '0');
+            const s = String(d.getSeconds()).padStart(2, '0');
+            return `${h}:${m}:${s} WIB`;
+        } catch (e) {
+            return "Tersimpan";
+        }
+    },
+
+    playSaveSound() {
+        try {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (!AudioCtx) return;
+            const ctx = new AudioCtx();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = "sine";
+            osc.frequency.setValueAtTime(523.25, ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(659.25, ctx.currentTime + 0.12);
+            gain.gain.setValueAtTime(0.12, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start();
+            osc.stop(ctx.currentTime + 0.35);
+        } catch (e) {}
     },
 
     updateRambutToggleButton() {
@@ -1872,6 +2052,7 @@ const AdminPortal = {
     openAttendanceDateFromHistory(dateStr) {
         if (!dateStr) return;
         this.currentAttendanceDate = dateStr;
+        this._attendanceDirty = false;
         const dateInput = document.getElementById("attFilterTanggal");
         if (dateInput) dateInput.value = dateStr;
         this.switchAdminTab('presensi');

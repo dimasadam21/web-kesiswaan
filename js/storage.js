@@ -1575,12 +1575,15 @@ const StorageManager = {
         const data = this.getData();
         if (!data.classAttendances) data.classAttendances = {};
         const key = `${kelas}_${tanggal}`;
+        const prev = data.classAttendances[key] || {};
         data.classAttendances[key] = {
             kelas,
             tanggal,
-            kegiatan: payload.kegiatan || "Presensi",
-            updatedAt: new Date().toISOString(),
-            records: payload.records || {}
+            kegiatan: payload.kegiatan || prev.kegiatan || "Presensi",
+            updatedAt: payload.updatedAt || new Date().toISOString(),
+            savedAt: payload.savedAt !== undefined ? payload.savedAt : (payload.isSaved ? new Date().toISOString() : (prev.savedAt || null)),
+            isSaved: payload.isSaved !== undefined ? !!payload.isSaved : (prev.isSaved || false),
+            records: payload.records || prev.records || {}
         };
         this.saveData(data);
         return data.classAttendances[key];

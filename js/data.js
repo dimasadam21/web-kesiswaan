@@ -437,6 +437,17 @@ const DEFAULT_TEACHERS = [
         icon: "👨‍💼"
     },
     {
+        username: "ridwan",
+        password: "123",
+        name: "Ust. M. Ridwan, M.Ag",
+        role: "guru",
+        roleLabel: "Pembina Sekbid 1",
+        sekbid: "Sekbid 1: Keimanan & Ketaqwaan",
+        pembina: "ROHIS",
+        pokja: "Pokja Pembinaan Keimanan & Ketaqwaan",
+        icon: "🕌"
+    },
+    {
         username: "gurubk",
         password: "123",
         name: "Bambang Wijaya, S.Pd, M.Kons",
@@ -448,6 +459,72 @@ const DEFAULT_TEACHERS = [
         icon: "👨‍🏫"
     },
     {
+        username: "suryono",
+        password: "123",
+        name: "Drs. H. Suryono",
+        role: "guru",
+        roleLabel: "Pembina Sekbid 3",
+        sekbid: "Sekbid 3: Kepribadian Unggul & Wawasan Kebangsaan",
+        pembina: "Paskibra, STUPA",
+        pokja: "Pokja Wawasan Kebangsaan & Bela Negara",
+        icon: "🇮🇩"
+    },
+    {
+        username: "dewilestari",
+        password: "123",
+        name: "Dewi Lestari, M.Pd",
+        role: "guru",
+        roleLabel: "Pembina Sekbid 4",
+        sekbid: "Sekbid 4: Prestasi Akademik, Seni & Olahraga",
+        pembina: "OSN, Seni & Olahraga",
+        pokja: "Pokja Prestasi Akademik, Seni & Olahraga",
+        icon: "🏆"
+    },
+    {
+        username: "rinakusuma",
+        password: "123",
+        name: "Rina Kusuma, S.E",
+        role: "guru",
+        roleLabel: "Pembina Sekbid 5",
+        sekbid: "Sekbid 5: Demokrasi, HAM & Lingkungan Hidup",
+        pembina: "Green School, Adiwiyata",
+        pokja: "Pokja Demokrasi, HAM & Lingkungan Hidup",
+        icon: "🌱"
+    },
+    {
+        username: "farhan",
+        password: "123",
+        name: "Farhan Hakim, S.Pd",
+        role: "guru",
+        roleLabel: "Pembina Sekbid 6",
+        sekbid: "Sekbid 6: Kreativitas & Kewirausahaan",
+        pembina: "Koperasi Siswa",
+        pokja: "Pokja Kewirausahaan & Kreativitas Siswa",
+        icon: "💡"
+    },
+    {
+        username: "hendrawijaya",
+        password: "123",
+        name: "Hendra Wijaya, S.Pd",
+        role: "guru",
+        roleLabel: "Pembina Sekbid 7",
+        sekbid: "Sekbid 7: Kualitas Jasmani & Kesehatan",
+        pembina: "PMR, Olahraga",
+        pokja: "Pokja Kesehatan Jasmani & Gizi Remaja",
+        icon: "🍎"
+    },
+    {
+        username: "sitimaryam",
+        password: "123",
+        name: "Siti Maryam, S.Pd",
+        role: "guru",
+        roleLabel: "Pembina Sekbid 8",
+        sekbid: "Sekbid 8: Sastra, Bahasa & Budaya",
+        pembina: "Mading, Sastra",
+        pokja: "Pokja Sastra, Bahasa & Budaya",
+        icon: "🎭"
+    },
+    {
         username: "walikelas",
         password: "123",
         name: "Budi Santoso, S.Kom",
@@ -456,7 +533,18 @@ const DEFAULT_TEACHERS = [
         sekbid: "Sekbid 9: Teknologi Informasi & Komunikasi (TIK)",
         pembina: "Robotika, Redicator",
         pokja: "Pokja Prestasi & Pengembangan Bakat Lomba",
-        icon: "🧑‍🏫"
+        icon: "💻"
+    },
+    {
+        username: "lindapermata",
+        password: "123",
+        name: "Linda Permatasari, M.Hum",
+        role: "guru",
+        roleLabel: "Pembina Sekbid 10",
+        sekbid: "Sekbid 10: Komunikasi Bahasa Asing",
+        pembina: "English Club, Nihongo Club",
+        pokja: "Pokja Komunikasi Bahasa Asing",
+        icon: "🌐"
     }
 ];
 
@@ -836,7 +924,7 @@ const DEFAULT_SEKBID_PROGRAMS = [
         namaSingkat: "Budi Pekerti & Karakter",
         ikon: "🤝",
         warna: "#2563eb",
-        pembina: "Bambang Wijaya, S.Pd, M.Kons (BK)",
+        pembina: "Bambang Wijaya, S.Pd, M.Kons",
         ketuaSiswa: "Muhammad Rayhan (OSIS)",
         visi: "Membangun kultur sekolah yang beradab, berkarakter 5S, santun, dan bebas dari perundungan (anti-bullying).",
         programKerja: [
@@ -873,7 +961,7 @@ const DEFAULT_SEKBID_PROGRAMS = [
         namaSingkat: "Wawasan Kebangsaan & Bela Negara",
         ikon: "🇮🇩",
         warna: "#dc2626",
-        pembina: "Drs. H. Suryono (Paskibra)",
+        pembina: "Drs. H. Suryono",
         ketuaSiswa: "Reza Aditya Pratama",
         visi: "Menumbuhkan jiwa patriotisme, kedisiplinan tinggi, cinta tanah air, dan loyalitas terhadap NKRI.",
         programKerja: [
@@ -910,7 +998,7 @@ const DEFAULT_SEKBID_PROGRAMS = [
         namaSingkat: "Prestasi, Seni & Olahraga",
         ikon: "🏆",
         warna: "#ea580c",
-        pembina: "Dewi Lestari, M.Pd & Dra. Hj. Siti Rahma",
+        pembina: "Dewi Lestari, M.Pd",
         ketuaSiswa: "Nabila Aurelia Putri",
         visi: "Mengoptimalkan potensi bakat minat siswa hingga meraih prestasi juara di tingkat daerah, nasional, dan internasional.",
         programKerja: [
@@ -1013,7 +1101,7 @@ const DEFAULT_SEKBID_PROGRAMS = [
         namaSingkat: "Jasmani, Kesehatan & Gizi",
         ikon: "🍎",
         warna: "#0284c7",
-        pembina: "Hendra Wijaya, S.Pd (PMR & Olahraga)",
+        pembina: "Hendra Wijaya, S.Pd",
         ketuaSiswa: "Alya Sabrina",
         visi: "Mewujudkan siswa yang sehat fisik, bugar, memiliki ketahanan tubuh prima, dan mengerti pola hidup higienis.",
         programKerja: [

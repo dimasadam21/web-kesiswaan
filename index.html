@@ -563,6 +563,10 @@
                             <button class="btn btn-outline" style="font-size: 0.8rem; padding: 0.4rem 0.75rem; background: #ecfdf5; color: #059669; border-color: #a7f3d0;" onclick="AdminPortal.markAllStudentsPresent()" title="Tandai Semua Siswa Hadir">
                                 ✅ Semua Hadir
                             </button>
+                            <button id="btnSaveAttendanceHeader" class="btn-save-header att-header-unsaved" onclick="AdminPortal.saveCurrentAttendance()" title="Simpan Data Presensi Kelas">
+                                <span id="attSaveHeaderIcon">💾</span>
+                                <span id="attSaveHeaderTitle">Simpan Presensi</span>
+                            </button>
                             <button class="btn btn-outline" style="font-size: 0.8rem; padding: 0.4rem 0.75rem;" onclick="AdminPortal.exportAttendanceToExcel()" title="Ekspor Blangko Presensi ke Excel">
                                 📊 Ekspor Excel
                             </button>
@@ -608,6 +612,36 @@
                                 <!-- Diisi via JavaScript renderClassAttendance() -->
                             </tbody>
                         </table>
+                    </div>
+
+                    <!-- ACTION BAR / FITUR SIMPAN SETELAH SELESAI MENGISI PRESENSI -->
+                    <div id="attSaveActionContainer" class="att-save-container">
+                        <div class="att-save-card">
+                            <div class="att-save-left">
+                                <button id="btnSaveAttendanceLarge" class="att-save-btn att-save-btn-unsaved" onclick="AdminPortal.saveCurrentAttendance()" type="button" title="Simpan data presensi dan kedisiplinan kelas">
+                                    <span class="att-save-btn-icon-wrapper" id="attSaveLargeIcon">
+                                        <svg class="att-save-svg" width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                                            <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                                            <polyline points="7 3 7 8 15 8"></polyline>
+                                        </svg>
+                                    </span>
+                                    <div class="att-save-btn-text-wrapper">
+                                        <span class="att-save-btn-main-title" id="attSaveLargeTitle">SIMPAN PRESENSI KELAS</span>
+                                        <span class="att-save-btn-sub-text" id="attSaveLargeSub">Klik setelah selesai mengisi untuk menyimpan data presensi</span>
+                                    </div>
+                                </button>
+                            </div>
+                            <div class="att-save-info" id="attSaveInfoBox">
+                                <div class="att-save-status-badge badge-unsaved" id="attSaveStatusBadge">
+                                    <span class="att-status-indicator" id="attStatusIndicator"></span>
+                                    <span id="attSaveStatusText">Ada perubahan belum disimpan</span>
+                                </div>
+                                <div class="att-save-timestamp" id="attSaveTimestampText">
+                                    Terakhir disimpan: <em>Belum disimpan</em>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
