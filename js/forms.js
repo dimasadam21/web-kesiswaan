@@ -352,6 +352,11 @@ const Forms = {
     },
 
     openViolationModal(preselectedStudentId = null) {
+        if (AuthManager.isWaliKelas()) {
+            App.showToast("Akses dibatasi. Wali Kelas hanya memiliki hak akses melihat data siswa.");
+            return;
+        }
+
         let student = null;
         if (preselectedStudentId) {
             student = StorageManager.getStudentById(preselectedStudentId);
@@ -395,6 +400,11 @@ const Forms = {
     },
 
     openAchievementModal(preselectedStudentId = null) {
+        if (AuthManager.isWaliKelas()) {
+            App.showToast("Akses dibatasi. Wali Kelas hanya memiliki hak akses melihat data siswa.");
+            return;
+        }
+
         let student = null;
         if (preselectedStudentId) {
             student = StorageManager.getStudentById(preselectedStudentId);
@@ -436,6 +446,10 @@ const Forms = {
     },
 
     openStudentModal(fromManage = false) {
+        if (AuthManager.isWaliKelas()) {
+            App.showToast("Akses dibatasi. Wali Kelas hanya memiliki hak akses melihat data siswa.");
+            return;
+        }
         if (!AuthManager.isSuperAdmin()) {
             App.showToast("Fitur tambah siswa baru hanya dapat diakses oleh Super Admin!");
             return;
@@ -664,6 +678,10 @@ const Forms = {
 
     // 3B. EDIT PROFIL SISWA (LENGKAP SESUAI FORMAT EXCEL IMPOR)
     openEditStudentModal(studentId, fromManage = false) {
+        if (AuthManager.isWaliKelas()) {
+            App.showToast("Akses dibatasi. Wali Kelas hanya memiliki hak akses melihat data siswa.");
+            return;
+        }
         this.isEditingFromManageStudents = !!fromManage;
         const id = studentId || (AdminPortal.selectedStudent ? AdminPortal.selectedStudent.id : null);
         if (!id) {
@@ -1563,6 +1581,14 @@ const Forms = {
         this.exportStudentCurrentPage = 1;
         this.exportStudentPageSize = 50;
 
+        const isWaliKelas = AuthManager.isWaliKelas();
+        const btnAdd = document.getElementById("btnExportAddNewStudent");
+        const btnRestore = document.getElementById("btnExportRestoreMaster");
+        const btnReset = document.getElementById("btnExportResetZero");
+        if (btnAdd) btnAdd.style.display = isWaliKelas ? "none" : "inline-flex";
+        if (btnRestore) btnRestore.style.display = isWaliKelas ? "none" : "inline-flex";
+        if (btnReset) btnReset.style.display = isWaliKelas ? "none" : "inline-flex";
+
         const searchInput = document.getElementById("exportStudentSearchInput");
         if (searchInput) searchInput.value = "";
 
@@ -1572,6 +1598,10 @@ const Forms = {
     },
 
     restoreOfficialStudentsMaster() {
+        if (AuthManager.isWaliKelas()) {
+            App.showToast("Akses dibatasi. Hanya Super Admin dan Staf Kesiswaan yang dapat memulihkan master siswa.");
+            return;
+        }
         const masterSource = (typeof MASTER_STUDENTS_LIST !== 'undefined' && Array.isArray(MASTER_STUDENTS_LIST) && MASTER_STUDENTS_LIST.length > 0)
             ? MASTER_STUDENTS_LIST
             : (typeof window !== 'undefined' && window.MASTER_STUDENTS_LIST ? window.MASTER_STUDENTS_LIST : null);
@@ -1613,6 +1643,10 @@ const Forms = {
     },
 
     resetAllStudentRecordsToZero() {
+        if (AuthManager.isWaliKelas()) {
+            App.showToast("Akses dibatasi. Hanya Super Admin dan Staf Kesiswaan yang dapat me-reset poin siswa.");
+            return;
+        }
         const confirmReset = confirm("PERINGATAN RESET AWAL TAHUN AJARAN / SEMESTER:\n\nApakah Anda yakin ingin me-reset SEMUA data pelanggaran dan prestasi seluruh siswa ke 0?\n\n• Seluruh siswa akan memulai dari 0 poin pelanggaran dan 0 prestasi.\n• Status seluruh siswa kembali menjadi Aman.\n• Nama dan kelas resmi dari master 2.107 siswa tetap bersih dan utuh.");
         if (!confirmReset) return;
 
@@ -1709,6 +1743,7 @@ const Forms = {
         const tbody = document.getElementById("exportStudentsTableBody");
         if (!tbody) return;
 
+        const isWaliKelas = AuthManager.isWaliKelas();
         const allStudents = StorageManager.getStudents() || [];
         const filtered = this.getFilteredExportStudents();
         const total = filtered.length;
@@ -1843,12 +1878,14 @@ const Forms = {
                         </span>
                     </td>
                     <td style="padding: 6px 10px; text-align: center; white-space: nowrap;">
+                        ${!isWaliKelas ? `
                         <button type="button" class="btn btn-outline btn-sm" onclick="Forms.openEditStudentModal('${this.escapeHtml(s.id)}', true)" style="padding: 4px 8px; font-size: 0.74rem; font-weight: 600; color: #0284c7; border-color: #7dd3fc; background: #f0f9ff; margin-right: 4px;" title="Edit Biodata Siswa">
                             ✏️ Edit
                         </button>
                         <button type="button" class="btn btn-outline btn-sm" onclick="Forms.handleDeleteStudentFromManage('${this.escapeHtml(s.id)}', '${this.escapeHtml(s.nama)}')" style="padding: 4px 8px; font-size: 0.74rem; font-weight: 600; color: #dc2626; border-color: #fca5a5; background: #fef2f2; margin-right: 4px;" title="Hapus Siswa">
                             🗑️ Hapus
                         </button>
+                        ` : ''}
                         <button type="button" class="btn btn-primary btn-sm" onclick="Forms.selectStudentFromExportModal('${this.escapeHtml(s.id)}')" style="padding: 4px 8px; font-size: 0.74rem; font-weight: 600;" title="Buka Siswa ke Dasbor Pencarian">
                             👉 Pilih
                         </button>
@@ -1888,6 +1925,10 @@ const Forms = {
     },
 
     handleDeleteStudentFromManage(studentId, studentName) {
+        if (AuthManager.isWaliKelas()) {
+            App.showToast("Akses dibatasi. Wali Kelas tidak memiliki hak akses menghapus data siswa.");
+            return;
+        }
         if (!confirm(`Yakin ingin menghapus siswa "${studentName}"?\n\nPerhatian: Seluruh catatan pelanggaran dan prestasi siswa ini akan terhapus secara permanen dari sistem.`)) {
             return;
         }

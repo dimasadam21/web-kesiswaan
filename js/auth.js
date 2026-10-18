@@ -35,6 +35,22 @@ const AuthManager = {
         return this.currentUser && this.currentUser.role === "superadmin";
     },
 
+    isWaliKelas() {
+        if (!this.currentUser) return false;
+        if (this.currentUser.role === "superadmin") return false;
+        const username = (this.currentUser.username || "").toLowerCase();
+        if (username === "kesiswaan" || username === "admin") return false;
+        const roleLabel = (this.currentUser.roleLabel || "").toLowerCase();
+        const kelas = this.currentUser.kelas;
+        return roleLabel.includes("wali kelas") || (kelas && kelas !== "-");
+    },
+
+    isStaffKesiswaan() {
+        if (!this.currentUser) return false;
+        if (this.currentUser.role === "superadmin") return true;
+        return !this.isWaliKelas();
+    },
+
     getCurrentUser() {
         return this.currentUser;
     },

@@ -49,10 +49,7 @@ const AdminPortal = {
         if (dropdown) dropdown.style.display = "none";
 
         const isSuperAdmin = AuthManager.isSuperAdmin();
-        const isWaliKelas = !isSuperAdmin && user && (
-            (user.roleLabel && user.roleLabel.toLowerCase().includes("wali kelas")) ||
-            (user.kelas && user.kelas !== "-")
-        );
+        const isWaliKelas = AuthManager.isWaliKelas();
 
         if (user && user.kelas && user.kelas !== "-") {
             this.currentAttendanceClass = user.kelas;
@@ -61,6 +58,14 @@ const AdminPortal = {
         }
 
         const isAdminKesiswaan = !isSuperAdmin && !isWaliKelas;
+
+        // Sembunyikan tombol catat pelanggaran, prestasi & edit profil untuk Wali Kelas (hanya melihat)
+        const btnTargetAddVio = document.getElementById("btnTargetAddViolation");
+        const btnTargetAddAch = document.getElementById("btnTargetAddAchievement");
+        const btnTargetEditStu = document.getElementById("btnTargetEditStudent");
+        if (btnTargetAddVio) btnTargetAddVio.style.display = isWaliKelas ? "none" : "inline-flex";
+        if (btnTargetAddAch) btnTargetAddAch.style.display = isWaliKelas ? "none" : "inline-flex";
+        if (btnTargetEditStu) btnTargetEditStu.style.display = isWaliKelas ? "none" : "inline-flex";
 
         // Tampilkan tombol tab Presensi & Rekap Riwayat HANYA untuk Wali Kelas
         const btnPresensi = document.getElementById("adminTabBtnPresensi");
@@ -473,11 +478,24 @@ const AdminPortal = {
             card.style.display = "block";
         }
 
+        // Kontrol tombol aksi pada kartu siswa terpilih: Wali Kelas hanya melihat
+        const isWaliKelas = AuthManager.isWaliKelas();
+        const btnTargetAddVio = document.getElementById("btnTargetAddViolation");
+        const btnTargetAddAch = document.getElementById("btnTargetAddAchievement");
+        const btnTargetEditStu = document.getElementById("btnTargetEditStudent");
+        if (btnTargetAddVio) btnTargetAddVio.style.display = isWaliKelas ? "none" : "inline-flex";
+        if (btnTargetAddAch) btnTargetAddAch.style.display = isWaliKelas ? "none" : "inline-flex";
+        if (btnTargetEditStu) btnTargetEditStu.style.display = isWaliKelas ? "none" : "inline-flex";
+
         App.showToast(`Siswa terpilih: ${student.nama}`);
     },
 
     // 3. Tombol-Tombol Aksi pada Siswa yang Dituju
     actionAddViolation() {
+        if (AuthManager.isWaliKelas()) {
+            App.showToast("Akses dibatasi. Wali Kelas hanya memiliki hak akses melihat data siswa.");
+            return;
+        }
         if (!this.selectedStudent) {
             const students = StorageManager.getStudents();
             if (students.length > 0) this.selectTargetStudent(students[0].id);
@@ -487,6 +505,10 @@ const AdminPortal = {
     },
 
     actionAddAchievement() {
+        if (AuthManager.isWaliKelas()) {
+            App.showToast("Akses dibatasi. Wali Kelas hanya memiliki hak akses melihat data siswa.");
+            return;
+        }
         if (!this.selectedStudent) {
             const students = StorageManager.getStudents();
             if (students.length > 0) this.selectTargetStudent(students[0].id);
@@ -594,6 +616,8 @@ const AdminPortal = {
             return a.student.nama.localeCompare(b.student.nama);
         });
 
+        const isWaliKelas = AuthManager.isWaliKelas();
+
         // Cek jika seluruh siswa saat ini bernilai 0 (karena baru dimulai dari awal)
         const hasAnyScore = studentsWithStatus.some(item => item.score > 0);
         if (!hasAnyScore) {
@@ -617,12 +641,14 @@ const AdminPortal = {
                             <button type="button" class="btn btn-outline btn-sm" onclick="Forms.openManageStudentsModal()">
                                 👥 Buka Seluruh Data Siswa
                             </button>
+                            ${!isWaliKelas ? `
                             <button type="button" class="btn btn-success btn-sm" onclick="Forms.openAchievementModal()">
                                 🏆 + Catat Prestasi Baru
                             </button>
                             <button type="button" class="btn btn-danger btn-sm" onclick="Forms.openViolationModal()">
                                 ⚠️ + Catat Pelanggaran
                             </button>
+                            ` : ''}
                         </div>
                     </td>
                 </tr>
@@ -675,6 +701,7 @@ const AdminPortal = {
                             <button class="btn ${isSelected ? 'btn-primary' : 'btn-outline'} btn-sm" onclick="AdminPortal.selectTargetStudent('${s.id}')">
                                 ${isSelected ? '✓ Terpilih' : '👉 Pilih'}
                             </button>
+                            ${!isWaliKelas ? `
                             <button class="btn btn-danger btn-sm" onclick="Forms.openViolationModal('${s.id}')" title="Catat Pelanggaran Siswa Ini">
                                 ⚠️ Pelanggaran
                             </button>
@@ -689,6 +716,7 @@ const AdminPortal = {
                             <button class="btn btn-outline btn-sm" onclick="Forms.openEditStudentModal('${s.id}')" title="Edit Profil Siswa Lengkap">
                                 ✏️ Edit
                             </button>
+                            ` : ''}
                         </div>
                     </td>
                 </tr>
