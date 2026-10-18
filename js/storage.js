@@ -14,8 +14,12 @@ const IDB_STORE = "students";
 
 const StorageManager = {
     _studentsCache: null,
+    _dataCache: null,
+    _rulesCache: null,
 
     init() {
+        this._dataCache = null;
+        this._rulesCache = null;
         const stored = localStorage.getItem(STORAGE_KEY);
         if (!stored) {
             this.saveData({
@@ -101,6 +105,10 @@ const StorageManager = {
     },
 
     getData() {
+        if (this._dataCache) {
+            return this._dataCache;
+        }
+
         const data = localStorage.getItem(STORAGE_KEY);
         let parsed = null;
         if (!data) {
@@ -116,13 +124,27 @@ const StorageManager = {
         }
         if (!parsed || typeof parsed !== 'object') parsed = {};
 
-        // Selalu hubungkan data siswa dari manajemen penyimpanan siswa
-        parsed.students = this.getStudents();
-        return parsed;
+        // Hubungkan data siswa secara on-demand tanpa membebani pemanggilan config/guru
+        const self = this;
+        Object.defineProperty(parsed, 'students', {
+            get() {
+                return self.getStudents();
+            },
+            set(newStudents) {
+                self.saveStudents(newStudents);
+            },
+            configurable: true,
+            enumerable: true
+        });
+
+        this._dataCache = parsed;
+        return this._dataCache;
     },
 
     saveData(data) {
         if (!data) return;
+        this._dataCache = null;
+        this._rulesCache = null;
 
         // Jika data mengandung array siswa, simpan via manajemen siswa ber-chunk
         if (Array.isArray(data.students)) {
@@ -403,9 +425,11 @@ const StorageManager = {
         return true;
     },
 
-    // ATURAN RENTANG POIN & SANKSI OTOMATIS (SUPER ADMIN)
     getRules() {
-        return this.getData().rules || DEFAULT_RULES;
+        if (this._rulesCache) return this._rulesCache;
+        const data = this.getData();
+        this._rulesCache = data.rules || (typeof DEFAULT_RULES !== 'undefined' ? DEFAULT_RULES : []);
+        return this._rulesCache;
     },
 
     updateRules(newRules) {
@@ -878,10 +902,45 @@ const StorageManager = {
     },
 
     calculateStudentStatus(student) {
-        const totalPoinPelanggaran = (student.pelanggaran || []).reduce((acc, curr) => acc + (Number(curr.poin) || 0), 0);
-        const totalPrestasi = (student.prestasi || []).length;
+        if (!student) {
+            return {
+                totalPoinPelanggaran: 0,
+                totalPoinPrestasi: 0,
+                totalPrestasi: 0,
+                saldoPoinKebaikan: 100,
+                statusText: "Aman",
+                actionText: "Tidak ada sanksi",
+                badgeClass: "pill-green",
+                isBermasalah: false,
+                isBerprestasi: false
+            };
+        }
+
+        const pel = student.pelanggaran;
+        const pres = student.prestasi;
+        const hasPel = Array.isArray(pel) && pel.length > 0;
+        const hasPres = Array.isArray(pres) && pres.length > 0;
+
+        // FAST-PATH: Siswa tanpa riwayat pelanggaran dan tanpa prestasi (99% dari 2.107 siswa)
+        // Menghilangkan miliaran siklus CPU saat login guru / kesiswaan
+        if (!hasPel && !hasPres) {
+            return {
+                totalPoinPelanggaran: 0,
+                totalPoinPrestasi: 0,
+                totalPrestasi: 0,
+                saldoPoinKebaikan: 100,
+                statusText: "Aman",
+                actionText: "Tidak ada sanksi",
+                badgeClass: "pill-green",
+                isBermasalah: false,
+                isBerprestasi: false
+            };
+        }
+
+        const totalPoinPelanggaran = hasPel ? pel.reduce((acc, curr) => acc + (Number(curr.poin) || 0), 0) : 0;
+        const totalPrestasi = hasPres ? pres.length : 0;
         
-        const rules = this.getData().rules || DEFAULT_RULES;
+        const rules = this.getRules();
         let ruleMatch = rules[0];
 
         for (const rule of rules) {
@@ -1728,6 +1787,9 @@ const StorageManager = {
     },
 
     resetToDefault() {
+        this._dataCache = null;
+        this._rulesCache = null;
+        this._studentsCache = null;
         localStorage.removeItem(STORAGE_KEY);
         localStorage.removeItem(STUDENTS_ZERO_RESET_KEY);
         this.resetAllStudentRecordsToZero();

@@ -114,28 +114,23 @@ const AdminPortal = {
             this.updateRambutToggleButton();
         }
 
+        // Inisialisasi dropdown kelas presensi
+        this.populateAttendanceClassOptions();
+
         // Tampilkan siswa pertama sebagai contoh awal di tab siswa
         const students = StorageManager.getStudents();
         if (students.length > 0) {
             this.selectTargetStudent(students[0].id);
         }
 
-        this.renderTeacherAllStudents();
-        this.renderAdminPrestasiList();
-        this.renderAdminKegiatanList();
-        this.renderAdminPengumumanList();
-        this.renderAdminAgendaTerdekatList();
-        this.updateAdminBadgeCounts();
+        // Tentukan dan aktifkan tab pertama secara instan
+        const initialTab = isWaliKelas ? 'presensi' : (this.currentTab || 'siswa');
+        this.switchAdminTab(initialTab);
 
-        // Inisialisasi dropdown kelas presensi
-        this.populateAttendanceClassOptions();
-
-        // Untuk wali kelas, menu yang langsung muncul adalah Presensi & Disiplin Kelas
-        if (isWaliKelas) {
-            this.switchAdminTab('presensi');
-        } else {
-            this.switchAdminTab(this.currentTab || 'siswa');
-        }
+        // Tunda pembaruan badge counts dan data latar belakang agar transisi login instan (< 15ms)
+        setTimeout(() => {
+            this.updateAdminBadgeCounts();
+        }, 50);
     },
 
     // 0. Beralih Antara Sub-Tab Admin
@@ -183,6 +178,8 @@ const AdminPortal = {
 
         if (tabName === "presensi") {
             this.renderClassAttendance();
+        } else if (tabName === "siswa") {
+            this.renderTeacherAllStudents();
         } else if (tabName === "riwayat") {
             this.renderAttendanceHistory();
         } else if (tabName === "prestasi") {

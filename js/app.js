@@ -941,6 +941,12 @@ const App = {
             if (btnImporSiswa) btnImporSiswa.style.display = "none";
             if (btnKelolaSiswa) btnKelolaSiswa.style.display = "none";
 
+            const btnTeacherLogin = document.getElementById("btnSubmitTeacherLogin");
+            if (btnTeacherLogin) {
+                btnTeacherLogin.disabled = false;
+                btnTeacherLogin.innerHTML = `Masuk Portal Kesiswaan`;
+            }
+
             this.renderPublicDashboard();
         } else if (user.role === "siswa") {
             // SISWA LOGIN
@@ -1206,12 +1212,26 @@ const App = {
 
     handleTeacherLogin(event) {
         event.preventDefault();
-        const u = document.getElementById("loginTeacherUsername").value;
-        const p = document.getElementById("loginTeacherPassword").value;
+        const u = document.getElementById("loginTeacherUsername")?.value || "";
+        const p = document.getElementById("loginTeacherPassword")?.value || "";
+        const submitBtn = event.submitter || document.getElementById("btnSubmitTeacherLogin") || event.target?.querySelector('button[type="submit"]');
+
+        let originalContent = "";
+        if (submitBtn) {
+            originalContent = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = `<span>⏳ Masuk...</span>`;
+        }
+
         try {
             AuthManager.loginAsTeacher(u, p);
-            this.updateViewBasedOnAuth();
+            // AuthManager.notifyListeners() secara otomatis langsung memicu this.updateViewBasedOnAuth().
+            // Tidak perlu duplikasi pemanggilan di sini.
         } catch (err) {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalContent;
+            }
             this.showToast(err.message);
         }
     },
@@ -1223,7 +1243,6 @@ const App = {
         if (pInput) pInput.value = password;
         try {
             AuthManager.loginAsTeacher(username, password);
-            this.updateViewBasedOnAuth();
         } catch (err) {
             this.showToast(err.message);
         }
