@@ -304,7 +304,7 @@ const AdminPortal = {
                         <img src="${fotoUrl}" alt="Foto" style="width: 36px; height: 36px; border-radius: 8px; object-fit: cover; border: 1px solid var(--border); flex-shrink: 0;" onerror="this.src='${fallbackAvatar}'">
                         <div style="min-width: 0;">
                             <strong style="color: var(--text-main); font-size: 0.88rem; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${highlightedName}</strong>
-                            <div style="font-size: 0.74rem; color: var(--text-muted);"><span style="background: #e0f2fe; color: #0369a1; font-weight: 700; padding: 1px 5px; border-radius: 4px;">${s.kelas}</span> • NIS: ${s.nis || '-'} • NISN: ${s.nisn || '-'}</div>
+                            <div style="font-size: 0.74rem; color: var(--text-muted);"><span style="background: #e0f2fe; color: #0369a1; font-weight: 700; padding: 1px 5px; border-radius: 4px;">${s.kelas}</span>${(s.nis || s.nisn) ? ` • NIS: ${s.nis || '-'} • NISN: ${s.nisn || '-'}` : ''}</div>
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0;">
@@ -364,9 +364,19 @@ const AdminPortal = {
         if (input) input.value = student.nama;
 
         // Isi data ke kartu tindakan siswa
-        document.getElementById("targetStudentFoto").src = student.foto;
+        const fallbackAvatar = student.gender === "P" 
+            ? "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=300&q=80" 
+            : "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=300&q=80";
+        const elFoto = document.getElementById("targetStudentFoto");
+        if (elFoto) {
+            elFoto.src = student.foto || fallbackAvatar;
+            elFoto.onerror = function() { this.src = fallbackAvatar; };
+        }
+
         document.getElementById("targetStudentNama").textContent = student.nama;
-        document.getElementById("targetStudentInfo").textContent = `NISN: ${student.nisn} • Kelas: ${student.kelas} (${student.jurusan})`;
+        const nisnText = (student.nisn && student.nisn !== "-") ? `NISN: ${student.nisn} • ` : "";
+        const jurusanText = (student.jurusan && student.jurusan !== "-") ? ` (${student.jurusan})` : "";
+        document.getElementById("targetStudentInfo").textContent = `${nisnText}Kelas: ${student.kelas}${jurusanText}`;
         document.getElementById("targetStudentWali").textContent = student.waliKelas || "-";
 
         // Rincian Lengkap Profil Format Excel Impor
@@ -385,21 +395,37 @@ const AdminPortal = {
         const elAyah = document.getElementById("targetStudentAyah");
         if (elAyah) elAyah.textContent = student.namaOrtuBapak || "-";
 
+        const hpBapakWrap = document.getElementById("targetStudentHpBapakWrap");
         const elHpBapak = document.getElementById("targetStudentHpBapak");
-        if (elHpBapak) elHpBapak.textContent = student.noHpBapak || "-";
+        if (hpBapakWrap) {
+            if (student.noHpBapak && student.noHpBapak !== "-") {
+                hpBapakWrap.style.display = "inline";
+                if (elHpBapak) elHpBapak.textContent = student.noHpBapak;
+            } else {
+                hpBapakWrap.style.display = "none";
+            }
+        }
 
         const elIbu = document.getElementById("targetStudentIbu");
         if (elIbu) elIbu.textContent = student.namaOrtuIbu || "-";
 
+        const hpIbuWrap = document.getElementById("targetStudentHpIbuWrap");
         const elHpIbu = document.getElementById("targetStudentHpIbu");
-        if (elHpIbu) elHpIbu.textContent = student.noHpIbu || "-";
+        if (hpIbuWrap) {
+            if (student.noHpIbu && student.noHpIbu !== "-") {
+                hpIbuWrap.style.display = "inline";
+                if (elHpIbu) elHpIbu.textContent = student.noHpIbu;
+            } else {
+                hpIbuWrap.style.display = "none";
+            }
+        }
 
         const elAlamat = document.getElementById("targetStudentAlamat");
         if (elAlamat) elAlamat.textContent = student.alamat || "-";
 
         const mapsBtn = document.getElementById("targetStudentMapsLink");
         if (mapsBtn) {
-            if (student.mapsAlamat && student.mapsAlamat.trim()) {
+            if (student.mapsAlamat && student.mapsAlamat.trim() && student.mapsAlamat !== "-") {
                 mapsBtn.href = student.mapsAlamat;
                 mapsBtn.style.display = "inline-flex";
             } else if (student.alamat && student.alamat.trim() && student.alamat !== "-") {
@@ -590,7 +616,7 @@ const AdminPortal = {
                     <td style="text-align: center;">${rankBadge}</td>
                     <td>
                         <div style="font-weight: 700; color: var(--text-main); font-size: 0.95rem;">${s.nama}</div>
-                        <div style="font-size: 0.75rem; color: var(--text-muted);">NISN: ${s.nisn} ${s.nis ? '• NIS: ' + s.nis : ''}</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">${(s.nisn || s.nis) ? `NISN: ${s.nisn || '-'}${s.nis ? ' • NIS: ' + s.nis : ''}` : `Kelas: ${s.kelas}`}</div>
                     </td>
                     <td><span class="status-pill pill-gray">${s.kelas}</span></td>
                     <td>

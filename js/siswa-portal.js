@@ -204,12 +204,12 @@ const SiswaPortal = {
                     <td style="padding: 5px 8px; width: 34%;"><strong>${student.nama}</strong></td>
                     <td style="padding: 5px 8px; width: 18%; font-weight: 600;">NIS / NISN</td>
                     <td style="width: 2%;">:</td>
-                    <td style="padding: 5px 8px;">${student.nis || '-'} / ${student.nisn}</td>
+                    <td style="padding: 5px 8px;">${student.nis || '-'} / ${student.nisn || '-'}</td>
                 </tr>
                 <tr>
                     <td style="padding: 5px 8px; font-weight: 600;">Kelas / Jurusan</td>
                     <td>:</td>
-                    <td style="padding: 5px 8px;">${student.kelas} (${student.jurusan})</td>
+                    <td style="padding: 5px 8px;">${student.kelas} (${student.jurusan || '-'})</td>
                     <td style="padding: 5px 8px; font-weight: 600;">Jenis Kelamin</td>
                     <td>:</td>
                     <td style="padding: 5px 8px;">${student.gender === 'P' ? 'Perempuan' : 'Laki-Laki'}</td>
@@ -225,10 +225,10 @@ const SiswaPortal = {
                 <tr>
                     <td style="padding: 5px 8px; font-weight: 600;">Orang Tua (Ayah)</td>
                     <td>:</td>
-                    <td style="padding: 5px 8px;">${student.namaOrtuBapak || '-'} (${student.noHpBapak || '-'})</td>
+                    <td style="padding: 5px 8px;">${student.namaOrtuBapak || '-'}${student.noHpBapak && student.noHpBapak !== '-' ? ` (${student.noHpBapak})` : ''}</td>
                     <td style="padding: 5px 8px; font-weight: 600;">Orang Tua (Ibu)</td>
                     <td>:</td>
-                    <td style="padding: 5px 8px;">${student.namaOrtuIbu || '-'} (${student.noHpIbu || '-'})</td>
+                    <td style="padding: 5px 8px;">${student.namaOrtuIbu || '-'}${student.noHpIbu && student.noHpIbu !== '-' ? ` (${student.noHpIbu})` : ''}</td>
                 </tr>
                 <tr>
                     <td style="padding: 5px 8px; font-weight: 600;">Alamat Lengkap</td>

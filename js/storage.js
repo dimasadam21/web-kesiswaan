@@ -6,6 +6,7 @@
 
 const STORAGE_KEY = "kesiswaan_app_data_v2";
 const STUDENTS_META_KEY = "kesiswaan_students_meta_v1";
+const STUDENTS_CLEAN_VERSION_KEY = "kesiswaan_students_clean_v20261018";
 const STUDENTS_CHUNK_PREFIX = "kesiswaan_students_c_";
 const IDB_NAME = "kesiswaan_idb";
 const IDB_STORE = "students";
@@ -692,6 +693,38 @@ const StorageManager = {
     },
 
     getStudents() {
+        const masterSource = (typeof MASTER_STUDENTS_LIST !== 'undefined' && Array.isArray(MASTER_STUDENTS_LIST) && MASTER_STUDENTS_LIST.length > 0)
+            ? MASTER_STUDENTS_LIST
+            : ((typeof INITIAL_STUDENTS !== 'undefined' && Array.isArray(INITIAL_STUDENTS)) ? INITIAL_STUDENTS : []);
+
+        // 0. Sinkronisasi data resmi bersih super admin (hanya Nama dan Kelas)
+        // Riwayat pelanggaran dan prestasi yang sudah dicatat sebelumnya tetap dipertahankan
+        const isCleanSynced = localStorage.getItem(STUDENTS_CLEAN_VERSION_KEY);
+        if (!isCleanSynced && masterSource.length > 0) {
+            let loadedForSync = [];
+            try {
+                const metaRaw = localStorage.getItem(STUDENTS_META_KEY);
+                if (metaRaw) {
+                    const meta = JSON.parse(metaRaw);
+                    if (meta && typeof meta.chunks === "number" && meta.chunks > 0) {
+                        for (let i = 0; i < meta.chunks; i++) {
+                            const chunkRaw = localStorage.getItem(STUDENTS_CHUNK_PREFIX + i);
+                            if (chunkRaw) {
+                                const parsedChunk = JSON.parse(chunkRaw);
+                                if (Array.isArray(parsedChunk)) loadedForSync = loadedForSync.concat(parsedChunk);
+                            }
+                        }
+                    }
+                }
+            } catch (e) {}
+
+            const merged = this.mergeWithMasterStudents(masterSource, loadedForSync.length > 0 ? loadedForSync : (this._studentsCache || []));
+            this._studentsCache = merged;
+            this.saveStudents(merged, true);
+            localStorage.setItem(STUDENTS_CLEAN_VERSION_KEY, "true");
+            return merged;
+        }
+
         if (this._studentsCache && Array.isArray(this._studentsCache) && this._studentsCache.length >= 2000) {
             return this._studentsCache;
         }

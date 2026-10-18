@@ -771,8 +771,8 @@ const Forms = {
         const alamat = document.getElementById("formEditStudentAlamat").value.trim();
         const mapsAlamat = document.getElementById("formEditStudentMapsAlamat").value.trim();
 
-        if (!nisn || !nama || !kelas) {
-            App.showToast("NISN, Nama, dan Kelas wajib diisi!");
+        if (!nama || !kelas) {
+            App.showToast("Nama dan Kelas wajib diisi!");
             return;
         }
 
@@ -1588,6 +1588,7 @@ const Forms = {
             const current = StorageManager.getStudents() || [];
             const merged = StorageManager.mergeWithMasterStudents(masterSource, current);
             StorageManager.saveStudents(merged, true);
+            localStorage.setItem("kesiswaan_students_clean_v20261018", "true");
 
             this.populateExportStudentClassFilter();
             this.renderExportStudentsTable();
@@ -1765,7 +1766,7 @@ const Forms = {
                             <img src="${this.escapeHtml(fotoUrl)}" alt="Foto" style="width: 36px; height: 36px; border-radius: 8px; object-fit: cover; border: 1px solid var(--border); flex-shrink: 0;" onerror="this.src='${fallbackAvatar}'">
                             <div>
                                 <strong style="font-size: 0.88rem; color: var(--text-main); display: block;">${this.escapeHtml(s.nama || '-')}</strong>
-                                <span style="font-size: 0.75rem; color: var(--text-muted); font-family: monospace;">NIS: ${this.escapeHtml(s.nis || '-')} • NISN: ${this.escapeHtml(s.nisn || '-')}</span>
+                                ${(s.nis || s.nisn) ? `<span style="font-size: 0.75rem; color: var(--text-muted); font-family: monospace;">NIS: ${this.escapeHtml(s.nis || '-')} • NISN: ${this.escapeHtml(s.nisn || '-')}</span>` : `<span style="font-size: 0.75rem; color: var(--text-muted);">Kelas: ${this.escapeHtml(s.kelas || '-')}</span>`}
                             </div>
                         </div>
                     </td>
