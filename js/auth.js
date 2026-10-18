@@ -51,6 +51,10 @@ const AuthManager = {
         return !this.isWaliKelas();
     },
 
+    isAdminKesiswaan() {
+        return this.isStaffKesiswaan();
+    },
+
     getCurrentUser() {
         return this.currentUser;
     },

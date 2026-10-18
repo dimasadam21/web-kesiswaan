@@ -1628,13 +1628,58 @@ const StorageManager = {
 
     ensureStudentsForClass(kelasTarget) {
         if (!kelasTarget) return [];
-        const allStudents = this.getStudents();
+        let allStudents = this.getStudents() || [];
         const cleanTarget = kelasTarget.trim().toLowerCase().replace(/[\s\-_.]/g, '');
-        let classStudents = allStudents.filter(s => {
-            if (!s.kelas) return false;
+        const matchClass = (s) => {
+            if (!s || !s.kelas) return false;
             const cleanS = s.kelas.trim().toLowerCase().replace(/[\s\-_.]/g, '');
             return cleanS === cleanTarget || s.kelas.trim().toUpperCase() === kelasTarget.trim().toUpperCase();
-        });
+        };
+
+        let classStudents = allStudents.filter(matchClass);
+
+        // Jika data siswa kelas target belum ada di penyimpanan lokal, otomatis ambil dari master 2.107 siswa
+        if (classStudents.length === 0 && typeof MASTER_STUDENTS_LIST !== 'undefined' && Array.isArray(MASTER_STUDENTS_LIST)) {
+            const masterClassStudents = MASTER_STUDENTS_LIST.filter(matchClass);
+            if (masterClassStudents.length > 0) {
+                const cleaned = masterClassStudents.map(s => ({
+                    id: s.id,
+                    no: s.no,
+                    foto: s.foto || "",
+                    nis: s.nis || "",
+                    nisn: s.nisn || "",
+                    nama: s.nama,
+                    gender: s.gender || "L",
+                    kelas: s.kelas,
+                    jurusan: s.jurusan || "-",
+                    tempatLahir: s.tempatLahir || "",
+                    tanggalLahir: s.tanggalLahir || "",
+                    agama: s.agama || "",
+                    tempatTinggal: s.tempatTinggal || "",
+                    alamat: s.alamat || "",
+                    mapsAlamat: s.mapsAlamat || "",
+                    nomorHp: s.nomorHp || "",
+                    namaOrtuBapak: s.namaOrtuBapak || "",
+                    pekerjaanBapak: s.pekerjaanBapak || "",
+                    noHpBapak: s.noHpBapak || "",
+                    namaOrtuIbu: s.namaOrtuIbu || "",
+                    pekerjaanIbu: s.pekerjaanIbu || "",
+                    noHpIbu: s.noHpIbu || "",
+                    inputSpmb: s.inputSpmb || "",
+                    waliKelas: s.waliKelas || "-",
+                    kontakOrtu: s.kontakOrtu || "-",
+                    prestasi: [],
+                    pelanggaran: [],
+                    skorPelanggaran: 0,
+                    totalPoinPrestasi: 0,
+                    status: "Aman"
+                }));
+                allStudents = allStudents.concat(cleaned);
+                this._studentsCache = allStudents;
+                this.saveStudents(allStudents, true);
+                classStudents = cleaned;
+            }
+        }
         
         return classStudents;
     },

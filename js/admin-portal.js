@@ -861,37 +861,21 @@ const AdminPortal = {
         const dayOfWeek = this.getDayOfWeek(dateStr); // 0: Minggu, 1: Senin, 2: Selasa, 3: Rabu, 4: Kamis, 5: Jumat, 6: Sabtu
         const schedule = StorageManager.getAttendanceSchedule();
 
-        // 1. Khusus hari Senin: SENIN UPACARA
-        if (dayOfWeek === 1) {
-            if (schedule && schedule[1] && schedule[1].aktif !== false && schedule[1].kode) {
-                return schedule[1].kode;
-            }
-            return "SENIN UPACARA";
-        }
-
-        // 2. Khusus hari Rabu: RABU SENAM
-        if (dayOfWeek === 3) {
-            if (schedule && schedule[3] && schedule[3].aktif !== false && schedule[3].kode && schedule[3].kode !== "RABU SENAM SAIH") {
-                return schedule[3].kode;
-            }
-            return "RABU SENAM";
-        }
-
-        // 3. Khusus hari Jumat: JUMAT SENAM
-        if (dayOfWeek === 5) {
-            if (schedule && schedule[5] && schedule[5].aktif !== false && schedule[5].kode) {
-                return schedule[5].kode;
-            }
-            return "JUMAT SENAM";
-        }
-
-        // Hari lainnya (Selasa, Kamis, Sabtu, Minggu)
         if (schedule && schedule[dayOfWeek] && schedule[dayOfWeek].aktif !== false && schedule[dayOfWeek].kode) {
             return schedule[dayOfWeek].kode;
         }
 
-        const dayNames = ["MINGGU", "SENIN", "SELASA", "RABU", "KAMIS", "JUMAT", "SABTU"];
-        return `${dayNames[dayOfWeek]} PRESENSI`;
+        const defaultCodes = {
+            1: "SENIN UPACARA",
+            2: "SELASA PRESENSI",
+            3: "RABU SENAM",
+            4: "KAMIS PRESENSI",
+            5: "JUMAT SENAM",
+            6: "SABTU PRESENSI",
+            0: "MINGGU PRESENSI"
+        };
+
+        return defaultCodes[dayOfWeek] || "PRESENSI HARIAN";
     },
 
     populateAttendanceClassOptions() {
@@ -982,6 +966,13 @@ const AdminPortal = {
         }
 
         const dayOfWeek = this.getDayOfWeek(this.currentAttendanceDate);
+        const dayNames = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+        const dayName = dayNames[dayOfWeek] || "";
+        const badgeDay = document.getElementById("attDayNameBadge");
+        if (badgeDay) {
+            badgeDay.textContent = dayName;
+        }
+
         const isRambutActive = StorageManager.isRambutChecklistActive(this.currentAttendanceDate);
         const isNoRambut = !isRambutActive; // Default hanya keluar pada Senin Minggu Pertama atau jika diatur aktif oleh Super Admin
         this.updateRambutToggleButton();
@@ -1008,16 +999,8 @@ const AdminPortal = {
                 : "• <strong>Rambut / Make up</strong>: Otomatis masuk pelanggaran <em>Rambut/Make up</em> (+10 Poin).";
         }
 
-        // Pastikan siswa untuk kelas target sudah disiapkan
-        StorageManager.ensureStudentsForClass(this.currentAttendanceClass);
-
-        const allStudents = StorageManager.getStudents();
-        const cleanCurrent = this.currentAttendanceClass.trim().toLowerCase().replace(/[\s\-_.]/g, '');
-        const students = allStudents.filter(s => {
-            if (!s.kelas) return false;
-            const cleanS = s.kelas.trim().toLowerCase().replace(/[\s\-_.]/g, '');
-            return cleanS === cleanCurrent || s.kelas.trim().toUpperCase() === this.currentAttendanceClass.trim().toUpperCase();
-        });
+        // Pastikan siswa untuk kelas target sudah disiapkan dan diambil
+        const students = StorageManager.ensureStudentsForClass(this.currentAttendanceClass);
 
         // Urutkan berdasarkan no absen / nama
         students.sort((a, b) => {
@@ -1294,8 +1277,7 @@ const AdminPortal = {
         };
         if (!attData.records) attData.records = {};
 
-        const allStudents = StorageManager.getStudents();
-        const students = allStudents.filter(s => s.kelas && s.kelas.trim().toUpperCase() === this.currentAttendanceClass.trim().toUpperCase());
+        const students = StorageManager.ensureStudentsForClass(this.currentAttendanceClass);
 
         students.forEach(s => {
             if (!attData.records[s.id]) {
