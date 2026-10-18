@@ -110,9 +110,9 @@ const InstagramSync = {
         const defaultCfg = {
             enabled: true,
             account: "smkn1magelang",
-            syncPrestasi: true,
+            syncPrestasi: false, // Default nonaktif agar semua siswa murni mulai dari 0
             syncKegiatan: true,
-            lastSync: "16 Oktober 2026, 11:35 WIB",
+            lastSync: "18 Oktober 2026, 15:30 WIB",
             syncedIds: []
         };
         try {
@@ -173,26 +173,17 @@ const InstagramSync = {
         const existingAchievements = StorageManager.getAllAchievements();
         const existingActivities = StorageManager.getActivities();
 
-        // 1. Sinkronkan Postingan Prestasi Siswa
+        // 1. Sinkronkan Postingan Prestasi Siswa (Hanya jika ada ID siswa target spesifik yang valid, tidak memasukkan ke sembarang siswa)
         if (cfg.syncPrestasi) {
             const prestasiPosts = this.MASTER_IG_POSTS.filter(p => p.type === "prestasi");
             prestasiPosts.forEach(post => {
-                // Periksa apakah prestasi ini sudah pernah diposting sebelumnya
                 const isExists = existingAchievements.some(a => 
                     (a.igPostId && a.igPostId === post.igId) || 
                     (a.nama && a.nama.trim().toLowerCase() === post.nama.trim().toLowerCase())
                 );
 
-                if (!isExists) {
-                    // Cari siswa representatif berdasarkan kelas atau gunakan siswa terdaftar
-                    let targetStudent = null;
-                    if (post.targetKelas) {
-                        targetStudent = allStudents.find(s => s.kelas && s.kelas.toUpperCase() === post.targetKelas.toUpperCase());
-                    }
-                    if (!targetStudent && allStudents.length > 0) {
-                        targetStudent = allStudents[addedCount % allStudents.length];
-                    }
-
+                if (!isExists && post.targetStudentId) {
+                    const targetStudent = StorageManager.getStudentById(post.targetStudentId);
                     if (targetStudent) {
                         try {
                             const achievementData = {

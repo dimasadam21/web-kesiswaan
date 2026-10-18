@@ -6,8 +6,8 @@
 
 const STORAGE_KEY = "kesiswaan_app_data_v2";
 const STUDENTS_META_KEY = "kesiswaan_students_meta_v1";
-const STUDENTS_CLEAN_VERSION_KEY = "kesiswaan_students_clean_v20261018";
-const STUDENTS_ZERO_RESET_KEY = "kesiswaan_zero_reset_v20261018_final";
+const STUDENTS_CLEAN_VERSION_KEY = "kesiswaan_clean_zero_v20261018_v6";
+const STUDENTS_ZERO_RESET_KEY = "kesiswaan_clean_zero_v20261018_v6";
 const STUDENTS_CHUNK_PREFIX = "kesiswaan_students_c_";
 const IDB_NAME = "kesiswaan_idb";
 const IDB_STORE = "students";
@@ -670,14 +670,12 @@ const StorageManager = {
         if (!Array.isArray(masterList)) return [];
         const result = masterList.map(s => ({
             ...s,
-            pelanggaran: Array.isArray(s.pelanggaran) ? [...s.pelanggaran] : [],
-            prestasi: Array.isArray(s.prestasi) ? [...s.prestasi] : []
+            pelanggaran: [],
+            prestasi: [],
+            skorPelanggaran: 0,
+            totalPoinPrestasi: 0,
+            status: "Aman"
         }));
-
-        // Jika migrasi zero-reset belum dilakukan, jangan warisi data lama
-        if (!localStorage.getItem(STUDENTS_ZERO_RESET_KEY)) {
-            return result;
-        }
 
         if (Array.isArray(currentStudents) && currentStudents.length > 0) {
             const normalizeName = (str) => String(str || "").toLowerCase().replace(/[\t\r\n]+/g, " ").replace(/\s+/g, " ").trim();
@@ -694,35 +692,19 @@ const StorageManager = {
                 return n && k ? `${n}::${k}` : (n || (s.id ? String(s.id).toLowerCase() : ''));
             };
 
-            const currentMap = new Map();
-            currentStudents.forEach(cs => {
-                const key = makeKey(cs);
-                if (key) currentMap.set(key, cs);
-                if (cs.id) currentMap.set(String(cs.id).toLowerCase(), cs);
-            });
-
-            result.forEach(s => {
-                const cur = currentMap.get(makeKey(s)) ||
-                            (s.id && currentMap.get(String(s.id).toLowerCase()));
-                if (cur) {
-                    if (Array.isArray(cur.pelanggaran) && cur.pelanggaran.length > 0) {
-                        s.pelanggaran = cur.pelanggaran;
-                    }
-                    if (Array.isArray(cur.prestasi) && cur.prestasi.length > 0) {
-                        s.prestasi = cur.prestasi;
-                    }
-                    if (cur.status) s.status = cur.status;
-                    if (cur.skorPelanggaran !== undefined) s.skorPelanggaran = cur.skorPelanggaran;
-                    if (cur.totalPoinPrestasi !== undefined) s.totalPoinPrestasi = cur.totalPoinPrestasi;
-                }
-            });
-
-            // Siswa buatan manual yang tidak ada di master tetap dipertahankan berdasarkan Nama & Kelas
+            // Siswa buatan manual yang tidak ada di master tetap dipertahankan berdasarkan Nama & Kelas (tetap dimulai dari 0)
             currentStudents.forEach(cs => {
                 const csKey = makeKey(cs);
                 const inMaster = result.some(r => makeKey(r) === csKey);
                 if (!inMaster && cs.nama && cs.kelas) {
-                    result.push(cs);
+                    result.push({
+                        ...cs,
+                        pelanggaran: [],
+                        prestasi: [],
+                        skorPelanggaran: 0,
+                        totalPoinPrestasi: 0,
+                        status: "Aman"
+                    });
                 }
             });
         }
@@ -1621,78 +1603,7 @@ const StorageManager = {
     },
 
     ensureSampleAttendancesForClass(kelas) {
-        const existing = this.getAllClassAttendances(kelas);
-        if (existing.length > 0) return existing;
-
-        const students = this.ensureStudentsForClass(kelas);
-        if (!students || students.length === 0) return [];
-
-        const today = new Date();
-        const sampleDates = [];
-        let cur = new Date(today);
-        cur.setDate(cur.getDate() - 1);
-
-        while (sampleDates.length < 3) {
-            const day = cur.getDay();
-            if (day !== 0 && day !== 6) {
-                const y = cur.getFullYear();
-                const m = String(cur.getMonth() + 1).padStart(2, '0');
-                const d = String(cur.getDate()).padStart(2, '0');
-                sampleDates.push(`${y}-${m}-${d}`);
-            }
-            cur.setDate(cur.getDate() - 1);
-        }
-
-        const kegiatanLabels = {
-            1: "SENIN UPACARA",
-            2: "SELASA LITERASI",
-            3: "RABU SENAM & KEBERSIHAN",
-            4: "KAMIS BERKARYA",
-            5: "JUMAT RELIGI"
-        };
-
-        sampleDates.forEach((dateStr, sessionIdx) => {
-            const parts = dateStr.split('-');
-            const dObj = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
-            const dayOfWeek = dObj.getDay();
-            const keg = kegiatanLabels[dayOfWeek] || "Presensi Rutin";
-
-            const records = {};
-            students.forEach((s, sIdx) => {
-                let st = 'hadir';
-                let rambut = false;
-                let atribut = false;
-                let makeup = false;
-                let seragam = false;
-
-                if (sIdx === (sessionIdx + 2) % students.length) {
-                    st = 'izin';
-                } else if (sIdx === (sessionIdx + 5) % students.length) {
-                    st = 'sakit';
-                } else if (sIdx === 1 && sessionIdx === 0) {
-                    st = 'hadir';
-                    atribut = true;
-                } else if (sIdx === 3 && sessionIdx === 1) {
-                    st = 'hadir';
-                    seragam = true;
-                }
-
-                records[s.id] = {
-                    status: st,
-                    rambut: rambut,
-                    atribut: atribut,
-                    makeup: makeup,
-                    seragam: seragam,
-                    violations: {}
-                };
-            });
-
-            this.saveClassAttendance(kelas, dateStr, {
-                kegiatan: keg,
-                records: records
-            });
-        });
-
+        // Presensi upacara (Senin) dan senam (Rabu, Jumat) murni dimulai dari nol tanpa data dummy
         return this.getAllClassAttendances(kelas);
     },
 
@@ -1771,17 +1682,31 @@ const StorageManager = {
         localStorage.setItem(STUDENTS_CLEAN_VERSION_KEY, "true");
         localStorage.setItem(STUDENTS_ZERO_RESET_KEY, "true");
 
-        // Bersihkan array students di STORAGE_KEY agar tidak menyimpan data duplikat lama
+        // Bersihkan array students dan seluruh riwayat presensi (Upacara Senin, Senam Rabu & Jumat)
         try {
             const raw = localStorage.getItem(STORAGE_KEY);
             if (raw) {
                 const p = JSON.parse(raw);
                 if (p && typeof p === "object") {
                     p.students = [];
+                    p.classAttendances = {};
                     localStorage.setItem(STORAGE_KEY, JSON.stringify(p));
                 }
             }
         } catch (e) {}
+
+        // Nonaktifkan sinkronisasi otomatis prestasi Instagram yang sebelumnya memasukkan prestasi dummy ke siswa
+        try {
+            const igCfgRaw = localStorage.getItem("KESISWAAN_IG_SYNC_CONFIG");
+            if (igCfgRaw) {
+                const igCfg = JSON.parse(igCfgRaw);
+                igCfg.syncPrestasi = false;
+                localStorage.setItem("KESISWAAN_IG_SYNC_CONFIG", JSON.stringify(igCfg));
+            }
+        } catch (e) {}
+
+        this._dataCache = null;
+        this._rulesCache = null;
 
         return cleanList;
     },

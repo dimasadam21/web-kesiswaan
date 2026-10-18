@@ -1579,9 +1579,8 @@ const AdminPortal = {
 
         this.populateRekapClassOptions();
 
-        // Pastikan siswa dan data presensi siap
+        // Pastikan siswa untuk kelas target siap
         StorageManager.ensureStudentsForClass(this.currentAttendanceClass);
-        StorageManager.ensureSampleAttendancesForClass(this.currentAttendanceClass);
 
         const allStudents = StorageManager.getStudents();
         const cleanCurrent = this.currentAttendanceClass.trim().toLowerCase().replace(/[\s\-_.]/g, '');
