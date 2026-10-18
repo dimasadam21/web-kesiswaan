@@ -1180,12 +1180,12 @@ const AdminPortal = {
             // Geser ke Alpha
             currentRec.status = 'alpha';
 
-            // Catat pelanggaran Alpha: 10 poin
+            // Catat pelanggaran Alpha: 15 poin
             if (!currentRec.violations.alphaId) {
                 const viol = StorageManager.addStudentViolation(studentId, {
                     nama: "Tidak masuk tanpa keterangan/Alpha baik pelajaran/upacara/senam",
                     kategori: "Kedisiplinan",
-                    poin: 10,
+                    poin: 15,
                     sanksi: `Pembinaan Wali Kelas & Presensi (${this.getHariKegiatanText(this.currentAttendanceDate)})`,
                     pencatat: pencatat,
                     tanggal: this.currentAttendanceDate
@@ -1235,12 +1235,12 @@ const AdminPortal = {
         currentRec.status = newKet;
 
         if (newKet === 'alpha') {
-            // Tambahkan pelanggaran Alpha jika belum ada
+            // Tambahkan pelanggaran Alpha jika belum ada (15 poin)
             if (!currentRec.violations.alphaId) {
                 const viol = StorageManager.addStudentViolation(studentId, {
                     nama: "Tidak masuk tanpa keterangan/Alpha baik pelajaran/upacara/senam",
                     kategori: "Kedisiplinan",
-                    poin: 10,
+                    poin: 15,
                     sanksi: `Pembinaan Wali Kelas & Presensi (${this.getHariKegiatanText(this.currentAttendanceDate)})`,
                     pencatat: pencatat,
                     tanggal: this.currentAttendanceDate
@@ -1289,7 +1289,7 @@ const AdminPortal = {
 
         if (isChecked) {
             let namaViol = "";
-            let poinViol = 5;
+            let poinViol = 10;
             let sanksiViol = "";
 
             if (field === 'rambut' || field === 'makeup') {
@@ -1300,7 +1300,7 @@ const AdminPortal = {
                     : "Peringatan & pembersihan riasan make up berlebih";
             } else if (field === 'atribut' || field === 'seragam') {
                 namaViol = "Atribut seragam tidak lengkap/tidak benar";
-                poinViol = 5;
+                poinViol = 10;
                 sanksiViol = field === 'atribut'
                     ? "Peringatan kelengkapan atribut seragam sekolah"
                     : "Peringatan kerapian pakaian seragam sekolah";
@@ -1610,9 +1610,9 @@ const AdminPortal = {
             if (!isNoRambut) {
                 row["Rambut (10 Poin)"] = rec.rambut ? "Melanggar" : "Rapi";
             }
-            row["Atribut (5 Poin)"] = rec.atribut ? "Melanggar" : "Lengkap";
+            row["Atribut (10 Poin)"] = rec.atribut ? "Melanggar" : "Lengkap";
             row["Make up (10 Poin)"] = rec.makeup ? "Melanggar" : "Rapi";
-            row["Seragam (5 Poin)"] = rec.seragam ? "Melanggar" : "Rapi";
+            row["Seragam (10 Poin)"] = rec.seragam ? "Melanggar" : "Rapi";
             return row;
         });
 

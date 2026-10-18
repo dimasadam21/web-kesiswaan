@@ -39,6 +39,39 @@ const StorageManager = {
         if (!localStorage.getItem(STUDENTS_ZERO_RESET_KEY)) {
             this.resetAllStudentRecordsToZero();
         }
+
+        // Sinkronisasi otomatis master tata tertib & poin pelanggaran resmi Super Admin
+        // (Alpha 15 poin, Atribut / Seragam 10 poin, Rambut / Make up 10 poin)
+        const curData = this.getData();
+        if (curData && Array.isArray(curData.violationsMaster)) {
+            let updated = false;
+            curData.violationsMaster.forEach(v => {
+                if (v.id === "P04" || v.id === "P05" || (v.nama && (v.nama.toLowerCase().includes("tanpa keterangan") || v.nama.toLowerCase().includes("alpha baik pelajaran")))) {
+                    if (v.poin !== 15) { v.poin = 15; updated = true; }
+                }
+                if (v.id === "P06" || v.id === "P07" || (v.nama && (v.nama.toLowerCase().includes("atribut seragam") || v.nama.toLowerCase().includes("pakaian ketat")))) {
+                    if (v.poin !== 10) { v.poin = 10; updated = true; }
+                }
+            });
+            if (curData.tataTertib && Array.isArray(curData.tataTertib)) {
+                curData.tataTertib.forEach(tt => {
+                    if (tt.id === "TT-01" && Array.isArray(tt.butirAturan)) {
+                        tt.butirAturan = tt.butirAturan.map(b => b.replace("Poin 10", "Poin 15"));
+                        updated = true;
+                    }
+                    if (tt.id === "TT-02") {
+                        if (tt.poinRentang !== "Poin 10") {
+                            tt.poinRentang = "Poin 10";
+                            updated = true;
+                        }
+                    }
+                });
+            }
+            if (updated) {
+                this.saveData(curData);
+            }
+        }
+
         // Pastikan cache siswa dimuat
         this.getStudents();
         // Inisialisasi IndexedDB sebagai backup tahan kuota

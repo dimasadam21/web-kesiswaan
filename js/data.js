@@ -709,10 +709,10 @@ const MASTER_PELANGGARAN = [
     { id: "P01", kategori: "Kedisiplinan", nama: "Terlambat masuk sekolah (1-15 menit)", poin: 5 },
     { id: "P02", kategori: "Kedisiplinan", nama: "Terlambat masuk sekolah (>15 menit)", poin: 10 },
     { id: "P03", kategori: "Kedisiplinan", nama: "Keluar kelas/sekolah tanpa izin (Membolos)", poin: 20 },
-    { id: "P04", kategori: "Kedisiplinan", nama: "Tidak masuk tanpa keterangan/Alpha baik pelajaran/upacara/senam", poin: 10 },
-    { id: "P05", kategori: "Kedisiplinan", nama: "Tidak masuk sekolah tanpa keterangan (Alfa)", poin: 10 },
-    { id: "P06", kategori: "Kerapian", nama: "Atribut seragam tidak lengkap/tidak benar", poin: 5 },
-    { id: "P07", kategori: "Kerapian", nama: "Pakaian ketat, tidak dimasukkan, atau tidak sesuai jadwal", poin: 5 },
+    { id: "P04", kategori: "Kedisiplinan", nama: "Tidak masuk tanpa keterangan/Alpha baik pelajaran/upacara/senam", poin: 15 },
+    { id: "P05", kategori: "Kedisiplinan", nama: "Tidak masuk sekolah tanpa keterangan (Alfa)", poin: 15 },
+    { id: "P06", kategori: "Kerapian", nama: "Atribut seragam tidak lengkap/tidak benar", poin: 10 },
+    { id: "P07", kategori: "Kerapian", nama: "Pakaian ketat, tidak dimasukkan, atau tidak sesuai jadwal", poin: 10 },
     { id: "P08", kategori: "Kerapian", nama: "Rambut panjang (untuk putra)/dicat (untuk putra&putri)/make up berlebih", poin: 10 },
     { id: "P09", kategori: "Etika", nama: "Menggunakan HP saat KBM tanpa instruksi guru", poin: 10 },
     { id: "P10", kategori: "Etika", nama: "Bersikap tidak sopan / membantah guru atau karyawan", poin: 25 },
@@ -1243,7 +1243,7 @@ const DEFAULT_TATA_TERTIB = [
             "Bel masuk sekolah berbunyi tepat pukul 07.00 WIB. Siswa wajib hadir di sekolah paling lambat 15 menit sebelum bel berbunyi (06.45 WIB).",
             "Pukul 07.00 - 07.15 WIB diawali kegiatan pembiasaan: menyanyikan Lagu Indonesia Raya, tadarus Al-Qur'an / doa bersama, dan literasi pagi.",
             "Siswa yang tiba di sekolah setelah pukul 07.00 WIB dinyatakan terlambat dan wajib melapor ke Guru Piket untuk mendapatkan surat izin masuk kelas (Terlambat 1-15 menit: Poin 5; Terlambat >15 menit: Poin 10).",
-            "Siswa yang tidak hadir karena sakit wajib menyerahkan surat keterangan dokter atau surat dari orang tua/wali. Ketidakhadiran tanpa izin (Alfa) dikenakan sanksi Poin 10.",
+            "Siswa yang tidak hadir karena sakit wajib menyerahkan surat keterangan dokter atau surat dari orang tua/wali. Ketidakhadiran tanpa izin (Alfa) dikenakan sanksi Poin 15.",
             "Siswa dilarang meninggalkan area sekolah selama jam pelajaran berlangsung tanpa izin tertulis dari Guru Piket / Guru BK (Membolos dikenakan sanksi Poin 20)."
         ]
     },
@@ -1253,7 +1253,7 @@ const DEFAULT_TATA_TERTIB = [
         kategoriLabel: "👔 Seragam & Kerapian",
         judul: "Standar Pakaian Seragam & Atribut Kerapian",
         ikon: "👔",
-        poinRentang: "Poin 5 - 10",
+        poinRentang: "Poin 10",
         butirAturan: [
             "Senin & Selasa: Seragam Putih Abu-Abu lengkap dengan badge OSIS, lambang sekolah, dasi, ikat pinggang resmi sekolah, dan kaos kaki putih di atas mata kaki.",
             "Rabu: Seragam Khas Sekolah / Kejuruan rapi dan sopan.",
