@@ -31,11 +31,43 @@ const AdminPortal = {
         return new Date(dateStr + "T00:00:00").getDay();
     },
 
-    init() {},
+    init() {
+        this.currentAttendanceDate = this.getTodayDate();
+        this.updateAttendanceDayDisplay(this.currentAttendanceDate);
+    },
+
+    updateAttendanceDayDisplay(dateStr) {
+        if (!dateStr) dateStr = this.currentAttendanceDate || this.getTodayDate();
+        const dayOfWeek = this.getDayOfWeek(dateStr);
+        const dayNames = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jum'at", "Sabtu"];
+        const dayName = dayNames[dayOfWeek] || "";
+
+        const badgeDay = document.getElementById("attDayNameBadge");
+        if (badgeDay) {
+            badgeDay.textContent = dayName;
+        }
+
+        const dateInput = document.getElementById("attFilterTanggal");
+        if (dateInput && !dateInput.value) {
+            dateInput.value = dateStr;
+        }
+
+        const bannerText = this.getHariKegiatanText(dateStr);
+        const headerBanner = document.getElementById("attHeaderBannerText");
+        if (headerBanner) {
+            headerBanner.textContent = `📅 ${bannerText}`;
+        }
+
+        const tableBanner = document.getElementById("attTableActivityBanner");
+        if (tableBanner) {
+            tableBanner.textContent = bannerText;
+        }
+    },
 
     initTeacherPortal(user) {
         // Otomatiskan tanggal presensi sesuai hari lokal saat ini saat mengisi
         this.currentAttendanceDate = this.getTodayDate();
+        this.updateAttendanceDayDisplay(this.currentAttendanceDate);
 
         const greeting = document.getElementById("teacherGreetingName");
         if (greeting) {
@@ -861,21 +893,43 @@ const AdminPortal = {
         const dayOfWeek = this.getDayOfWeek(dateStr); // 0: Minggu, 1: Senin, 2: Selasa, 3: Rabu, 4: Kamis, 5: Jumat, 6: Sabtu
         const schedule = StorageManager.getAttendanceSchedule();
 
-        if (schedule && schedule[dayOfWeek] && schedule[dayOfWeek].aktif !== false && schedule[dayOfWeek].kode) {
+        // 1. Hari Senin: otomatis ada tambahan tulisan upacara -> "SENIN UPACARA"
+        if (dayOfWeek === 1) {
+            if (schedule && schedule[1] && schedule[1].aktif !== false && schedule[1].kode) {
+                return schedule[1].kode;
+            }
+            return "SENIN UPACARA";
+        }
+
+        // 2. Hari Rabu: otomatis -> "RABU SENAM"
+        if (dayOfWeek === 3) {
+            if (schedule && schedule[3] && schedule[3].aktif !== false && schedule[3].kode) {
+                return schedule[3].kode;
+            }
+            return "RABU SENAM";
+        }
+
+        // 3. Hari Jum'at: otomatis -> "JUM'AT SENAM"
+        if (dayOfWeek === 5) {
+            if (schedule && schedule[5] && schedule[5].aktif !== false && schedule[5].kode && schedule[5].kode !== "JUMAT SENAM") {
+                return schedule[5].kode;
+            }
+            return "JUM'AT SENAM";
+        }
+
+        // 4. Selebihnya tulisan hari biasa sesuai nama harinya: "SELASA", "KAMIS", "SABTU", "MINGGU"
+        if (schedule && schedule[dayOfWeek] && schedule[dayOfWeek].aktif && schedule[dayOfWeek].kode) {
             return schedule[dayOfWeek].kode;
         }
 
-        const defaultCodes = {
-            1: "SENIN UPACARA",
-            2: "SELASA PRESENSI",
-            3: "RABU SENAM",
-            4: "KAMIS PRESENSI",
-            5: "JUMAT SENAM",
-            6: "SABTU PRESENSI",
-            0: "MINGGU PRESENSI"
+        const defaultDayLabels = {
+            2: "SELASA",
+            4: "KAMIS",
+            6: "SABTU",
+            0: "MINGGU"
         };
 
-        return defaultCodes[dayOfWeek] || "PRESENSI HARIAN";
+        return defaultDayLabels[dayOfWeek] || "SENIN UPACARA";
     },
 
     populateAttendanceClassOptions() {
@@ -922,6 +976,7 @@ const AdminPortal = {
     handleAttendanceDateChange(val) {
         if (!val) return;
         this.currentAttendanceDate = val;
+        this.updateAttendanceDayDisplay(val);
         this.renderClassAttendance();
     },
 
@@ -966,21 +1021,13 @@ const AdminPortal = {
         }
 
         const dayOfWeek = this.getDayOfWeek(this.currentAttendanceDate);
-        const dayNames = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
-        const dayName = dayNames[dayOfWeek] || "";
-        const badgeDay = document.getElementById("attDayNameBadge");
-        if (badgeDay) {
-            badgeDay.textContent = dayName;
-        }
+        this.updateAttendanceDayDisplay(this.currentAttendanceDate);
 
         const isRambutActive = StorageManager.isRambutChecklistActive(this.currentAttendanceDate);
         const isNoRambut = !isRambutActive; // Default hanya keluar pada Senin Minggu Pertama atau jika diatur aktif oleh Super Admin
         this.updateRambutToggleButton();
 
         const bannerText = this.getHariKegiatanText(this.currentAttendanceDate);
-        const headerBanner = document.getElementById("attHeaderBannerText");
-        if (headerBanner) headerBanner.textContent = `📅 ${bannerText}`;
-
         const tableBanner = document.getElementById("attTableActivityBanner");
         if (tableBanner) {
             tableBanner.textContent = bannerText;
