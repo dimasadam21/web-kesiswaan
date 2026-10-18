@@ -1612,6 +1612,43 @@ const Forms = {
         }
     },
 
+    resetAllStudentRecordsToZero() {
+        const confirmReset = confirm("PERINGATAN RESET AWAL TAHUN AJARAN / SEMESTER:\n\nApakah Anda yakin ingin me-reset SEMUA data pelanggaran dan prestasi seluruh siswa ke 0?\n\n• Seluruh siswa akan memulai dari 0 poin pelanggaran dan 0 prestasi.\n• Status seluruh siswa kembali menjadi Aman.\n• Nama dan kelas resmi dari master 2.107 siswa tetap bersih dan utuh.");
+        if (!confirmReset) return;
+
+        try {
+            const cleanList = StorageManager.resetAllStudentRecordsToZero();
+
+            this.populateExportStudentClassFilter();
+            this.renderExportStudentsTable();
+
+            if (window.App && typeof App.renderAll === "function") {
+                App.renderAll();
+            }
+
+            if (window.AdminPortal) {
+                if (typeof AdminPortal.renderTeacherAllStudents === "function") {
+                    AdminPortal.renderTeacherAllStudents();
+                }
+                if (typeof AdminPortal.renderAdminPrestasiList === "function") {
+                    AdminPortal.renderAdminPrestasiList();
+                }
+                if (typeof AdminPortal.updateAdminBadgeCounts === "function") {
+                    AdminPortal.updateAdminBadgeCounts();
+                }
+            }
+
+            if (window.App && typeof App.showToast === "function") {
+                App.showToast(`Berhasil me-reset seluruh ${cleanList.length} siswa ke 0 poin (awal periode)!`);
+            } else {
+                alert(`Berhasil me-reset seluruh ${cleanList.length} siswa ke 0 poin!`);
+            }
+        } catch (e) {
+            console.error("Gagal me-reset data siswa ke 0:", e);
+            alert("Terjadi kesalahan saat me-reset siswa: " + e.message);
+        }
+    },
+
     populateExportStudentClassFilter() {
         const select = document.getElementById("exportStudentFilterKelas");
         if (!select) return;

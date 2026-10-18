@@ -669,43 +669,8 @@ const INITIAL_STUDENTS = [
         waliKelas: "Budi Santoso, S.Kom",
         kontakOrtu: "0812-3456-7890",
         foto: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=300&q=80",
-        prestasi: [
-            {
-                id: "PR-HIST-01",
-                tanggal: "2026-02-14",
-                nama: "Juara 1 Lomba Web Design & Coding EduTech 2026",
-                kategori: "Akademik",
-                tingkat: "Nasional",
-                peringkat: "Juara 1",
-                poin: 0,
-                foto: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=800&q=80",
-                keterangan: "Mewakili provinsi ke tingkat nasional di Bandung dan meraih medali emas inovasi teknologi.",
-                pencatat: "Dra. Hj. Siti Rahma (Kesiswaan)"
-            },
-            {
-                id: "PR-HIST-02",
-                tanggal: "2025-11-20",
-                nama: "Ketua Panitia Bulan Bahasa & Literasi 2025",
-                kategori: "Karakter",
-                tingkat: "Sekolah",
-                peringkat: "Apresiasi",
-                poin: 0,
-                foto: "https://images.unsplash.com/photo-1511632765486-a01980e01a18?auto=format&fit=crop&w=800&q=80",
-                keterangan: "Keberhasilan mengoordinasikan kegiatan literasi sekolah dengan keterlibatan 800+ siswa.",
-                pencatat: "Budi Santoso, S.Kom"
-            }
-        ],
-        pelanggaran: [
-            {
-                id: "PL-HIST-01",
-                tanggal: "2026-01-10",
-                nama: "Terlambat masuk sekolah (1-15 menit)",
-                kategori: "Kedisiplinan",
-                poin: 5,
-                sanksi: "Tadarus pagi 15 menit & piket perpustakaan",
-                pencatat: "H. Mustofa, M.Pd (Guru Piket)"
-            }
-        ]
+        prestasi: [],
+        pelanggaran: []
     },
     {
         id: "SIS-002",
@@ -727,32 +692,7 @@ const INITIAL_STUDENTS = [
         waliKelas: "Dewi Lestari, M.Pd",
         kontakOrtu: "0813-8899-1122",
         foto: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80",
-        prestasi: [
-            {
-                id: "PR-HIST-03",
-                tanggal: "2026-01-25",
-                nama: "Medali Emas Olimpiade Biologi Pelajar (OSN-P)",
-                kategori: "Akademik",
-                tingkat: "Provinsi",
-                peringkat: "Juara 1",
-                poin: 0,
-                foto: "https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&w=800&q=80",
-                keterangan: "Lolos dengan skor tertinggi se-provinsi dan melaju ke Olimpiade Sains Nasional.",
-                pencatat: "Dewi Lestari, M.Pd"
-            },
-            {
-                id: "PR-HIST-04",
-                tanggal: "2025-10-18",
-                nama: "Juara 2 Debat Bahasa Inggris Tingkat Kota",
-                kategori: "Akademik",
-                tingkat: "Kota/Kabupaten",
-                peringkat: "Juara 2",
-                poin: 0,
-                foto: "https://images.unsplash.com/photo-1475721027785-f74eccf877e2?auto=format&fit=crop&w=800&q=80",
-                keterangan: "Inter-Highschool English Debating Championship 2025.",
-                pencatat: "Farhan Hakim, S.Pd"
-            }
-        ],
+        prestasi: [],
         pelanggaran: []
     },
     {
@@ -776,26 +716,7 @@ const INITIAL_STUDENTS = [
         kontakOrtu: "0852-7711-4433",
         foto: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=300&q=80",
         prestasi: [],
-        pelanggaran: [
-            {
-                id: "PL-HIST-02",
-                tanggal: "2026-01-08",
-                nama: "Merokok / membawa rokok atau vape di lingkungan sekolah",
-                kategori: "Berat",
-                poin: 40,
-                sanksi: "Pembinaan BK & Surat komitmen",
-                pencatat: "Bambang Wijaya, S.Pd (BK)"
-            },
-            {
-                id: "PL-HIST-03",
-                tanggal: "2026-02-02",
-                nama: "Keluar kelas/sekolah tanpa izin (Membolos)",
-                kategori: "Kedisiplinan",
-                poin: 20,
-                sanksi: "Panggilan Orang Tua I & Tugas Literasi",
-                pencatat: "Agus Salim, S.T"
-            }
-        ]
+        pelanggaran: []
     },
     {
         id: "SIS-004",
@@ -818,26 +739,7 @@ const INITIAL_STUDENTS = [
         kontakOrtu: "0819-2233-4455",
         foto: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=300&q=80",
         prestasi: [],
-        pelanggaran: [
-            {
-                id: "PL-HIST-05",
-                tanggal: "2026-01-12",
-                nama: "Terlibat perkelahian / tawuran di dalam atau luar sekolah",
-                kategori: "Berat",
-                poin: 75,
-                sanksi: "Panggilan Orang Tua, Skorsing 3 Hari & SP 1",
-                pencatat: "Bambang Wijaya, S.Pd (BK)"
-            },
-            {
-                id: "PL-HIST-06",
-                tanggal: "2026-02-05",
-                nama: "Keluar kelas/sekolah tanpa izin (Membolos)",
-                kategori: "Kedisiplinan",
-                poin: 20,
-                sanksi: "Peringatan Keras Tim Kesiswaan",
-                pencatat: "H. Mustofa, M.Pd"
-            }
-        ]
+        pelanggaran: []
     },
     {
         id: "SIS-005",
@@ -859,32 +761,7 @@ const INITIAL_STUDENTS = [
         waliKelas: "Rina Kusuma, S.E",
         kontakOrtu: "0878-5544-3322",
         foto: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=300&q=80",
-        prestasi: [
-            {
-                id: "PR-HIST-05",
-                tanggal: "2026-02-01",
-                nama: "Juara 1 Lomba Kompetensi Akuntansi Tingkat Kota",
-                kategori: "Akademik",
-                tingkat: "Kota/Kabupaten",
-                peringkat: "Juara 1",
-                poin: 0,
-                foto: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=800&q=80",
-                keterangan: "Lomba Akuntansi Keuangan Lembaga Tingkat Kota Bandung.",
-                pencatat: "Rina Kusuma, S.E"
-            },
-            {
-                id: "PR-HIST-06",
-                tanggal: "2025-09-10",
-                nama: "Hafiz Quran 5 Juz Teruji",
-                kategori: "Karakter",
-                tingkat: "Sekolah",
-                peringkat: "Mumtaz",
-                poin: 0,
-                foto: "https://images.unsplash.com/photo-1609599006353-e629aaabfeae?auto=format&fit=crop&w=800&q=80",
-                keterangan: "Wisuda Tahfidz Angkatan 2025 dengan predikat kelulusan Mumtaz.",
-                pencatat: "Ust. M. Ridwan, M.Ag"
-            }
-        ],
+        prestasi: [],
         pelanggaran: []
     },
     {
@@ -898,35 +775,7 @@ const INITIAL_STUDENTS = [
         kontakOrtu: "0856-1122-3344",
         foto: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=300&q=80",
         prestasi: [],
-        pelanggaran: [
-            {
-                id: "PL-HIST-09",
-                tanggal: "2026-01-15",
-                nama: "Merokok / membawa rokok di lingkungan sekolah",
-                kategori: "Berat",
-                poin: 40,
-                sanksi: "Panggilan Wali Murid",
-                pencatat: "Bambang Wijaya, S.Pd (BK)"
-            },
-            {
-                id: "PL-HIST-10",
-                tanggal: "2026-01-29",
-                nama: "Mencemarkan nama baik guru di media sosial",
-                kategori: "Etika",
-                poin: 35,
-                sanksi: "Permohonan maaf terbuka & SP 1",
-                pencatat: "Dra. Hj. Siti Rahma (Kesiswaan)"
-            },
-            {
-                id: "PL-HIST-11",
-                tanggal: "2026-02-16",
-                nama: "Keluar kelas tanpa izin (Membolos)",
-                kategori: "Kedisiplinan",
-                poin: 20,
-                sanksi: "Panggilan Orang Tua III, SP 2 & Skorsing",
-                pencatat: "Wawan Kurniawan, S.T"
-            }
-        ]
+        pelanggaran: []
     }
 ];
 

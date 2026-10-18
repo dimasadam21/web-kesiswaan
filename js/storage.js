@@ -7,6 +7,7 @@
 const STORAGE_KEY = "kesiswaan_app_data_v2";
 const STUDENTS_META_KEY = "kesiswaan_students_meta_v1";
 const STUDENTS_CLEAN_VERSION_KEY = "kesiswaan_students_clean_v20261018";
+const STUDENTS_ZERO_RESET_KEY = "kesiswaan_zero_reset_v20261018_final";
 const STUDENTS_CHUNK_PREFIX = "kesiswaan_students_c_";
 const IDB_NAME = "kesiswaan_idb";
 const IDB_STORE = "students";
@@ -30,6 +31,10 @@ const StorageManager = {
                 activities: DAFTAR_KEGIATAN
             });
         }
+        // Pastikan reset total pelanggaran & prestasi ke 0 jika belum dilakukan
+        if (!localStorage.getItem(STUDENTS_ZERO_RESET_KEY)) {
+            this.resetAllStudentRecordsToZero();
+        }
         // Pastikan cache siswa dimuat
         this.getStudents();
         // Inisialisasi IndexedDB sebagai backup tahan kuota
@@ -52,6 +57,10 @@ const StorageManager = {
                 const store = tx.objectStore(IDB_STORE);
                 const getReq = store.get("all_students");
                 getReq.onsuccess = () => {
+                    if (!localStorage.getItem(STUDENTS_ZERO_RESET_KEY)) {
+                        this.resetAllStudentRecordsToZero();
+                        return;
+                    }
                     if (getReq.result && Array.isArray(getReq.result.data) && getReq.result.data.length > 0) {
                         const idbData = getReq.result.data;
                         // Pulihkan dari IDB jika IDB memiliki data lengkap (>= 2000 siswa) dan memori belum lengkap
@@ -641,6 +650,11 @@ const StorageManager = {
             prestasi: Array.isArray(s.prestasi) ? [...s.prestasi] : []
         }));
 
+        // Jika migrasi zero-reset belum dilakukan, jangan warisi data lama
+        if (!localStorage.getItem(STUDENTS_ZERO_RESET_KEY)) {
+            return result;
+        }
+
         if (Array.isArray(currentStudents) && currentStudents.length > 0) {
             const normalizeName = (str) => String(str || "").toLowerCase().replace(/[\t\r\n]+/g, " ").replace(/\s+/g, " ").trim();
             const normalizeClass = (str) => {
@@ -697,8 +711,12 @@ const StorageManager = {
             ? MASTER_STUDENTS_LIST
             : ((typeof INITIAL_STUDENTS !== 'undefined' && Array.isArray(INITIAL_STUDENTS)) ? INITIAL_STUDENTS : []);
 
-        // 0. Sinkronisasi data resmi bersih super admin (hanya Nama dan Kelas)
-        // Riwayat pelanggaran dan prestasi yang sudah dicatat sebelumnya tetap dipertahankan
+        // 0. RESET SEMUA PELANGGARAN & PRESTASI KE 0 (UNTUK AWAL TAHUN AJARAN BARU)
+        if (!localStorage.getItem(STUDENTS_ZERO_RESET_KEY) && masterSource.length > 0) {
+            return this.resetAllStudentRecordsToZero();
+        }
+
+        // 1. Sinkronisasi data resmi bersih super admin (hanya Nama dan Kelas)
         const isCleanSynced = localStorage.getItem(STUDENTS_CLEAN_VERSION_KEY);
         if (!isCleanSynced && masterSource.length > 0) {
             let loadedForSync = [];
@@ -785,10 +803,6 @@ const StorageManager = {
         // 3. Fallback master resmi 2.107 siswa SMKN 1 Magelang
         // Jika data siswa < 2000 (misal terpotong menjadi 382 siswa), sinkronkan otomatis
         // dengan master 2.107 siswa tanpa menghilangkan catatan pelanggaran / prestasi yang ada.
-        const masterSource = (typeof MASTER_STUDENTS_LIST !== 'undefined' && Array.isArray(MASTER_STUDENTS_LIST) && MASTER_STUDENTS_LIST.length > 0)
-            ? MASTER_STUDENTS_LIST
-            : ((typeof INITIAL_STUDENTS !== 'undefined' && Array.isArray(INITIAL_STUDENTS)) ? INITIAL_STUDENTS : []);
-
         if (masterSource.length > 0) {
             const merged = this.mergeWithMasterStudents(masterSource, loadedStudents.length > 0 ? loadedStudents : (this._studentsCache || []));
             this._studentsCache = merged;
@@ -1583,8 +1597,68 @@ const StorageManager = {
         return classStudents;
     },
 
+    resetAllStudentRecordsToZero() {
+        const masterSource = (typeof MASTER_STUDENTS_LIST !== 'undefined' && Array.isArray(MASTER_STUDENTS_LIST) && MASTER_STUDENTS_LIST.length > 0)
+            ? MASTER_STUDENTS_LIST
+            : ((typeof INITIAL_STUDENTS !== 'undefined' && Array.isArray(INITIAL_STUDENTS)) ? INITIAL_STUDENTS : []);
+
+        const cleanList = masterSource.map(s => ({
+            id: s.id,
+            no: s.no,
+            foto: "",
+            nis: "",
+            nisn: "",
+            nama: s.nama,
+            gender: s.gender || "L",
+            kelas: s.kelas,
+            jurusan: s.jurusan || "-",
+            tempatLahir: "",
+            tanggalLahir: "",
+            agama: "",
+            tempatTinggal: "",
+            alamat: "",
+            mapsAlamat: "",
+            nomorHp: "",
+            namaOrtuBapak: "",
+            pekerjaanBapak: "",
+            noHpBapak: "",
+            namaOrtuIbu: "",
+            pekerjaanIbu: "",
+            noHpIbu: "",
+            inputSpmb: "",
+            waliKelas: s.waliKelas || "-",
+            kontakOrtu: s.kontakOrtu || "-",
+            prestasi: [],
+            pelanggaran: [],
+            skorPelanggaran: 0,
+            totalPoinPrestasi: 0,
+            status: "Aman"
+        }));
+
+        this._studentsCache = cleanList;
+        this.saveStudents(cleanList, true);
+        localStorage.setItem(STUDENTS_CLEAN_VERSION_KEY, "true");
+        localStorage.setItem(STUDENTS_ZERO_RESET_KEY, "true");
+
+        // Bersihkan array students di STORAGE_KEY agar tidak menyimpan data duplikat lama
+        try {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (raw) {
+                const p = JSON.parse(raw);
+                if (p && typeof p === "object") {
+                    p.students = [];
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(p));
+                }
+            }
+        } catch (e) {}
+
+        return cleanList;
+    },
+
     resetToDefault() {
         localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem(STUDENTS_ZERO_RESET_KEY);
+        this.resetAllStudentRecordsToZero();
         this.init();
     }
 };

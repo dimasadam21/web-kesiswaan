@@ -591,6 +591,42 @@ const AdminPortal = {
             return a.student.nama.localeCompare(b.student.nama);
         });
 
+        // Cek jika seluruh siswa saat ini bernilai 0 (karena baru dimulai dari awal)
+        const hasAnyScore = studentsWithStatus.some(item => item.score > 0);
+        if (!hasAnyScore) {
+            let emptyTitle = "Semua Data Siswa Bersih (0 Poin)";
+            let emptyDesc = "Catatan pelanggaran dan prestasi seluruh siswa dalam kondisi 0 (awal periode). Peringkat siswa berprestasi atau pelanggaran akan otomatis tersusun setelah ada pencatatan data baru.";
+            if (mode === 'prestasi') {
+                emptyTitle = "Belum Ada Catatan Prestasi Siswa";
+                emptyDesc = "Seluruh 2.107 siswa memulai dari 0 prestasi. Peringkat siswa berprestasi tertinggi akan otomatis tampil saat prestasi baru dicatat.";
+            } else if (mode === 'pelanggaran') {
+                emptyTitle = "Seluruh Siswa Berstatus Aman (0 Poin)";
+                emptyDesc = "Tidak ada catatan pelanggaran siswa pada periode ini. Semua siswa memiliki 0 poin pelanggaran.";
+            }
+
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" style="text-align: center; padding: 2.8rem 1.5rem; color: var(--text-muted); background: #fafafa;">
+                        <div style="font-size: 2.2rem; margin-bottom: 0.6rem;">🌱</div>
+                        <strong style="color: var(--text-main); font-size: 1.05rem; display: block; margin-bottom: 6px;">${emptyTitle}</strong>
+                        <p style="font-size: 0.85rem; max-width: 540px; margin: 0 auto 16px auto; line-height: 1.5;">${emptyDesc}</p>
+                        <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
+                            <button type="button" class="btn btn-outline btn-sm" onclick="Forms.openManageStudentsModal()">
+                                👥 Buka Seluruh Data Siswa
+                            </button>
+                            <button type="button" class="btn btn-success btn-sm" onclick="Forms.openAchievementModal()">
+                                🏆 + Catat Prestasi Baru
+                            </button>
+                            <button type="button" class="btn btn-danger btn-sm" onclick="Forms.openViolationModal()">
+                                ⚠️ + Catat Pelanggaran
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
         // Cukup tampilkan 10 siswa teratas
         const top10 = studentsWithStatus.slice(0, 10);
 
@@ -601,11 +637,11 @@ const AdminPortal = {
             const isSp = StorageManager.isStudentEligibleForSummons(s);
 
             let rankBadge = '';
-            if (idx === 0) {
+            if (item.score > 0 && idx === 0) {
                 rankBadge = `<span class="rank-badge rank-1" title="Peringkat 1">🥇 1</span>`;
-            } else if (idx === 1) {
+            } else if (item.score > 0 && idx === 1) {
                 rankBadge = `<span class="rank-badge rank-2" title="Peringkat 2">🥈 2</span>`;
-            } else if (idx === 2) {
+            } else if (item.score > 0 && idx === 2) {
                 rankBadge = `<span class="rank-badge rank-3" title="Peringkat 3">🥉 3</span>`;
             } else {
                 rankBadge = `<span class="rank-badge rank-other">${idx + 1}</span>`;
