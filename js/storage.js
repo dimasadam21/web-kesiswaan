@@ -97,6 +97,21 @@ const SyncManager = {
 
         // Segera perbarui tampilan antarmuka yang sedang dibuka tanpa reload halaman
         if (window.AdminPortal) {
+            // Segera perbarui tabel siapa saja siswa yang tercatat pelanggaran maupun prestasi
+            if (typeof AdminPortal.renderTeacherAllStudents === "function") {
+                AdminPortal.renderTeacherAllStudents();
+            }
+
+            // Segarkan kartu detail siswa target jika sedang dibuka
+            if (AdminPortal.selectedStudent && typeof AdminPortal.selectTargetStudent === "function") {
+                AdminPortal.selectTargetStudent(AdminPortal.selectedStudent.id, true);
+            }
+
+            // Segarkan daftar prestasi admin jika pane prestasi aktif
+            if (typeof AdminPortal.renderAdminPrestasiList === "function") {
+                AdminPortal.renderAdminPrestasiList();
+            }
+
             if (typeof AdminPortal.renderClassAttendance === "function") {
                 AdminPortal.renderClassAttendance();
             }
@@ -105,13 +120,26 @@ const SyncManager = {
             }
         }
 
+        // Segarkan animasi galeri prestasi berjalan di dasbor awal
+        if (window.App && typeof App.initPrestasiSlider === "function") {
+            App.initPrestasiSlider();
+        }
+
+        // Segarkan portal siswa jika akun siswa sedang login
+        if (window.AuthManager && typeof AuthManager.isStudent === "function" && AuthManager.isStudent() && window.SiswaPortal) {
+            const curStudent = AuthManager.getCurrentUser();
+            if (curStudent && curStudent.studentId && typeof SiswaPortal.renderMyStudentPortal === "function") {
+                SiswaPortal.renderMyStudentPortal(curStudent.studentId);
+            }
+        }
+
         if (window.Forms) {
             const modalTeachers = document.getElementById("modalManageTeachers");
-            if (modalTeachers && (modalTeachers.classList.contains("active") || modalTeachers.style.display === "flex")) {
+            if (modalTeachers && (modalTeachers.classList.contains("active") || modalTeachers.classList.contains("show") || modalTeachers.style.display === "flex")) {
                 if (typeof Forms.renderTeachersList === "function") Forms.renderTeachersList();
             }
             const modalStudents = document.getElementById("modalExportStudents");
-            if (modalStudents && (modalStudents.classList.contains("active") || modalStudents.style.display === "flex")) {
+            if (modalStudents && (modalStudents.classList.contains("active") || modalStudents.classList.contains("show") || modalStudents.style.display === "flex")) {
                 if (typeof Forms.populateExportStudentClassFilter === "function") Forms.populateExportStudentClassFilter();
                 if (typeof Forms.renderExportStudentsTable === "function") Forms.renderExportStudentsTable();
             }
@@ -808,52 +836,93 @@ const StorageManager = {
             if (s.prestasi) {
                 const prevLen = s.prestasi.length;
                 s.prestasi = s.prestasi.filter(p => p.id !== achievementId);
-                if (s.prestasi.length < prevLen) found = true;
+                if (s.prestasi.length < prevLen) {
+                    found = true;
+                    s.totalPoinPrestasi = s.prestasi.reduce((sum, p) => sum + (parseInt(p.poin) || 0), 0);
+                }
             }
         });
-        if (found) this.saveData(data);
+        if (found) {
+            this.saveData(data);
+            if (typeof SyncManager !== "undefined") {
+                SyncManager.broadcast("ACHIEVEMENTS_UPDATED", { achievementId });
+            }
+        }
         return found;
     },
 
     // DATA SISWA
     mergeWithMasterStudents(masterList, currentStudents = []) {
         if (!Array.isArray(masterList)) return [];
-        const result = masterList.map(s => ({
-            ...s,
-            pelanggaran: [],
-            prestasi: [],
-            skorPelanggaran: 0,
-            totalPoinPrestasi: 0,
-            status: "Aman"
-        }));
 
-        if (Array.isArray(currentStudents) && currentStudents.length > 0) {
-            const normalizeName = (str) => String(str || "").toLowerCase().replace(/[\t\r\n]+/g, " ").replace(/\s+/g, " ").trim();
-            const normalizeClass = (str) => {
-                let c = String(str || "").toLowerCase().replace(/[^a-z0-9]/g, "");
-                if (c.startsWith("10")) c = "x" + c.slice(2);
-                else if (c.startsWith("11")) c = "xi" + c.slice(2);
-                else if (c.startsWith("12")) c = "xii" + c.slice(2);
-                return c;
-            };
-            const makeKey = (s) => {
-                const n = normalizeName(s.nama);
-                const k = normalizeClass(s.kelas);
-                return n && k ? `${n}::${k}` : (n || (s.id ? String(s.id).toLowerCase() : ''));
-            };
+        const normalizeName = (str) => String(str || "").toLowerCase().replace(/[\t\r\n]+/g, " ").replace(/\s+/g, " ").trim();
+        const normalizeClass = (str) => {
+            let c = String(str || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+            if (c.startsWith("10")) c = "x" + c.slice(2);
+            else if (c.startsWith("11")) c = "xi" + c.slice(2);
+            else if (c.startsWith("12")) c = "xii" + c.slice(2);
+            return c;
+        };
+        const makeKey = (s) => {
+            if (!s) return "";
+            const n = normalizeName(s.nama);
+            const k = normalizeClass(s.kelas);
+            return n && k ? `${n}::${k}` : (n || (s.id ? String(s.id).toLowerCase() : ''));
+        };
 
-            // Siswa buatan manual yang tidak ada di master tetap dipertahankan berdasarkan Nama & Kelas (tetap dimulai dari 0)
+        const existingMap = new Map();
+        if (Array.isArray(currentStudents)) {
             currentStudents.forEach(cs => {
+                if (!cs) return;
+                const k = makeKey(cs);
+                if (k) existingMap.set(k, cs);
+                if (cs.id) existingMap.set(String(cs.id).toLowerCase(), cs);
+            });
+        }
+
+        const result = masterList.map(s => {
+            const k = makeKey(s);
+            const existing = existingMap.get(k) || (s.id ? existingMap.get(String(s.id).toLowerCase()) : null);
+            const pelanggaran = (existing && Array.isArray(existing.pelanggaran)) ? existing.pelanggaran : [];
+            const prestasi = (existing && Array.isArray(existing.prestasi)) ? existing.prestasi : [];
+            const skorPelanggaran = pelanggaran.reduce((sum, p) => sum + (parseInt(p.poin) || 0), 0);
+            const totalPoinPrestasi = prestasi.reduce((sum, p) => sum + (parseInt(p.poin) || 0), 0);
+
+            return {
+                ...s,
+                pelanggaran,
+                prestasi,
+                skorPelanggaran,
+                totalPoinPrestasi,
+                status: (skorPelanggaran >= 100 ? "Sanksi Berat" : (skorPelanggaran >= 50 ? "Peringatan" : (skorPelanggaran > 0 ? "Perhatian" : "Aman"))),
+                nis: s.nis || existing?.nis || "",
+                nisn: s.nisn || existing?.nisn || ""
+            };
+        });
+
+        // Siswa buatan manual yang tidak ada di master tetap dipertahankan
+        if (Array.isArray(currentStudents)) {
+            currentStudents.forEach(cs => {
+                if (!cs || !cs.nama || !cs.kelas) return;
                 const csKey = makeKey(cs);
                 const inMaster = result.some(r => makeKey(r) === csKey);
-                if (!inMaster && cs.nama && cs.kelas) {
+                if (!inMaster) {
+                    const pelanggaran = Array.isArray(cs.pelanggaran) ? cs.pelanggaran : [];
+                    const prestasi = Array.isArray(cs.prestasi) ? cs.prestasi : [];
+                    const skorPelanggaran = typeof cs.skorPelanggaran === 'number'
+                        ? cs.skorPelanggaran
+                        : pelanggaran.reduce((sum, p) => sum + (parseInt(p.poin) || 0), 0);
+                    const totalPoinPrestasi = typeof cs.totalPoinPrestasi === 'number'
+                        ? cs.totalPoinPrestasi
+                        : prestasi.reduce((sum, p) => sum + (parseInt(p.poin) || 0), 0);
+
                     result.push({
                         ...cs,
-                        pelanggaran: [],
-                        prestasi: [],
-                        skorPelanggaran: 0,
-                        totalPoinPrestasi: 0,
-                        status: "Aman"
+                        pelanggaran,
+                        prestasi,
+                        skorPelanggaran,
+                        totalPoinPrestasi,
+                        status: cs.status || (skorPelanggaran >= 100 ? "Sanksi Berat" : (skorPelanggaran >= 50 ? "Peringatan" : (skorPelanggaran > 0 ? "Perhatian" : "Aman")))
                     });
                 }
             });
@@ -899,7 +968,8 @@ const StorageManager = {
             return merged;
         }
 
-        if (this._studentsCache && Array.isArray(this._studentsCache) && this._studentsCache.length >= 2000) {
+        const requiredCount = masterSource.length > 0 ? Math.min(2000, masterSource.length) : 1;
+        if (this._studentsCache && Array.isArray(this._studentsCache) && this._studentsCache.length >= requiredCount) {
             return this._studentsCache;
         }
 
@@ -1116,7 +1186,13 @@ const StorageManager = {
 
         if (!data.students[index].pelanggaran) data.students[index].pelanggaran = [];
         data.students[index].pelanggaran.unshift(item);
+        data.students[index].skorPelanggaran = data.students[index].pelanggaran.reduce((sum, p) => sum + (parseInt(p.poin) || 0), 0);
+        const pts = data.students[index].skorPelanggaran;
+        data.students[index].status = (pts >= 100 ? "Sanksi Berat" : (pts >= 50 ? "Peringatan" : (pts > 0 ? "Perhatian" : "Aman")));
         this.saveData(data);
+        if (typeof SyncManager !== "undefined") {
+            SyncManager.broadcast("VIOLATIONS_UPDATED", { studentId, violationId: item.id });
+        }
         if (window.SupabaseClient && typeof SupabaseClient.pushViolation === "function") {
             SupabaseClient.pushViolation(item, data.students[index].nisn);
         }
@@ -1128,7 +1204,17 @@ const StorageManager = {
         const index = data.students.findIndex(s => s.id === studentId);
         if (index === -1) throw new Error("Siswa tidak ditemukan");
 
+        const poinMap = {
+            "Internasional": 100,
+            "Nasional": 75,
+            "Provinsi": 50,
+            "Kabupaten": 30,
+            "Kota": 30,
+            "Kecamatan": 15,
+            "Sekolah": 10
+        };
         const defaultFoto = "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=800&q=80";
+        const calcPoin = Number(achievementData.poin) || (poinMap[achievementData.tingkat] || 10);
         const item = {
             id: "PR-" + Date.now(),
             tanggal: achievementData.tanggal || new Date().toISOString().split("T")[0],
@@ -1138,7 +1224,7 @@ const StorageManager = {
             peringkat: achievementData.peringkat || "Juara 1",
             penyelenggara: achievementData.penyelenggara || "-",
             piagam: achievementData.piagam || "",
-            poin: 0,
+            poin: calcPoin,
             foto: achievementData.foto || achievementData.piagam || defaultFoto,
             keterangan: achievementData.keterangan || `${achievementData.peringkat || 'Juara'} ${achievementData.tingkat || ''} (${achievementData.penyelenggara || '-'})`,
             pencatat: achievementData.pencatat || "Tim Kesiswaan"
@@ -1146,7 +1232,11 @@ const StorageManager = {
 
         if (!data.students[index].prestasi) data.students[index].prestasi = [];
         data.students[index].prestasi.unshift(item);
+        data.students[index].totalPoinPrestasi = data.students[index].prestasi.reduce((sum, p) => sum + (parseInt(p.poin) || 0), 0);
         this.saveData(data);
+        if (typeof SyncManager !== "undefined") {
+            SyncManager.broadcast("ACHIEVEMENTS_UPDATED", { studentId, achievementId: item.id });
+        }
         if (window.SupabaseClient && typeof SupabaseClient.pushAchievement === "function") {
             SupabaseClient.pushAchievement(item, data.students[index].nisn);
         }
@@ -1869,10 +1959,64 @@ const StorageManager = {
         const initialLen = student.pelanggaran.length;
         student.pelanggaran = student.pelanggaran.filter(p => p.id !== violationId);
         if (student.pelanggaran.length !== initialLen) {
+            student.skorPelanggaran = student.pelanggaran.reduce((sum, p) => sum + (parseInt(p.poin) || 0), 0);
+            const pts = student.skorPelanggaran;
+            student.status = (pts >= 100 ? "Sanksi Berat" : (pts >= 50 ? "Peringatan" : (pts > 0 ? "Perhatian" : "Aman")));
             this.saveData(data);
+            if (typeof SyncManager !== "undefined") {
+                SyncManager.broadcast("VIOLATIONS_UPDATED", { studentId, violationId });
+            }
             return true;
         }
         return false;
+    },
+
+    updateStudentViolation(studentId, violationId, updatedData) {
+        if (!studentId || !violationId || !updatedData) return false;
+        const data = this.getData();
+        const student = (data.students || []).find(s => s.id === studentId);
+        if (!student || !Array.isArray(student.pelanggaran)) return false;
+
+        const index = student.pelanggaran.findIndex(p => p.id === violationId);
+        if (index === -1) return false;
+
+        student.pelanggaran[index] = {
+            ...student.pelanggaran[index],
+            ...updatedData,
+            id: violationId
+        };
+        student.skorPelanggaran = student.pelanggaran.reduce((sum, p) => sum + (parseInt(p.poin) || 0), 0);
+        const pts = student.skorPelanggaran;
+        student.status = (pts >= 100 ? "Sanksi Berat" : (pts >= 50 ? "Peringatan" : (pts > 0 ? "Perhatian" : "Aman")));
+
+        this.saveData(data);
+        if (typeof SyncManager !== "undefined") {
+            SyncManager.broadcast("VIOLATIONS_UPDATED", { studentId, violationId });
+        }
+        return student.pelanggaran[index];
+    },
+
+    updateStudentAchievement(studentId, achievementId, updatedData) {
+        if (!studentId || !achievementId || !updatedData) return false;
+        const data = this.getData();
+        const student = (data.students || []).find(s => s.id === studentId);
+        if (!student || !Array.isArray(student.prestasi)) return false;
+
+        const index = student.prestasi.findIndex(p => p.id === achievementId);
+        if (index === -1) return false;
+
+        student.prestasi[index] = {
+            ...student.prestasi[index],
+            ...updatedData,
+            id: achievementId
+        };
+        student.totalPoinPrestasi = student.prestasi.reduce((sum, p) => sum + (parseInt(p.poin) || 0), 0);
+
+        this.saveData(data);
+        if (typeof SyncManager !== "undefined") {
+            SyncManager.broadcast("ACHIEVEMENTS_UPDATED", { studentId, achievementId });
+        }
+        return student.prestasi[index];
     },
 
     ensureStudentsForClass(kelasTarget) {
@@ -2118,5 +2262,9 @@ const StorageManager = {
         this.init();
     }
 };
+
+if (typeof window !== "undefined") {
+    window.StorageManager = StorageManager;
+}
 
 StorageManager.init();

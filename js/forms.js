@@ -351,7 +351,7 @@ const Forms = {
         }
     },
 
-    openViolationModal(preselectedStudentId = null) {
+    openViolationModal(preselectedStudentId = null, editingViolationId = null) {
         if (AuthManager.isWaliKelas()) {
             App.showToast("Akses dibatasi. Wali Kelas hanya memiliki hak akses melihat data siswa.");
             return;
@@ -376,17 +376,61 @@ const Forms = {
             return;
         }
 
+        this.editingViolationId = editingViolationId || null;
+
         // Kunci siswa yang dituju (tanpa dropdown lain)
         AdminPortal.selectedStudent = student;
         document.getElementById("formPelanggaranSiswaId").value = student.id;
         document.getElementById("formPelanggaranLockedNama").textContent = student.nama;
         document.getElementById("formPelanggaranLockedInfo").textContent = `NISN: ${student.nisn} • Kelas: ${student.kelas} (${student.jurusan || '-'})`;
 
-        // Tanggal kejadian tepat di bawah nama siswa
-        document.getElementById("formPelanggaranTanggal").value = new Date().toISOString().split("T")[0];
+        // Update judul modal & tombol submit
+        const titleEl = document.getElementById("modalViolationTitle");
+        const btnSubmit = document.getElementById("btnSubmitViolation");
+        if (titleEl) titleEl.textContent = editingViolationId ? "✏️ Ubah Catatan Pelanggaran Siswa" : "⚠️ Catat Pelanggaran Siswa";
+        if (btnSubmit) btnSubmit.textContent = editingViolationId ? "💾 Simpan Perubahan Pelanggaran" : "Simpan Catatan Pelanggaran";
 
         // Reset pilihan katalog jenis pelanggaran
         this.populateDropdowns();
+
+        if (editingViolationId) {
+            const editingItem = (student.pelanggaran || []).find(p => p.id === editingViolationId);
+            if (editingItem) {
+                document.getElementById("formPelanggaranTanggal").value = editingItem.tanggal || new Date().toISOString().split("T")[0];
+                document.getElementById("formPelanggaranNama").value = editingItem.nama || "";
+                document.getElementById("formPelanggaranPoin").value = editingItem.poin || 0;
+                document.getElementById("formPelanggaranKategori").value = editingItem.kategori || "Kedisiplinan";
+                document.getElementById("formPelanggaranSanksi").value = editingItem.sanksi || "";
+
+                const vCat = document.getElementById("formPelanggaranKatalog");
+                if (vCat) {
+                    let matched = false;
+                    for (let i = 0; i < vCat.options.length; i++) {
+                        if (vCat.options[i].text.includes(editingItem.nama) || (vCat.options[i].value && vCat.options[i].value.includes(editingItem.nama))) {
+                            vCat.selectedIndex = i;
+                            matched = true;
+                            break;
+                        }
+                    }
+                    if (!matched) {
+                        const customOpt = document.createElement("option");
+                        customOpt.value = editingItem.nama;
+                        customOpt.textContent = `${editingItem.nama} (${editingItem.poin} Poin)`;
+                        customOpt.selected = true;
+                        vCat.appendChild(customOpt);
+                    }
+                }
+
+                // Kalkulasi rekap poin
+                this.updateViolationCalculation(student, editingItem);
+                this.openModal("modalViolation");
+                return;
+            }
+        }
+
+        // Tanggal kejadian tepat di bawah nama siswa
+        document.getElementById("formPelanggaranTanggal").value = new Date().toISOString().split("T")[0];
+
         const vCat = document.getElementById("formPelanggaranKatalog");
         if (vCat) vCat.value = "";
         document.getElementById("formPelanggaranNama").value = "";
@@ -397,6 +441,10 @@ const Forms = {
         this.updateViolationCalculation(student, null);
 
         this.openModal("modalViolation");
+    },
+
+    openEditStudentViolationModal(studentId, violationId) {
+        this.openViolationModal(studentId, violationId);
     },
 
     openAchievementModal(preselectedStudentId = null) {
@@ -489,28 +537,53 @@ const Forms = {
         }
 
         try {
-            StorageManager.addViolation(studentId, {
-                nama,
-                kategori,
-                poin: Number(poin),
-                tanggal,
-                sanksi,
-                pencatat: AuthManager.getCurrentUser() ? AuthManager.getCurrentUser().name : "Guru Piket"
-            });
+            if (this.editingViolationId) {
+                StorageManager.updateStudentViolation(studentId, this.editingViolationId, {
+                    nama,
+                    kategori,
+                    poin: Number(poin),
+                    tanggal,
+                    sanksi,
+                    pencatat: AuthManager.getCurrentUser() ? AuthManager.getCurrentUser().name : "Guru"
+                });
+                this.editingViolationId = null;
+                this.closeAllModals();
 
-            this.closeAllModals();
+                if (AuthManager.isTeacher()) {
+                    AdminPortal.renderTeacherAllStudents();
+                    AdminPortal.selectTargetStudent(studentId);
+                }
 
-            if (AuthManager.isTeacher()) {
-                AdminPortal.renderTeacherAllStudents();
-                AdminPortal.selectTargetStudent(studentId);
+                if (AuthManager.isStudent() && AuthManager.getCurrentUser().studentId === studentId) {
+                    SiswaPortal.renderMyStudentPortal(studentId);
+                }
+
+                const student = StorageManager.getStudentById(studentId);
+                App.showToast(`Catatan pelanggaran siswa ${student ? student.nama : ''} (${poin} Poin) berhasil diperbarui.`);
+            } else {
+                StorageManager.addViolation(studentId, {
+                    nama,
+                    kategori,
+                    poin: Number(poin),
+                    tanggal,
+                    sanksi,
+                    pencatat: AuthManager.getCurrentUser() ? AuthManager.getCurrentUser().name : "Guru Piket"
+                });
+
+                this.closeAllModals();
+
+                if (AuthManager.isTeacher()) {
+                    AdminPortal.renderTeacherAllStudents();
+                    AdminPortal.selectTargetStudent(studentId);
+                }
+
+                if (AuthManager.isStudent() && AuthManager.getCurrentUser().studentId === studentId) {
+                    SiswaPortal.renderMyStudentPortal(studentId);
+                }
+
+                const student = StorageManager.getStudentById(studentId);
+                App.showToast(`Pelanggaran siswa ${student.nama} (${poin} Poin) berhasil disimpan. Sanksi: ${sanksi}`);
             }
-
-            if (AuthManager.isStudent() && AuthManager.getCurrentUser().studentId === studentId) {
-                SiswaPortal.renderMyStudentPortal(studentId);
-            }
-
-            const student = StorageManager.getStudentById(studentId);
-            App.showToast(`Pelanggaran siswa ${student.nama} (${poin} Poin) berhasil disimpan. Sanksi: ${sanksi}`);
         } catch (err) {
             App.showToast(err.message);
         }

@@ -1568,6 +1568,41 @@ body.has-wallpaper-active .top-students-header {
     font-weight: 700;
 }
 
+.pill-counter {
+    background: #e2e8f0;
+    color: #475569;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 1px 7px;
+    border-radius: 99px;
+    transition: all 0.2s ease;
+}
+
+.filter-pill-btn.active .pill-counter {
+    background: var(--primary);
+    color: #ffffff;
+}
+
+.filter-pill-btn.active#btnSortPelanggaran .pill-counter {
+    background: #dc2626;
+    color: #ffffff;
+}
+
+.filter-pill-btn.active#btnSortPrestasi .pill-counter {
+    background: #16a34a;
+    color: #ffffff;
+}
+
+.top-students-toolbar {
+    background: #f8fafc;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.2s ease;
+}
+
+body.has-wallpaper-active .top-students-toolbar {
+    background: rgba(248, 250, 252, 0.9);
+}
+
 .top-students-card .simple-table-container {
     border: none;
     border-radius: 0;

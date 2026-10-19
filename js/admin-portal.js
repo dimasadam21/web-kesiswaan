@@ -389,7 +389,7 @@ const AdminPortal = {
     },
 
     // 2. Pilih Siswa yang Dituju (Menampilkan Kartu Tindakan Siswa)
-    selectTargetStudent(studentId) {
+    selectTargetStudent(studentId, isSilent = false) {
         const student = StorageManager.getStudentById(studentId);
         if (!student) return;
 
@@ -486,8 +486,7 @@ const AdminPortal = {
         document.getElementById("targetStudentPoinPelanggaran").textContent = `${st.totalPoinPelanggaran} Poin`;
         document.getElementById("targetStudentPoinPrestasi").textContent = `${(student.prestasi || []).length} Capaian`;
 
-        // KONTROL OTOMATIS SURAT PANGGILAN ORANG TUA:
-        // HANYA MUNCUL JIKA SUDAH MELEWATI BATAS POIN KADAR SP (>= 31 Poin)
+        // KONTROL OTOMATIS SURAT PANGGILAN ORANG TUA (>= 31 Poin)
         const isEligibleSp = StorageManager.isStudentEligibleForSummons(student);
         const btnPanggil = document.getElementById("btnPanggilOrtuTarget");
         const noticeBelumSp = document.getElementById("noticeBelumSpTarget");
@@ -519,7 +518,197 @@ const AdminPortal = {
         if (btnTargetAddAch) btnTargetAddAch.style.display = isWaliKelas ? "none" : "inline-flex";
         if (btnTargetEditStu) btnTargetEditStu.style.display = isWaliKelas ? "none" : "inline-flex";
 
-        App.showToast(`Siswa terpilih: ${student.nama}`);
+        // Render riwayat pelanggaran & prestasi siswa pada tab kartu
+        this.renderTargetStudentRecords(student);
+
+        if (!isSilent) {
+            App.showToast(`Siswa terpilih: ${student.nama}`);
+        }
+    },
+
+    activeTargetTab: 'pelanggaran',
+
+    switchTargetStudentTab(tab) {
+        this.activeTargetTab = tab;
+        const btnVio = document.getElementById("tabBtnTargetViolations");
+        const btnAch = document.getElementById("tabBtnTargetAchievements");
+        const paneVio = document.getElementById("targetStudentViolationsPane");
+        const paneAch = document.getElementById("targetStudentAchievementsPane");
+
+        if (btnVio) {
+            btnVio.classList.toggle("active", tab === 'pelanggaran');
+            btnVio.style.borderBottom = tab === 'pelanggaran' ? '2px solid var(--danger)' : '2px solid transparent';
+            btnVio.style.color = tab === 'pelanggaran' ? 'var(--danger)' : 'var(--text-muted)';
+            btnVio.style.fontWeight = tab === 'pelanggaran' ? '700' : '600';
+        }
+        if (btnAch) {
+            btnAch.classList.toggle("active", tab === 'prestasi');
+            btnAch.style.borderBottom = tab === 'prestasi' ? '2px solid var(--success)' : '2px solid transparent';
+            btnAch.style.color = tab === 'prestasi' ? 'var(--success)' : 'var(--text-muted)';
+            btnAch.style.fontWeight = tab === 'prestasi' ? '700' : '600';
+        }
+        if (paneVio) paneVio.style.display = tab === 'pelanggaran' ? 'block' : 'none';
+        if (paneAch) paneAch.style.display = tab === 'prestasi' ? 'block' : 'none';
+    },
+
+    renderTargetStudentRecords(student) {
+        if (!student) return;
+        const isWaliKelas = AuthManager.isWaliKelas();
+
+        // 1. Render Riwayat Pelanggaran Siswa
+        const vContent = document.getElementById("targetStudentViolationsContent");
+        const vBadge = document.getElementById("badgeTargetViolCount");
+        const viols = student.pelanggaran || [];
+        if (vBadge) vBadge.textContent = viols.length;
+
+        if (vContent) {
+            if (viols.length === 0) {
+                vContent.innerHTML = `
+                    <div style="padding: 1.25rem; text-align: center; background: #f0fdf4; border: 1px dashed #86efac; border-radius: 8px; color: #166534; font-size: 0.85rem;">
+                        <span style="font-size: 1.3rem; display: block; margin-bottom: 4px;">✨</span>
+                        <strong>Catatan Kedisiplinan Bersih (0 Poin)</strong>
+                        <p style="margin: 3px 0 0 0; font-size: 0.78rem; color: #15803d;">Siswa ini belum memiliki riwayat pelanggaran tata tertib.</p>
+                    </div>
+                `;
+            } else {
+                vContent.innerHTML = `
+                    <div class="simple-table-container" style="box-shadow: none; border: 1px solid var(--border); overflow-x: auto;">
+                        <table class="simple-table" style="font-size: 0.82rem; margin-bottom: 0;">
+                            <thead>
+                                <tr style="background: #fef2f2;">
+                                    <th width="6%" style="text-align: center;">No</th>
+                                    <th width="15%">Tanggal</th>
+                                    <th width="32%">Pelanggaran & Kategori</th>
+                                    <th width="14%">Bobot Poin</th>
+                                    <th width="21%">Sanksi / Pembinaan</th>
+                                    <th width="12%" style="text-align: center;">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${viols.map((v, idx) => `
+                                    <tr>
+                                        <td style="text-align: center; font-weight: 600; color: var(--text-muted);">${idx + 1}</td>
+                                        <td style="white-space: nowrap; font-family: monospace;">📅 ${v.tanggal || '-'}</td>
+                                        <td>
+                                            <strong style="color: #991b1b; display: block;">${Forms.escapeHtml(v.nama || '-')}</strong>
+                                            <span style="font-size: 0.7rem; color: var(--text-muted);">Kategori: ${Forms.escapeHtml(v.kategori || 'Kedisiplinan')} • Dicatat: ${Forms.escapeHtml(v.pencatat || 'Guru')}</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge" style="background: #fee2e2; color: #991b1b; font-weight: 700; font-size: 0.76rem; padding: 2px 7px; border-radius: 99px;">
+                                                +${v.poin || 0} Poin
+                                            </span>
+                                        </td>
+                                        <td style="font-size: 0.76rem; color: #475569;">${Forms.escapeHtml(v.sanksi || '-')}</td>
+                                        <td style="text-align: center; white-space: nowrap;">
+                                            ${!isWaliKelas ? `
+                                            <button type="button" class="btn btn-outline btn-sm" onclick="Forms.openEditStudentViolationModal('${student.id}', '${v.id}')" style="padding: 2px 7px; font-size: 0.72rem; color: #0284c7; border-color: #7dd3fc; background: #f0f9ff; margin-right: 3px;" title="Ubah data pelanggaran ini">
+                                                ✏️ Ubah
+                                            </button>
+                                            <button type="button" class="btn btn-outline btn-sm" onclick="AdminPortal.handleDeleteStudentViolation('${student.id}', '${v.id}', '${Forms.escapeHtml(v.nama || 'Pelanggaran')}')" style="padding: 2px 7px; font-size: 0.72rem; color: #dc2626; border-color: #fca5a5; background: #fef2f2;" title="Hapus catatan pelanggaran ini">
+                                                🗑️ Hapus
+                                            </button>
+                                            ` : `
+                                            <span style="font-size: 0.72rem; color: var(--text-muted);">👁️ Terkunci</span>
+                                            `}
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+        }
+
+        // 2. Render Riwayat Prestasi Siswa
+        const aContent = document.getElementById("targetStudentAchievementsContent");
+        const aBadge = document.getElementById("badgeTargetAchCount");
+        const achs = student.prestasi || [];
+        if (aBadge) aBadge.textContent = achs.length;
+
+        if (aContent) {
+            if (achs.length === 0) {
+                aContent.innerHTML = `
+                    <div style="padding: 1.25rem; text-align: center; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px; color: #64748b; font-size: 0.85rem;">
+                        <span style="font-size: 1.3rem; display: block; margin-bottom: 4px;">🏆</span>
+                        <strong>Belum Ada Catatan Prestasi</strong>
+                        <p style="margin: 3px 0 0 0; font-size: 0.78rem;">Siswa ini belum memiliki catatan kejuaraan atau prestasi yang tercatat.</p>
+                    </div>
+                `;
+            } else {
+                aContent.innerHTML = `
+                    <div class="simple-table-container" style="box-shadow: none; border: 1px solid var(--border); overflow-x: auto;">
+                        <table class="simple-table" style="font-size: 0.82rem; margin-bottom: 0;">
+                            <thead>
+                                <tr style="background: #f0fdf4;">
+                                    <th width="6%" style="text-align: center;">No</th>
+                                    <th width="15%">Tanggal</th>
+                                    <th width="35%">Nama Kejuaraan & Prestasi</th>
+                                    <th width="18%">Tingkat & Penyelenggara</th>
+                                    <th width="14%">Piagam / Foto</th>
+                                    <th width="12%" style="text-align: center;">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${achs.map((p, idx) => `
+                                    <tr>
+                                        <td style="text-align: center; font-weight: 600; color: var(--text-muted);">${idx + 1}</td>
+                                        <td style="white-space: nowrap; font-family: monospace;">📅 ${p.tanggal || '-'}</td>
+                                        <td>
+                                            <strong style="color: #166534; display: block;">${Forms.escapeHtml(p.nama || '-')}</strong>
+                                            <span class="badge" style="background: #dcfce7; color: #166534; font-size: 0.7rem; font-weight: 700; padding: 1px 6px; border-radius: 99px;">
+                                                🏆 ${Forms.escapeHtml(p.peringkat || 'Juara')}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div style="font-weight: 600;">${Forms.escapeHtml(p.tingkat || 'Sekolah')}</div>
+                                            <div style="font-size: 0.72rem; color: var(--text-muted);">${Forms.escapeHtml(p.penyelenggara || '-')}</div>
+                                        </td>
+                                        <td>
+                                            <div style="display: flex; gap: 4px; align-items: center; flex-wrap: wrap;">
+                                                ${p.piagam ? `<a href="${p.piagam}" target="_blank" class="status-pill pill-yellow" style="font-size: 0.68rem; text-decoration: none; padding: 1px 6px;">📜 Piagam</a>` : ''}
+                                                ${p.foto ? `<a href="${p.foto}" target="_blank" class="status-pill pill-blue" style="font-size: 0.68rem; text-decoration: none; padding: 1px 6px;">📸 Foto</a>` : ''}
+                                                ${!p.piagam && !p.foto ? '<span style="font-size: 0.7rem; color: var(--text-muted);">-</span>' : ''}
+                                            </div>
+                                        </td>
+                                        <td style="text-align: center; white-space: nowrap;">
+                                            ${!isWaliKelas ? `
+                                            <button type="button" class="btn btn-outline btn-sm" onclick="AdminPortal.handleDeleteAchievement('${p.id}', '${Forms.escapeHtml(p.nama || 'Prestasi')}')" style="padding: 2px 7px; font-size: 0.72rem; color: #dc2626; border-color: #fca5a5; background: #fef2f2;" title="Hapus catatan prestasi ini">
+                                                🗑️ Hapus
+                                            </button>
+                                            ` : `
+                                            <span style="font-size: 0.72rem; color: var(--text-muted);">👁️ Terkunci</span>
+                                            `}
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+        }
+    },
+
+    handleDeleteStudentViolation(studentId, violationId, violationName) {
+        if (AuthManager.isWaliKelas()) {
+            App.showToast("Wali Kelas hanya memiliki hak akses melihat data.");
+            return;
+        }
+        if (!confirm(`Yakin ingin menghapus catatan pelanggaran "${violationName || 'ini'}"? Poin pelanggaran siswa akan otomatis berkurang.`)) {
+            return;
+        }
+        const success = StorageManager.deleteStudentViolation(studentId, violationId);
+        if (success) {
+            this.selectTargetStudent(studentId, true);
+            this.renderTeacherAllStudents();
+            if (typeof this.renderClassAttendance === "function") {
+                this.renderClassAttendance();
+            }
+            App.showToast(`Catatan pelanggaran "${violationName}" berhasil dihapus.`);
+        } else {
+            App.showToast("Gagal menghapus catatan pelanggaran.");
+        }
     },
 
     // 3. Tombol-Tombol Aksi pada Siswa yang Dituju
@@ -569,39 +758,76 @@ const AdminPortal = {
         SiswaPortal.openRaporKarakterModal(this.selectedStudent.id);
     },
 
-    topStudentsSort: 'prestasi', // 'prestasi' | 'pelanggaran' | 'max'
+    topStudentsSort: 'pelanggaran', // 'pelanggaran' | 'prestasi' | 'recorded' | 'top10'
+    teacherTableSearchQuery: '',
+    teacherTableClassFilter: '',
 
     setTopStudentsSort(mode) {
         this.topStudentsSort = mode;
         const btnPrestasi = document.getElementById("btnSortPrestasi");
         const btnPelanggaran = document.getElementById("btnSortPelanggaran");
         const btnAll = document.getElementById("btnSortAll");
-        const title = document.getElementById("topStudentsTitle");
+        const btnTop10 = document.getElementById("btnSortTop10");
 
-        if (btnPrestasi) btnPrestasi.classList.toggle("active", mode === 'prestasi');
         if (btnPelanggaran) btnPelanggaran.classList.toggle("active", mode === 'pelanggaran');
-        if (btnAll) btnAll.classList.toggle("active", mode === 'max');
-
-        if (title) {
-            if (mode === 'prestasi') {
-                title.textContent = "🏆 10 Siswa Teratas (Prestasi Terbanyak)";
-            } else if (mode === 'pelanggaran') {
-                title.textContent = "⚠️ 10 Siswa Teratas (Poin Pelanggaran Tertinggi)";
-            } else {
-                title.textContent = "🌟 10 Siswa Teratas";
-            }
-        }
+        if (btnPrestasi) btnPrestasi.classList.toggle("active", mode === 'prestasi');
+        if (btnAll) btnAll.classList.toggle("active", mode === 'recorded' || mode === 'max');
+        if (btnTop10) btnTop10.classList.toggle("active", mode === 'top10');
 
         this.renderTeacherAllStudents();
     },
 
-    // 4. Render Tabel 10 Siswa Teratas (Poin Tertinggi) di Halaman Guru
+    handleTableSearch(val) {
+        this.teacherTableSearchQuery = val || '';
+        this.renderTeacherAllStudents();
+    },
+
+    handleTableClassFilter(val) {
+        this.teacherTableClassFilter = val || '';
+        this.renderTeacherAllStudents();
+    },
+
+    populateTableClassFilter(students) {
+        const select = document.getElementById("teacherTableClassFilter");
+        if (!select || select.options.length > 1) return;
+
+        const classesSet = new Set();
+        (students || []).forEach(s => {
+            if (s.kelas) classesSet.add(s.kelas);
+        });
+
+        const sortedClasses = Array.from(classesSet).sort((a, b) => {
+            return StorageManager.normalizeClassName(a).localeCompare(StorageManager.normalizeClassName(b));
+        });
+
+        sortedClasses.forEach(cls => {
+            const opt = document.createElement("option");
+            opt.value = cls;
+            opt.textContent = cls;
+            select.appendChild(opt);
+        });
+
+        if (AuthManager.isWaliKelas()) {
+            const cur = AuthManager.getCurrentUser();
+            if (cur && cur.kelas) {
+                select.value = cur.kelas;
+                this.teacherTableClassFilter = cur.kelas;
+            }
+        }
+    },
+
+    // 4. Render Tabel Siapa Saja Siswa Tercatat Pelanggaran maupun Prestasi
     renderTeacherAllStudents() {
         const tbody = document.getElementById("teacherAllStudentsTableBody");
         if (!tbody) return;
 
-        const students = StorageManager.getStudents();
-        const mode = this.topStudentsSort || 'prestasi';
+        const students = StorageManager.getStudents() || [];
+        const mode = this.topStudentsSort || 'pelanggaran';
+        const searchQuery = (this.teacherTableSearchQuery || '').toLowerCase().trim();
+        const classFilter = this.teacherTableClassFilter || '';
+        const isWaliKelas = AuthManager.isWaliKelas();
+
+        this.populateTableClassFilter(students);
 
         if (!students || students.length === 0) {
             tbody.innerHTML = `
@@ -616,69 +842,145 @@ const AdminPortal = {
             return;
         }
 
-        // Hitung status dan score untuk pengurutan
+        // Hitung status untuk seluruh siswa
         const studentsWithStatus = students.map(s => {
             const st = StorageManager.calculateStudentStatus(s);
-            let score = 0;
-            if (mode === 'prestasi') {
-                score = (s.prestasi || []).length;
-            } else if (mode === 'pelanggaran') {
-                score = st.totalPoinPelanggaran || 0;
-            } else {
-                score = Math.max((s.prestasi || []).length, st.totalPoinPelanggaran || 0);
-            }
+            const violPoints = st.totalPoinPelanggaran || 0;
+            const violCount = (s.pelanggaran || []).length;
+            const achCount = (s.prestasi || []).length;
             return {
                 student: s,
                 status: st,
-                score: score
+                violPoints,
+                violCount,
+                achCount,
+                isRecorded: violPoints > 0 || achCount > 0
             };
         });
 
-        // Urutkan siswa berdasarkan score tertinggi secara menurun (descending)
-        studentsWithStatus.sort((a, b) => {
-            if (b.score !== a.score) {
-                return b.score - a.score;
-            }
-            // Jika skor prestasi sama, prioritaskan yang pelanggarannya lebih sedikit
-            if (mode === 'prestasi') {
-                if (a.status.totalPoinPelanggaran !== b.status.totalPoinPelanggaran) {
-                    return a.status.totalPoinPelanggaran - b.status.totalPoinPelanggaran;
-                }
-            }
-            return a.student.nama.localeCompare(b.student.nama);
-        });
+        // Hitung total counter global untuk badge tombol filter
+        const countViolGlobal = studentsWithStatus.filter(x => x.violPoints > 0).length;
+        const countAchGlobal = studentsWithStatus.filter(x => x.achCount > 0).length;
+        const countAllGlobal = studentsWithStatus.filter(x => x.isRecorded).length;
 
-        const isWaliKelas = AuthManager.isWaliKelas();
+        const badgeViol = document.getElementById("countBadgePelanggaran");
+        const badgeAch = document.getElementById("countBadgePrestasi");
+        const badgeAll = document.getElementById("countBadgeAll");
+        if (badgeViol) badgeViol.textContent = countViolGlobal;
+        if (badgeAch) badgeAch.textContent = countAchGlobal;
+        if (badgeAll) badgeAll.textContent = countAllGlobal;
 
-        // Cek jika seluruh siswa saat ini bernilai 0 (karena baru dimulai dari awal)
-        const hasAnyScore = studentsWithStatus.some(item => item.score > 0);
-        if (!hasAnyScore) {
-            let emptyTitle = "Semua Data Siswa Bersih (0 Poin)";
-            let emptyDesc = "Catatan pelanggaran dan prestasi seluruh siswa dalam kondisi 0 (awal periode). Peringkat siswa berprestasi atau pelanggaran akan otomatis tersusun setelah ada pencatatan data baru.";
-            if (mode === 'prestasi') {
-                emptyTitle = "Belum Ada Catatan Prestasi Siswa";
-                emptyDesc = "Seluruh 2.107 siswa memulai dari 0 prestasi. Peringkat siswa berprestasi tertinggi akan otomatis tampil saat prestasi baru dicatat.";
+        // Filter berdasarkan mode tampilan
+        let filtered = [];
+        if (mode === 'pelanggaran') {
+            filtered = studentsWithStatus.filter(x => x.violPoints > 0);
+            filtered.sort((a, b) => {
+                if (b.violPoints !== a.violPoints) return b.violPoints - a.violPoints;
+                return a.student.nama.localeCompare(b.student.nama);
+            });
+        } else if (mode === 'prestasi') {
+            filtered = studentsWithStatus.filter(x => x.achCount > 0);
+            filtered.sort((a, b) => {
+                if (b.achCount !== a.achCount) return b.achCount - a.achCount;
+                if (a.violPoints !== b.violPoints) return a.violPoints - b.violPoints;
+                return a.student.nama.localeCompare(b.student.nama);
+            });
+        } else if (mode === 'recorded' || mode === 'max') {
+            filtered = studentsWithStatus.filter(x => x.isRecorded);
+            filtered.sort((a, b) => {
+                if (b.violPoints !== a.violPoints) return b.violPoints - a.violPoints;
+                if (b.achCount !== a.achCount) return b.achCount - a.achCount;
+                return a.student.nama.localeCompare(b.student.nama);
+            });
+        } else {
+            // mode 'top10': 10 peringkat teratas
+            filtered = [...studentsWithStatus];
+            filtered.sort((a, b) => {
+                const scoreA = Math.max(a.violPoints, a.achCount);
+                const scoreB = Math.max(b.violPoints, b.achCount);
+                if (scoreB !== scoreA) return scoreB - scoreA;
+                return a.student.nama.localeCompare(b.student.nama);
+            });
+            filtered = filtered.slice(0, 10);
+        }
+
+        // Terapkan filter kelas jika ada
+        if (classFilter) {
+            filtered = filtered.filter(x => StorageManager.isClassMatch(x.student.kelas, classFilter));
+        }
+
+        // Terapkan kata kunci pencarian jika ada
+        if (searchQuery) {
+            filtered = filtered.filter(x => {
+                const s = x.student;
+                const nama = (s.nama || '').toLowerCase();
+                const nisn = (s.nisn || '').toLowerCase();
+                const nis = (s.nis || '').toLowerCase();
+                const kelas = (s.kelas || '').toLowerCase();
+                return nama.includes(searchQuery) || nisn.includes(searchQuery) || nis.includes(searchQuery) || kelas.includes(searchQuery);
+            });
+        }
+
+        // Update teks ringkasan & judul
+        const summaryEl = document.getElementById("teacherTableStatusSummary");
+        if (summaryEl) {
+            summaryEl.innerHTML = `Menampilkan <strong>${filtered.length}</strong> siswa tercatat`;
+        }
+
+        const titleEl = document.getElementById("topStudentsTitle");
+        const iconEl = document.getElementById("topStudentsBadgeIcon");
+        if (titleEl) {
+            if (mode === 'pelanggaran') {
+                titleEl.textContent = `⚠️ Siswa Tercatat Pelanggaran (${filtered.length} Siswa)`;
+                if (iconEl) iconEl.textContent = "⚠️";
+            } else if (mode === 'prestasi') {
+                titleEl.textContent = `🏆 Siswa Tercatat Prestasi (${filtered.length} Siswa)`;
+                if (iconEl) iconEl.textContent = "🏆";
+            } else if (mode === 'recorded' || mode === 'max') {
+                titleEl.textContent = `👥 Seluruh Siswa Tercatat Pelanggaran & Prestasi (${filtered.length} Siswa)`;
+                if (iconEl) iconEl.textContent = "👥";
+            } else {
+                titleEl.textContent = "🌟 10 Siswa Peringkat Teratas";
+                if (iconEl) iconEl.textContent = "🌟";
+            }
+        }
+
+        // Tampilan kosong jika tidak ada data yang cocok
+        if (filtered.length === 0) {
+            let emptyTitle = "Belum Ada Siswa yang Tercatat";
+            let emptyDesc = "Seluruh data siswa dalam kondisi bersih (0 poin). Setiap perubahan atau pencatatan pelanggaran/prestasi oleh guru akan langsung muncul di sini secara otomatis.";
+            let emptyIcon = "🌱";
+
+            if (searchQuery || classFilter) {
+                emptyTitle = "Tidak Ada Data Siswa yang Sesuai";
+                emptyDesc = "Coba ubah kata kunci pencarian atau sesuaikan pilihan filter kelas di atas.";
+                emptyIcon = "🔍";
             } else if (mode === 'pelanggaran') {
-                emptyTitle = "Seluruh Siswa Berstatus Aman (0 Poin)";
-                emptyDesc = "Tidak ada catatan pelanggaran siswa pada periode ini. Semua siswa memiliki 0 poin pelanggaran.";
+                emptyTitle = "Seluruh Siswa Berstatus Bersih (0 Poin Pelanggaran)";
+                emptyDesc = "Tidak ada siswa yang tercatat melakukan pelanggaran pada periode ini. Saat guru mencatat pelanggaran di presensi atau tindakan siswa, daftar ini akan langsung terisi.";
+                emptyIcon = "🛡️";
+            } else if (mode === 'prestasi') {
+                emptyTitle = "Belum Ada Catatan Prestasi Siswa";
+                emptyDesc = "Belum ada torehan kejuaraan/prestasi yang tercatat. Klik '+ Catat Prestasi Baru' untuk menambahkan torehan prestasi siswa.";
+                emptyIcon = "🏆";
             }
 
             tbody.innerHTML = `
                 <tr>
                     <td colspan="6" style="text-align: center; padding: 2.8rem 1.5rem; color: var(--text-muted); background: #fafafa;">
-                        <div style="font-size: 2.2rem; margin-bottom: 0.6rem;">🌱</div>
+                        <div style="font-size: 2.2rem; margin-bottom: 0.6rem;">${emptyIcon}</div>
                         <strong style="color: var(--text-main); font-size: 1.05rem; display: block; margin-bottom: 6px;">${emptyTitle}</strong>
                         <p style="font-size: 0.85rem; max-width: 540px; margin: 0 auto 16px auto; line-height: 1.5;">${emptyDesc}</p>
                         <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
                             <button type="button" class="btn btn-outline btn-sm" onclick="Forms.openManageStudentsModal()">
-                                👥 Buka Seluruh Data Siswa
+                                👥 Buka Seluruh Data 2.107 Siswa
                             </button>
                             ${!isWaliKelas ? `
-                            <button type="button" class="btn btn-success btn-sm" onclick="Forms.openAchievementModal()">
-                                🏆 + Catat Prestasi Baru
-                            </button>
                             <button type="button" class="btn btn-danger btn-sm" onclick="Forms.openViolationModal()">
                                 ⚠️ + Catat Pelanggaran
+                            </button>
+                            <button type="button" class="btn btn-success btn-sm" onclick="Forms.openAchievementModal()">
+                                🏆 + Catat Prestasi
                             </button>
                             ` : ''}
                         </div>
@@ -688,66 +990,89 @@ const AdminPortal = {
             return;
         }
 
-        // Cukup tampilkan 10 siswa teratas
-        const top10 = studentsWithStatus.slice(0, 10);
-
-        tbody.innerHTML = top10.map((item, idx) => {
+        tbody.innerHTML = filtered.map((item, idx) => {
             const s = item.student;
             const st = item.status;
             const isSelected = this.selectedStudent && this.selectedStudent.id === s.id;
             const isSp = StorageManager.isStudentEligibleForSummons(s);
 
             let rankBadge = '';
-            if (item.score > 0 && idx === 0) {
+            if (idx === 0 && (item.violPoints > 0 || item.achCount > 0)) {
                 rankBadge = `<span class="rank-badge rank-1" title="Peringkat 1">🥇 1</span>`;
-            } else if (item.score > 0 && idx === 1) {
+            } else if (idx === 1 && (item.violPoints > 0 || item.achCount > 0)) {
                 rankBadge = `<span class="rank-badge rank-2" title="Peringkat 2">🥈 2</span>`;
-            } else if (item.score > 0 && idx === 2) {
+            } else if (idx === 2 && (item.violPoints > 0 || item.achCount > 0)) {
                 rankBadge = `<span class="rank-badge rank-3" title="Peringkat 3">🥉 3</span>`;
             } else {
                 rankBadge = `<span class="rank-badge rank-other">${idx + 1}</span>`;
+            }
+
+            // Pelanggaran summary
+            let violSummaryHtml = '';
+            if (item.violPoints > 0) {
+                const recentViols = (s.pelanggaran || []).slice(0, 2).map(v => 
+                    `<span style="display: inline-block; background: #fee2e2; color: #991b1b; font-size: 0.68rem; font-weight: 600; padding: 1px 6px; border-radius: 4px; margin-top: 2px; margin-right: 3px; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${Forms.escapeHtml(v.nama)} (${v.poin} Poin)">${Forms.escapeHtml(v.nama)} (+${v.poin})</span>`
+                ).join('');
+                violSummaryHtml = `
+                    <div>
+                        <strong style="color: var(--danger); font-size: 0.95rem;">${item.violPoints} Poin</strong>
+                        <span style="font-size: 0.72rem; color: var(--text-muted); margin-left: 4px;">(${item.violCount} Kasus)</span>
+                    </div>
+                    <div style="line-height: 1.2;">${recentViols}${(s.pelanggaran || []).length > 2 ? `<span style="font-size: 0.65rem; color: var(--text-muted);">+${(s.pelanggaran || []).length - 2} lainnya</span>` : ''}</div>
+                `;
+            } else {
+                violSummaryHtml = `<span style="color: #16a34a; font-size: 0.8rem; font-weight: 600;">✨ 0 Poin</span>`;
+            }
+
+            // Prestasi summary
+            let achSummaryHtml = '';
+            if (item.achCount > 0) {
+                const recentAch = (s.prestasi || []).slice(0, 1).map(p => 
+                    `<div style="font-size: 0.72rem; color: #15803d; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 150px;" title="${Forms.escapeHtml(p.peringkat || '')} ${Forms.escapeHtml(p.nama || '')}">🏆 ${Forms.escapeHtml(p.peringkat || 'Juara')} - ${Forms.escapeHtml(p.nama || '')}</div>`
+                ).join('');
+                achSummaryHtml = `
+                    <div>
+                        <strong style="color: var(--success); font-size: 0.95rem;">${item.achCount} Prestasi</strong>
+                    </div>
+                    ${recentAch}
+                `;
+            } else {
+                achSummaryHtml = `<span style="color: var(--text-muted); font-size: 0.8rem;">-</span>`;
             }
 
             return `
                 <tr style="${isSelected ? 'background: #eff6ff; font-weight: 600;' : ''}">
                     <td style="text-align: center;">${rankBadge}</td>
                     <td>
-                        <div style="font-weight: 700; color: var(--text-main); font-size: 0.95rem;">${s.nama}</div>
-                        <div style="font-size: 0.75rem; color: var(--text-muted);">${(s.nisn || s.nis) ? `NISN: ${s.nisn || '-'}${s.nis ? ' • NIS: ' + s.nis : ''}` : `Kelas: ${s.kelas}`}</div>
-                    </td>
-                    <td><span class="status-pill pill-gray">${s.kelas}</span></td>
-                    <td>
-                        <strong style="color: ${st.totalPoinPelanggaran > 0 ? 'var(--danger)' : 'var(--text-muted)'};">
-                            ${st.totalPoinPelanggaran} Poin
-                        </strong>
-                        <div style="font-size: 0.7rem; color: var(--text-muted);">${(s.pelanggaran || []).length} Kasus</div>
+                        <div style="font-weight: 700; color: var(--text-main); font-size: 0.92rem;">${Forms.escapeHtml(s.nama)}</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); font-family: monospace;">
+                            ${(s.nisn || s.nis) ? `NISN: ${Forms.escapeHtml(s.nisn || '-')}${s.nis ? ' • NIS: ' + Forms.escapeHtml(s.nis) : ''}` : `Kelas: ${Forms.escapeHtml(s.kelas)}`}
+                        </div>
+                        ${isSp ? `<span class="status-pill pill-red" style="font-size: 0.65rem; padding: 1px 6px; margin-top: 2px;">⚠️ ${st.statusText}</span>` : ''}
                     </td>
                     <td>
-                        <strong style="color: ${(s.prestasi || []).length > 0 ? 'var(--success)' : 'var(--text-muted)'}; font-size: 0.95rem;">
-                            ${(s.prestasi || []).length} Prestasi
-                        </strong>
-                        <div style="font-size: 0.7rem; color: var(--text-muted);">${(s.prestasi || []).length > 0 ? 'Kejuaraan resmi' : 'Belum ada'}</div>
+                        <span class="status-pill pill-gray" style="font-weight: 700;">${Forms.escapeHtml(s.kelas)}</span>
+                        <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 2px;">${Forms.escapeHtml(s.waliKelas || '-')}</div>
                     </td>
+                    <td>${violSummaryHtml}</td>
+                    <td>${achSummaryHtml}</td>
                     <td>
                         <div style="display: flex; gap: 5px; flex-wrap: wrap;">
-                            <button class="btn ${isSelected ? 'btn-primary' : 'btn-outline'} btn-sm" onclick="AdminPortal.selectTargetStudent('${s.id}')">
+                            <button class="btn ${isSelected ? 'btn-primary' : 'btn-outline'} btn-sm" onclick="AdminPortal.selectTargetStudent('${s.id}')" style="padding: 3px 8px; font-size: 0.75rem;">
                                 ${isSelected ? '✓ Terpilih' : '👉 Pilih'}
                             </button>
                             ${!isWaliKelas ? `
-                            <button class="btn btn-danger btn-sm" onclick="Forms.openViolationModal('${s.id}')" title="Catat Pelanggaran Siswa Ini">
-                                ⚠️ Pelanggaran
+                            <button class="btn btn-danger btn-sm" onclick="Forms.openViolationModal('${s.id}')" style="padding: 3px 8px; font-size: 0.75rem;" title="Catat Pelanggaran Siswa Ini">
+                                ⚠️ + Pelanggaran
                             </button>
-                            <button class="btn btn-success btn-sm" onclick="Forms.openAchievementModal('${s.id}')" title="Catat Prestasi Siswa Ini">
-                                🏆 Prestasi
+                            <button class="btn btn-success btn-sm" onclick="Forms.openAchievementModal('${s.id}')" style="padding: 3px 8px; font-size: 0.75rem;" title="Catat Prestasi Siswa Ini">
+                                🏆 + Prestasi
                             </button>
                             ${isSp ? `
-                                <button class="btn btn-warning btn-sm" onclick="Forms.openSuratPanggilanModal('${s.id}')" title="Cetak Surat Panggilan SP (${st.statusText})">
+                                <button class="btn btn-warning btn-sm" onclick="Forms.openSuratPanggilanModal('${s.id}')" style="padding: 3px 8px; font-size: 0.75rem;" title="Cetak Surat Panggilan SP (${st.statusText})">
                                     📄 Surat SP
                                 </button>
                             ` : ''}
-                            <button class="btn btn-outline btn-sm" onclick="Forms.openEditStudentModal('${s.id}')" title="Edit Profil Siswa Lengkap">
-                                ✏️ Edit
-                            </button>
                             ` : ''}
                         </div>
                     </td>
@@ -818,6 +1143,9 @@ const AdminPortal = {
             if (success) {
                 this.renderAdminPrestasiList();
                 this.renderTeacherAllStudents();
+                if (this.selectedStudent) {
+                    this.selectTargetStudent(this.selectedStudent.id, true);
+                }
                 App.initPrestasiSlider();
                 App.showToast(`Prestasi "${namaPrestasi}" berhasil dihapus.`);
             } else {
@@ -1237,6 +1565,10 @@ const AdminPortal = {
         attData.records[studentId] = currentRec;
         StorageManager.saveClassAttendance(this.currentAttendanceClass, this.currentAttendanceDate, attData);
         this.renderClassAttendance();
+        this.renderTeacherAllStudents();
+        if (this.selectedStudent && this.selectedStudent.id === studentId) {
+            this.selectTargetStudent(studentId, true);
+        }
     },
 
     setStudentAttendanceKeterangan(studentId, newKet) {
@@ -1289,6 +1621,10 @@ const AdminPortal = {
         attData.records[studentId] = currentRec;
         StorageManager.saveClassAttendance(this.currentAttendanceClass, this.currentAttendanceDate, attData);
         this.renderClassAttendance();
+        this.renderTeacherAllStudents();
+        if (this.selectedStudent && this.selectedStudent.id === studentId) {
+            this.selectTargetStudent(studentId, true);
+        }
     },
 
     handleViolationCheckbox(studentId, field, isChecked) {
@@ -1359,6 +1695,10 @@ const AdminPortal = {
         attData.records[studentId] = currentRec;
         StorageManager.saveClassAttendance(this.currentAttendanceClass, this.currentAttendanceDate, attData);
         this.renderClassAttendance();
+        this.renderTeacherAllStudents();
+        if (this.selectedStudent && this.selectedStudent.id === studentId) {
+            this.selectTargetStudent(studentId, true);
+        }
     },
 
     markAllStudentsPresent() {
@@ -1394,6 +1734,10 @@ const AdminPortal = {
         attData.isSaved = false;
         StorageManager.saveClassAttendance(this.currentAttendanceClass, this.currentAttendanceDate, attData);
         this.renderClassAttendance();
+        this.renderTeacherAllStudents();
+        if (this.selectedStudent) {
+            this.selectTargetStudent(this.selectedStudent.id, true);
+        }
         App.showToast(`Seluruh siswa kelas ${this.currentAttendanceClass} berhasil ditandai Hadir! Klik tombol SIMPAN untuk menyimpan data.`);
     },
 
