@@ -155,7 +155,7 @@ const AuthManager = {
         }
 
         if (!match) {
-            throw new Error("Username atau Password salah! (Coba: admin / 123 atau kesiswaan / 123)");
+            throw new Error("Username atau Password salah!");
         }
 
         this.currentUser = {
