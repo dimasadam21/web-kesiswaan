@@ -11,6 +11,117 @@ const STUDENTS_ZERO_RESET_KEY = "kesiswaan_clean_zero_v20261018_v6";
 const STUDENTS_CHUNK_PREFIX = "kesiswaan_students_c_";
 const IDB_NAME = "kesiswaan_idb";
 const IDB_STORE = "students";
+const SYNC_BUS_CHANNEL = "kesiswaan_realtime_sync_v1";
+
+/**
+ * SYNC MANAGER (Live Realtime Cross-Tab & Cross-Session Synchronization)
+ * Default: Aktif secara otomatis sehingga setiap perubahan dari Super Admin
+ * langsung ter-update di akun Guru dan Wali Kelas secara realtime.
+ */
+const SyncManager = {
+    channel: null,
+    isAutoSyncEnabled: true,
+
+    init() {
+        const stored = localStorage.getItem("kesiswaan_auto_sync_enabled");
+        this.isAutoSyncEnabled = (stored === null || stored === "true");
+
+        if (typeof window !== "undefined" && "BroadcastChannel" in window && !this.channel) {
+            try {
+                this.channel = new BroadcastChannel(SYNC_BUS_CHANNEL);
+                this.channel.onmessage = (event) => {
+                    this.handleIncomingSync(event.data);
+                };
+            } catch (e) {
+                console.warn("BroadcastChannel init notice:", e);
+            }
+        }
+
+        if (typeof window !== "undefined" && !window._kesiswaanStorageListenerAttached) {
+            window._kesiswaanStorageListenerAttached = true;
+            window.addEventListener("storage", (e) => {
+                if (!e.key) return;
+                if (e.key === STORAGE_KEY || e.key === STUDENTS_META_KEY || e.key.startsWith(STUDENTS_CHUNK_PREFIX)) {
+                    this.handleIncomingSync({ type: "STORAGE_EVENT", key: e.key });
+                }
+            });
+        }
+    },
+
+    broadcast(type, payload = {}) {
+        if (!this.isAutoSyncEnabled) return;
+        const msg = { type, payload, timestamp: Date.now() };
+        if (this.channel) {
+            try { this.channel.postMessage(msg); } catch (e) {}
+        }
+    },
+
+    setAutoSync(enabled) {
+        this.isAutoSyncEnabled = !!enabled;
+        localStorage.setItem("kesiswaan_auto_sync_enabled", this.isAutoSyncEnabled ? "true" : "false");
+        this.broadcast("AUTOSYNC_TOGGLED", { enabled: this.isAutoSyncEnabled });
+    },
+
+    isAutoSync() {
+        return this.isAutoSyncEnabled;
+    },
+
+    handleIncomingSync(data) {
+        if (!this.isAutoSyncEnabled) return;
+        if (!data || !data.type) return;
+
+        // Reset in-memory cache
+        if (window.StorageManager) {
+            StorageManager._studentsCache = null;
+            StorageManager._dataCache = null;
+            StorageManager._rulesCache = null;
+        }
+
+        // Jika user aktif adalah guru/wali kelas, cek apakah ada perubahan akun/kelas oleh Super Admin
+        if (window.AuthManager && typeof AuthManager.isLoggedIn === "function" && AuthManager.isLoggedIn()) {
+            const cur = AuthManager.getCurrentUser();
+            if (cur && cur.username && window.StorageManager) {
+                const freshTeacher = StorageManager.getTeacherByUsername(cur.username);
+                if (freshTeacher) {
+                    let changed = false;
+                    if (cur.roleLabel !== freshTeacher.roleLabel) { cur.roleLabel = freshTeacher.roleLabel; changed = true; }
+                    if (cur.kelas !== freshTeacher.kelas) { cur.kelas = freshTeacher.kelas; changed = true; }
+                    if (cur.name !== freshTeacher.name) { cur.name = freshTeacher.name; changed = true; }
+                    if (changed) {
+                        sessionStorage.setItem("kesiswaan_auth_session_v3", JSON.stringify(cur));
+                        AuthManager.notifyListeners();
+                    }
+                }
+            }
+        }
+
+        // Segera perbarui tampilan antarmuka yang sedang dibuka tanpa reload halaman
+        if (window.AdminPortal) {
+            if (typeof AdminPortal.renderClassAttendance === "function") {
+                AdminPortal.renderClassAttendance();
+            }
+            if (typeof AdminPortal.renderAttendanceRekap === "function") {
+                AdminPortal.renderAttendanceRekap();
+            }
+        }
+
+        if (window.Forms) {
+            const modalTeachers = document.getElementById("modalManageTeachers");
+            if (modalTeachers && (modalTeachers.classList.contains("active") || modalTeachers.style.display === "flex")) {
+                if (typeof Forms.renderTeachersList === "function") Forms.renderTeachersList();
+            }
+            const modalStudents = document.getElementById("modalExportStudents");
+            if (modalStudents && (modalStudents.classList.contains("active") || modalStudents.style.display === "flex")) {
+                if (typeof Forms.populateExportStudentClassFilter === "function") Forms.populateExportStudentClassFilter();
+                if (typeof Forms.renderExportStudentsTable === "function") Forms.renderExportStudentsTable();
+            }
+        }
+    }
+};
+
+if (typeof window !== "undefined") {
+    window.SyncManager = SyncManager;
+}
 
 const StorageManager = {
     _studentsCache: null,
@@ -18,6 +129,9 @@ const StorageManager = {
     _rulesCache: null,
 
     init() {
+        if (typeof SyncManager !== "undefined") {
+            SyncManager.init();
+        }
         this._dataCache = null;
         this._rulesCache = null;
         const stored = localStorage.getItem(STORAGE_KEY);
@@ -190,6 +304,9 @@ const StorageManager = {
 
         try {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+            if (typeof SyncManager !== "undefined") {
+                SyncManager.broadcast("DATA_SAVED");
+            }
         } catch (e) {
             console.error("Gagal menyimpan ke localStorage (kemungkinan kuota penuh):", e);
             if (window.App && typeof App.showToast === "function") {
@@ -891,6 +1008,10 @@ const StorageManager = {
 
         if (syncIdb) {
             this.saveStudentsToIndexedDB(studentsList);
+        }
+
+        if (typeof SyncManager !== "undefined") {
+            SyncManager.broadcast("STUDENTS_SAVED");
         }
     },
 
@@ -1597,11 +1718,85 @@ const StorageManager = {
         return this.saveAttendanceSettings(settings);
     },
 
+    // =========================================================================
+    // HELPER NORMALISASI & ALIAS KELAS RESMI SMKN 1 MAGELANG
+    // =========================================================================
+    normalizeClassName(k) {
+        if (!k) return "";
+        let clean = String(k).trim().toUpperCase().replace(/\s+/g, ' ');
+        const aliasMap = {
+            "XI DKAV B": "XI DKV B",
+            "XI DKAV A": "XI DKV A",
+            "XII DKAV B": "XII DKV B",
+            "XII DKAV A": "XII DKV A",
+            "X DKAV B": "X DKV B",
+            "X DKAV A": "X DKV A",
+            "XI BA": "XI TKP",
+            "XI BB": "XI DPIB",
+            "XII BA": "XII TKP",
+            "XII BB": "XII DPIB"
+        };
+        return aliasMap[clean] || clean;
+    },
+
+    getOppositeClassAlias(k) {
+        if (!k) return "";
+        let clean = String(k).trim().toUpperCase().replace(/\s+/g, ' ');
+        const aliasPairs = {
+            "XI DKAV B": "XI DKV B",
+            "XI DKV B": "XI DKAV B",
+            "XI DKAV A": "XI DKV A",
+            "XI DKV A": "XI DKAV A",
+            "XII DKAV B": "XII DKV B",
+            "XII DKV B": "XII DKAV B",
+            "XII DKAV A": "XII DKV A",
+            "XII DKV A": "XII DKAV A",
+            "X DKAV B": "X DKV B",
+            "X DKV B": "X DKAV B",
+            "X DKAV A": "X DKV A",
+            "X DKV A": "X DKAV A",
+            "XI BA": "XI TKP",
+            "XI TKP": "XI BA",
+            "XI BB": "XI DPIB",
+            "XI DPIB": "XI BB",
+            "XII BA": "XII TKP",
+            "XII TKP": "XII BA",
+            "XII BB": "XII DPIB",
+            "XII DPIB": "XII BB"
+        };
+        return aliasPairs[clean] || "";
+    },
+
+    isClassMatch(classA, classB) {
+        if (!classA || !classB) return false;
+        const sA = String(classA).trim().toUpperCase();
+        const sB = String(classB).trim().toUpperCase();
+        if (sA === sB) return true;
+
+        const cleanA = sA.replace(/[\s\-_.]/g, '');
+        const cleanB = sB.replace(/[\s\-_.]/g, '');
+        if (cleanA === cleanB) return true;
+
+        const normA = this.normalizeClassName(sA);
+        const normB = this.normalizeClassName(sB);
+        if (normA === normB) return true;
+
+        const cleanNormA = normA.replace(/[\s\-_.]/g, '');
+        const cleanNormB = normB.replace(/[\s\-_.]/g, '');
+        return cleanNormA === cleanNormB;
+    },
+
     getClassAttendance(kelas, tanggal) {
         const data = this.getData();
         if (!data.classAttendances) data.classAttendances = {};
         const key = `${kelas}_${tanggal}`;
-        return data.classAttendances[key] || null;
+        if (data.classAttendances[key]) return data.classAttendances[key];
+        const alias = this.getOppositeClassAlias(kelas);
+        if (alias) {
+            const aliasKey = `${alias}_${tanggal}`;
+            if (data.classAttendances[aliasKey]) return data.classAttendances[aliasKey];
+        }
+        return null;
     },
 
     saveClassAttendance(kelas, tanggal, payload) {
@@ -1609,7 +1804,7 @@ const StorageManager = {
         if (!data.classAttendances) data.classAttendances = {};
         const key = `${kelas}_${tanggal}`;
         const prev = data.classAttendances[key] || {};
-        data.classAttendances[key] = {
+        const entry = {
             kelas,
             tanggal,
             kegiatan: payload.kegiatan || prev.kegiatan || "Presensi",
@@ -1618,7 +1813,18 @@ const StorageManager = {
             isSaved: payload.isSaved !== undefined ? !!payload.isSaved : (prev.isSaved || false),
             records: payload.records || prev.records || {}
         };
+        data.classAttendances[key] = entry;
+
+        // Simpan juga ke alias jika ada agar sinkron sempurna
+        const alias = this.getOppositeClassAlias(kelas);
+        if (alias) {
+            data.classAttendances[`${alias}_${tanggal}`] = { ...entry, kelas: alias };
+        }
+
         this.saveData(data);
+        if (typeof SyncManager !== "undefined") {
+            SyncManager.broadcast("ATTENDANCE_SAVED", { kelas, tanggal });
+        }
         return data.classAttendances[key];
     },
 
@@ -1627,15 +1833,22 @@ const StorageManager = {
         if (!data.classAttendances) data.classAttendances = {};
         let list = Object.values(data.classAttendances);
         if (kelas) {
-            const cleanTarget = kelas.trim().toLowerCase().replace(/[\s\-_.]/g, '');
             list = list.filter(item => {
                 if (!item || !item.kelas) return false;
-                const cleanItem = item.kelas.trim().toLowerCase().replace(/[\s\-_.]/g, '');
-                return cleanItem === cleanTarget || item.kelas.trim().toUpperCase() === kelas.trim().toUpperCase();
+                return this.isClassMatch(item.kelas, kelas);
             });
         }
-        list.sort((a, b) => (b.tanggal || '').localeCompare(a.tanggal || ''));
-        return list;
+        const seen = new Set();
+        const uniqueList = [];
+        list.forEach(item => {
+            if (!item || !item.tanggal) return;
+            if (!seen.has(item.tanggal)) {
+                seen.add(item.tanggal);
+                uniqueList.push(item);
+            }
+        });
+        uniqueList.sort((a, b) => (b.tanggal || '').localeCompare(a.tanggal || ''));
+        return uniqueList;
     },
 
     ensureSampleAttendancesForClass(kelas) {
@@ -1665,16 +1878,15 @@ const StorageManager = {
     ensureStudentsForClass(kelasTarget) {
         if (!kelasTarget) return [];
         let allStudents = this.getStudents() || [];
-        const cleanTarget = kelasTarget.trim().toLowerCase().replace(/[\s\-_.]/g, '');
+
         const matchClass = (s) => {
             if (!s || !s.kelas) return false;
-            const cleanS = s.kelas.trim().toLowerCase().replace(/[\s\-_.]/g, '');
-            return cleanS === cleanTarget || s.kelas.trim().toUpperCase() === kelasTarget.trim().toUpperCase();
+            return this.isClassMatch(s.kelas, kelasTarget);
         };
 
         let classStudents = allStudents.filter(matchClass);
 
-        // Jika data siswa kelas target belum ada di penyimpanan lokal, otomatis ambil dari master 2.107 siswa
+        // Jika data siswa kelas target belum ada di penyimpanan lokal, ambil dari master 2.107 siswa
         if (classStudents.length === 0 && typeof MASTER_STUDENTS_LIST !== 'undefined' && Array.isArray(MASTER_STUDENTS_LIST)) {
             const masterClassStudents = MASTER_STUDENTS_LIST.filter(matchClass);
             if (masterClassStudents.length > 0) {
@@ -1718,6 +1930,110 @@ const StorageManager = {
         }
         
         return classStudents;
+    },
+
+    // =========================================================================
+    // FITUR SINKRONISASI MASTER SISWA & GURU (SUPER ADMIN)
+    // =========================================================================
+    syncAllStudentsMaster(silent = false) {
+        const masterSource = (typeof MASTER_STUDENTS_LIST !== 'undefined' && Array.isArray(MASTER_STUDENTS_LIST) && MASTER_STUDENTS_LIST.length > 0)
+            ? MASTER_STUDENTS_LIST
+            : ((typeof INITIAL_STUDENTS !== 'undefined' && Array.isArray(INITIAL_STUDENTS)) ? INITIAL_STUDENTS : []);
+
+        if (masterSource.length === 0) {
+            if (!silent && window.App && typeof App.showToast === "function") {
+                App.showToast("Data master siswa belum termuat.");
+            }
+            return { total: 0 };
+        }
+
+        const currentStudents = this.getStudents() || [];
+        const merged = this.mergeWithMasterStudents(masterSource, currentStudents);
+        this._studentsCache = merged;
+        this.saveStudents(merged, true);
+
+        if (typeof SyncManager !== "undefined" && SyncManager.broadcast) {
+            SyncManager.broadcast("STUDENTS_SYNCED", { total: merged.length });
+        }
+
+        if (!silent && window.App && typeof App.showToast === "function") {
+            App.showToast(`✅ Berhasil menyinkronkan ${merged.length} siswa (60 Kelas)! Seluruh akun guru langsung terisi.`);
+        }
+
+        return { total: merged.length };
+    },
+
+    syncAllTeachersMaster(silent = false) {
+        if (typeof DAFTAR_WALI_KELAS_MASTER === 'undefined' || !Array.isArray(DAFTAR_WALI_KELAS_MASTER)) {
+            if (!silent && window.App && typeof App.showToast === "function") {
+                App.showToast("Data master guru / wali kelas belum termuat.");
+            }
+            return { total: 0 };
+        }
+
+        const data = this.getData();
+        if (!data.teachers || !Array.isArray(data.teachers)) {
+            data.teachers = JSON.parse(JSON.stringify(DEFAULT_TEACHERS));
+        }
+
+        let addedCount = 0;
+        let updatedCount = 0;
+
+        DAFTAR_WALI_KELAS_MASTER.forEach(w => {
+            const cleanUser = String(w.username).trim().toLowerCase();
+            const foundIndex = data.teachers.findIndex(t => 
+                String(t.username).trim().toLowerCase() === cleanUser ||
+                (t.roleLabel && (t.roleLabel === `Wali Kelas ${w.kode}` || t.roleLabel === `Wali Kelas ${w.label}`))
+            );
+
+            const payload = {
+                name: w.nama,
+                username: w.username,
+                password: w.password || `${w.username}123`,
+                role: "guru",
+                roleLabel: `Wali Kelas ${w.kode}`,
+                sekbid: "-",
+                pembina: "-",
+                pokja: `Wali Kelas ${w.kode}`,
+                kelas: w.kode,
+                icon: "🧑‍🏫"
+            };
+
+            if (foundIndex === -1) {
+                data.teachers.push(payload);
+                addedCount++;
+            } else {
+                data.teachers[foundIndex] = {
+                    ...data.teachers[foundIndex],
+                    name: payload.name,
+                    roleLabel: payload.roleLabel,
+                    kelas: payload.kelas,
+                    password: payload.password
+                };
+                updatedCount++;
+            }
+        });
+
+        if (!data.teachers.some(t => t.username.toLowerCase() === "admin")) {
+            const defAdmin = DEFAULT_TEACHERS.find(t => t.username === "admin");
+            if (defAdmin) data.teachers.unshift(defAdmin);
+        }
+        if (!data.teachers.some(t => t.username.toLowerCase() === "kesiswaan")) {
+            const defKes = DEFAULT_TEACHERS.find(t => t.username === "kesiswaan");
+            if (defKes) data.teachers.push(defKes);
+        }
+
+        this.saveData(data);
+
+        if (typeof SyncManager !== "undefined" && SyncManager.broadcast) {
+            SyncManager.broadcast("TEACHERS_SYNCED", { total: data.teachers.length });
+        }
+
+        if (!silent && window.App && typeof App.showToast === "function") {
+            App.showToast(`✅ Berhasil menyinkronkan data guru (${data.teachers.length} akun, termasuk 60 wali kelas)!`);
+        }
+
+        return { added: addedCount, updated: updatedCount, total: data.teachers.length };
     },
 
     resetAllStudentRecordsToZero() {

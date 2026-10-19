@@ -988,6 +988,24 @@ const AdminPortal = {
         this.renderClassAttendance();
     },
 
+    syncCurrentClassStudents() {
+        if (!this.currentAttendanceClass) return;
+        let students = StorageManager.ensureStudentsForClass(this.currentAttendanceClass);
+        if (!students || students.length === 0) {
+            StorageManager.syncAllStudentsMaster(true);
+            students = StorageManager.ensureStudentsForClass(this.currentAttendanceClass);
+        }
+        this.renderClassAttendance();
+        if (students && students.length > 0) {
+            App.showToast(`✅ Berhasil menyinkronkan ${students.length} siswa untuk kelas ${this.currentAttendanceClass}!`);
+            if (typeof SyncManager !== "undefined") {
+                SyncManager.broadcast("STUDENTS_UPDATED");
+            }
+        } else {
+            App.showToast(`Data siswa untuk kelas ${this.currentAttendanceClass} tidak ditemukan.`);
+        }
+    },
+
     renderClassAttendance() {
         const tbody = document.getElementById("attTableBody");
         if (!tbody) return;
@@ -1049,7 +1067,11 @@ const AdminPortal = {
         }
 
         // Pastikan siswa untuk kelas target sudah disiapkan dan diambil
-        const students = StorageManager.ensureStudentsForClass(this.currentAttendanceClass);
+        let students = StorageManager.ensureStudentsForClass(this.currentAttendanceClass);
+        if (students.length === 0 && typeof MASTER_STUDENTS_LIST !== 'undefined') {
+            StorageManager.syncAllStudentsMaster(true);
+            students = StorageManager.ensureStudentsForClass(this.currentAttendanceClass);
+        }
 
         // Urutkan berdasarkan no absen / nama
         students.sort((a, b) => {
@@ -1070,7 +1092,12 @@ const AdminPortal = {
                 <tr>
                     <td colspan="${isNoRambut ? 6 : 7}" style="padding: 2.5rem; text-align: center; color: var(--text-muted);">
                         Belum ada data siswa terdaftar untuk kelas <strong>${this.currentAttendanceClass}</strong>.<br>
-                        ${AuthManager.isSuperAdmin() ? '<button class="btn btn-primary btn-sm" style="margin-top: 0.75rem;" onclick="Forms.openImportStudentsModal()">📥 Impor Siswa Excel</button>' : ''}
+                        <div style="margin-top: 1rem; display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap;">
+                            <button type="button" class="btn btn-primary btn-sm" onclick="AdminPortal.syncCurrentClassStudents()">
+                                🔄 Sinkronkan Siswa Kelas Ini
+                            </button>
+                            ${AuthManager.isSuperAdmin() ? '<button type="button" class="btn btn-outline btn-sm" onclick="Forms.handleSyncAllStudents()">🔄 Sinkronkan 60 Kelas (Super Admin)</button>' : ''}
+                        </div>
                     </td>
                 </tr>
             `;
@@ -1581,13 +1608,7 @@ const AdminPortal = {
     },
 
     exportAttendanceToExcel() {
-        const allStudents = StorageManager.getStudents();
-        const cleanCurrent = this.currentAttendanceClass.trim().toLowerCase().replace(/[\s\-_.]/g, '');
-        const students = allStudents.filter(s => {
-            if (!s.kelas) return false;
-            const cleanS = s.kelas.trim().toLowerCase().replace(/[\s\-_.]/g, '');
-            return cleanS === cleanCurrent || s.kelas.trim().toUpperCase() === this.currentAttendanceClass.trim().toUpperCase();
-        });
+        const students = StorageManager.ensureStudentsForClass(this.currentAttendanceClass);
         students.sort((a, b) => (a.no || 0) - (b.no || 0));
 
         const attData = StorageManager.getClassAttendance(this.currentAttendanceClass, this.currentAttendanceDate);
@@ -1632,13 +1653,7 @@ const AdminPortal = {
     },
 
     printAttendanceSheet() {
-        const allStudents = StorageManager.getStudents();
-        const cleanCurrent = this.currentAttendanceClass.trim().toLowerCase().replace(/[\s\-_.]/g, '');
-        const students = allStudents.filter(s => {
-            if (!s.kelas) return false;
-            const cleanS = s.kelas.trim().toLowerCase().replace(/[\s\-_.]/g, '');
-            return cleanS === cleanCurrent || s.kelas.trim().toUpperCase() === this.currentAttendanceClass.trim().toUpperCase();
-        });
+        const students = StorageManager.ensureStudentsForClass(this.currentAttendanceClass);
         students.sort((a, b) => (a.no || 0) - (b.no || 0));
 
         const attData = StorageManager.getClassAttendance(this.currentAttendanceClass, this.currentAttendanceDate);
@@ -1817,15 +1832,7 @@ const AdminPortal = {
         this.populateRekapClassOptions();
 
         // Pastikan siswa untuk kelas target siap
-        StorageManager.ensureStudentsForClass(this.currentAttendanceClass);
-
-        const allStudents = StorageManager.getStudents();
-        const cleanCurrent = this.currentAttendanceClass.trim().toLowerCase().replace(/[\s\-_.]/g, '');
-        const students = allStudents.filter(s => {
-            if (!s.kelas) return false;
-            const cleanS = s.kelas.trim().toLowerCase().replace(/[\s\-_.]/g, '');
-            return cleanS === cleanCurrent || s.kelas.trim().toUpperCase() === this.currentAttendanceClass.trim().toUpperCase();
-        });
+        const students = StorageManager.ensureStudentsForClass(this.currentAttendanceClass);
         students.sort((a, b) => (a.no || 0) - (b.no || 0));
 
         let sessions = StorageManager.getAllClassAttendances(this.currentAttendanceClass);
@@ -1884,13 +1891,7 @@ const AdminPortal = {
         const badgeInfo = document.getElementById("rekapTableInfoBadge");
         if (!thead || !tbody) return;
 
-        const allStudents = StorageManager.getStudents();
-        const cleanCurrent = this.currentAttendanceClass.trim().toLowerCase().replace(/[\s\-_.]/g, '');
-        const students = allStudents.filter(s => {
-            if (!s.kelas) return false;
-            const cleanS = s.kelas.trim().toLowerCase().replace(/[\s\-_.]/g, '');
-            return cleanS === cleanCurrent || s.kelas.trim().toUpperCase() === this.currentAttendanceClass.trim().toUpperCase();
-        });
+        const students = StorageManager.ensureStudentsForClass(this.currentAttendanceClass);
         students.sort((a, b) => (a.no || 0) - (b.no || 0));
 
         let sessions = StorageManager.getAllClassAttendances(this.currentAttendanceClass);

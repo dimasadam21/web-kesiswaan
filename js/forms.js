@@ -1642,6 +1642,31 @@ const Forms = {
         }
     },
 
+    handleSyncAllStudents() {
+        if (AuthManager.isWaliKelas() && !AuthManager.isSuperAdmin()) {
+            App.showToast("Akses dibatasi. Hanya Super Admin dan Staf Kesiswaan yang dapat menyinkronkan data siswa master.");
+            return;
+        }
+        StorageManager.syncAllStudentsMaster(false);
+        this.populateExportStudentClassFilter();
+        this.renderExportStudentsTable();
+        if (window.AdminPortal && typeof AdminPortal.renderClassAttendance === "function") {
+            AdminPortal.renderClassAttendance();
+        }
+        if (window.AdminPortal && typeof AdminPortal.renderTeacherAllStudents === "function") {
+            AdminPortal.renderTeacherAllStudents();
+        }
+    },
+
+    handleSyncAllTeachers() {
+        if (!AuthManager.isSuperAdmin()) {
+            App.showToast("Akses dibatasi. Hanya Super Admin yang dapat menyinkronkan master data guru.");
+            return;
+        }
+        StorageManager.syncAllTeachersMaster(false);
+        this.renderTeachersList();
+    },
+
     resetAllStudentRecordsToZero() {
         if (AuthManager.isWaliKelas()) {
             App.showToast("Akses dibatasi. Hanya Super Admin dan Staf Kesiswaan yang dapat me-reset poin siswa.");

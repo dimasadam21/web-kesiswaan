@@ -456,6 +456,12 @@
                             <button class="hub-btn hub-btn-slate" onclick="Forms.openManageTeachersModal()" title="Kelola Akun Guru & Tim Kesiswaan">
                                 👥 Kelola Guru
                             </button>
+                            <button class="hub-btn" onclick="Forms.handleSyncAllStudents()" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: #ffffff;" title="Sinkronkan seluruh data 2.107 siswa ke seluruh akun guru & wali kelas">
+                                🔄 Sinkron Siswa
+                            </button>
+                            <button class="hub-btn" onclick="Forms.handleSyncAllTeachers()" style="background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%); color: #ffffff;" title="Sinkronkan seluruh akun guru & 60 wali kelas resmi">
+                                🔄 Sinkron Guru
+                            </button>
                         </div>
                     </div>
 
@@ -1743,8 +1749,14 @@
                         <button id="btnExportAddNewStudent" type="button" class="btn btn-primary btn-sm" onclick="Forms.openStudentModal(true)" style="height: 38px; display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 600;" title="Tambah Siswa Baru">
                             👤 + Siswa Baru
                         </button>
+                        <button type="button" class="btn btn-sm" onclick="Forms.handleSyncAllStudents()" style="height: 38px; display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 600; color: #ffffff; background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); border: none;" title="Sinkronkan seluruh 2.107 siswa ke seluruh akun guru & wali kelas">
+                            🔄 Sinkronkan Data Siswa
+                        </button>
+                        <span style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.75rem; background: #ecfdf5; color: #047857; padding: 4px 8px; border-radius: 6px; font-weight: 600; border: 1px solid #a7f3d0;" title="Perubahan data siswa langsung tersinkronkan otomatis secara real-time ke akun guru">
+                            🟢 Sinkron Otomatis: Aktif
+                        </span>
                         <button id="btnExportRestoreMaster" type="button" class="btn btn-outline btn-sm" onclick="Forms.restoreOfficialStudentsMaster()" style="height: 38px; display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 600; border-color: #3b82f6; color: #2563eb; background: #eff6ff;" title="Pulihkan / Sinkronkan kembali seluruh 2.107 data siswa resmi SMKN 1 Magelang (60 Kelas)">
-                            🔄 Pulihkan 2.107 Siswa
+                            🔄 Pulihkan Master Siswa
                         </button>
                         <button id="btnExportResetZero" type="button" class="btn btn-outline btn-sm" onclick="Forms.resetAllStudentRecordsToZero()" style="height: 38px; display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 600; border-color: #f59e0b; color: #b45309; background: #fffbeb;" title="Kosongkan seluruh riwayat pelanggaran dan prestasi siswa menjadi 0 (untuk awal tahun ajaran baru)">
                             🌱 Reset Poin ke 0
@@ -2134,10 +2146,16 @@
                 <!-- FORM TAMBAH GURU BARU -->
                 <div style="background: #f8fafc; border: 1px solid var(--border); border-radius: 10px; padding: 1.15rem; margin-bottom: 1.25rem;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
-                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
                             <strong style="color: var(--text-main); font-size: 0.95rem;">➕ Tambah Anggota / Guru Baru:</strong>
+                            <button type="button" class="btn btn-sm" onclick="Forms.handleSyncAllTeachers()" style="font-size: 0.75rem; padding: 4px 10px; font-weight: 600; color: #ffffff; background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%); border: none; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;" title="Sinkronkan seluruh data akun guru & 60 wali kelas resmi">
+                                🔄 Sinkronkan Data Guru
+                            </button>
+                            <span style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.75rem; background: #ecfdf5; color: #047857; padding: 3px 8px; border-radius: 99px; font-weight: 600; border: 1px solid #a7f3d0;" title="Perubahan data guru dan siswa langsung tersinkronkan otomatis secara real-time">
+                                🟢 Sinkron Otomatis: Aktif
+                            </span>
                             <button type="button" class="btn btn-sm btn-outline" onclick="Forms.seedAllOfficialWaliKelas()" style="font-size: 0.74rem; padding: 2px 8px; font-weight: 600; color: #0369a1; border-color: #7dd3fc; background: #f0f9ff;" title="Daftarkan sekaligus seluruh 60 wali kelas resmi SMK Negeri 1 Magelang 2026/2027">
-                                ⚡ Daftarkan 60 Wali Kelas Resmi
+                                ⚡ Daftarkan 60 Wali Kelas
                             </button>
                         </div>
                         <span style="font-size: 0.75rem; color: var(--text-muted);">Data dapat diedit kembali kapan saja</span>
