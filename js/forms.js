@@ -3121,7 +3121,7 @@ const Forms = {
                 AuthManager.currentUser.name = name;
                 AuthManager.currentUser.role = role;
                 AuthManager.currentUser.roleLabel = roleLabel;
-                sessionStorage.setItem("kesiswaan_auth_session", JSON.stringify(AuthManager.currentUser));
+                sessionStorage.setItem("kesiswaan_auth_session_v3", JSON.stringify(AuthManager.currentUser));
                 AuthManager.notifyListeners();
             }
 
@@ -4973,6 +4973,76 @@ const Forms = {
         }
 
         App.showToast("Pengaturan jadwal presensi & cek list rambut berhasil disimpan!");
+    },
+
+    openChangePasswordModal() {
+        if (!AuthManager.isLoggedIn()) {
+            App.showToast("Silakan login terlebih dahulu!");
+            return;
+        }
+        const curUser = AuthManager.getCurrentUser();
+        const unameInput = document.getElementById("changePassUsernameDisplay");
+        if (unameInput) {
+            unameInput.value = `${curUser.name} (${curUser.username})`;
+        }
+        const oldInput = document.getElementById("changePassCurrent");
+        const newInput = document.getElementById("changePassNew");
+        const confirmInput = document.getElementById("changePassConfirm");
+        if (oldInput) oldInput.value = "";
+        if (newInput) newInput.value = "";
+        if (confirmInput) confirmInput.value = "";
+        this.openModal("modalChangePassword");
+    },
+
+    handleChangePassword(e) {
+        e.preventDefault();
+        if (!AuthManager.isLoggedIn()) {
+            App.showToast("Sesi login berakhir. Silakan login kembali!");
+            return;
+        }
+
+        const curUser = AuthManager.getCurrentUser();
+        const oldPass = (document.getElementById("changePassCurrent")?.value || "").trim();
+        const newPass = (document.getElementById("changePassNew")?.value || "").trim();
+        const confirmPass = (document.getElementById("changePassConfirm")?.value || "").trim();
+
+        if (!oldPass || !newPass) {
+            App.showToast("Password saat ini dan password baru wajib diisi!");
+            return;
+        }
+
+        if (newPass.length < 3) {
+            App.showToast("Password baru minimal 3 karakter!");
+            return;
+        }
+
+        if (newPass !== confirmPass) {
+            App.showToast("Konfirmasi password baru tidak cocok!");
+            return;
+        }
+
+        const teacher = StorageManager.getTeacherByUsername(curUser.username);
+        if (!teacher) {
+            App.showToast("Data akun guru tidak ditemukan di sistem!");
+            return;
+        }
+
+        const currentStoredPass = String(teacher.password || "123").trim();
+        if (currentStoredPass !== oldPass) {
+            App.showToast("Password saat ini yang Anda masukkan salah!");
+            return;
+        }
+
+        try {
+            StorageManager.updateTeacher(curUser.username, {
+                ...teacher,
+                password: newPass
+            });
+            this.closeModal("modalChangePassword");
+            App.showToast(`✅ Kata sandi akun ${curUser.username} berhasil diubah!`);
+        } catch (err) {
+            App.showToast("Gagal mengubah password: " + err.message);
+        }
     }
 };
 

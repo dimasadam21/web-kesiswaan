@@ -109,7 +109,13 @@ const SupabaseClient = {
         }
 
         if (res.status === 204) return null; // No content
-        return await res.json();
+        const text = await res.text();
+        if (!text || text.trim() === "") return null;
+        try {
+            return JSON.parse(text);
+        } catch (e) {
+            return text;
+        }
     },
 
     async testConnection(testUrl, testKey) {
@@ -201,6 +207,7 @@ const SupabaseClient = {
                     name: g.nama,
                     role: g.role,
                     roleLabel: g.role_label,
+                    kelas: g.kelas || (g.role_label && g.role_label.startsWith("Wali Kelas ") ? g.role_label.replace("Wali Kelas ", "").trim() : "-"),
                     sekbid: g.sekbid,
                     pokja: g.pokja,
                     pembina: g.pembina,
@@ -457,9 +464,9 @@ const SupabaseClient = {
                 icon: teacher.icon || "👨‍🏫"
             };
 
-            await this.request("guru", {
+            await this.request("guru?on_conflict=username", {
                 method: "POST",
-                headers: { "Prefer": "resolution=merge-duplicates" },
+                headers: { "Prefer": "resolution=merge-duplicates,return=representation" },
                 body: JSON.stringify(payload)
             });
         } catch (err) {

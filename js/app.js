@@ -947,6 +947,9 @@ const App = {
                 btnTeacherLogin.innerHTML = `Masuk Portal Kesiswaan`;
             }
 
+            const pInput = document.getElementById("loginTeacherPassword");
+            if (pInput) pInput.value = "";
+
             this.renderPublicDashboard();
         } else if (user.role === "siswa") {
             // SISWA LOGIN

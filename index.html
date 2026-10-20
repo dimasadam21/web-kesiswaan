@@ -48,11 +48,14 @@
                     <span id="headerGuestBadgeText"></span>
                 </div>
 
-                <div id="headerUserPill" style="display: none; align-items: center; gap: 0.6rem;">
+                <div id="headerUserPill" style="display: none; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
                     <div id="headerUserBadge" class="user-badge-pill">
                         <span id="headerUserName">Nama Pengguna</span>
                     </div>
-                    <button class="btn btn-outline btn-sm" onclick="AuthManager.logout()">
+                    <button type="button" class="btn btn-outline btn-sm" onclick="Forms.openChangePasswordModal()" title="Ubah kata sandi akun saya" style="display: flex; align-items: center; gap: 4px; font-size: 0.78rem; padding: 0.35rem 0.65rem;">
+                        🔑 Ganti Password
+                    </button>
+                    <button type="button" class="btn btn-outline btn-sm" onclick="AuthManager.logout()" style="font-size: 0.78rem; padding: 0.35rem 0.65rem;">
                         🚪 Keluar
                     </button>
                 </div>
@@ -2482,7 +2485,12 @@
                             </span>
                         </div>
                         <div class="form-group-clean">
-                            <label>Password Akun *</label>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+                                <label style="margin: 0;">Password Akun *</label>
+                                <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('editTeacherPassword').value = '123'" style="padding: 1px 6px; font-size: 0.7rem; color: var(--text-muted); border-color: var(--border);" title="Kembalikan kata sandi akun ke bawaan 123">
+                                    🔄 Reset ke 123
+                                </button>
+                            </div>
                             <input type="text" id="editTeacherPassword" class="form-control-clean" required placeholder="Ketik kata sandi akun">
                             <span style="font-size: 0.72rem; color: var(--text-muted); display: block; margin-top: 3px;">
                                 Password dapat diubah/direset langsung di sini.
@@ -2495,6 +2503,67 @@
                         💾 Simpan Perubahan Guru
                     </button>
                     <button type="button" class="btn btn-outline" onclick="Forms.closeModal('modalEditTeacher')">
+                        Batal
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         MODAL 5C: GANTI PASSWORD AKUN SAYA (GURU & SUPER ADMIN)
+         ===================================================================== -->
+    <div id="modalChangePassword" class="modal-backdrop">
+        <div class="modal-card" style="max-width: 480px; width: 95%;">
+            <div class="modal-card-header">
+                <div>
+                    <h3 style="margin-bottom: 2px;">🔑 Ubah Kata Sandi Akun</h3>
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">Perbarui password akun Anda untuk keamanan portal</p>
+                </div>
+                <button type="button" class="btn-outline btn-sm" onclick="Forms.closeModal('modalChangePassword')">&times; Tutup</button>
+            </div>
+            <form id="changePasswordForm" onsubmit="Forms.handleChangePassword(event)">
+                <div class="modal-card-body">
+                    <div class="form-group-clean">
+                        <label>Akun Saat Ini</label>
+                        <input type="text" id="changePassUsernameDisplay" class="form-control-clean" readonly style="background: #f8fafc; font-weight: 600; cursor: not-allowed;">
+                    </div>
+
+                    <div class="form-group-clean">
+                        <label>Password Saat Ini (Lama) *</label>
+                        <div style="position: relative;">
+                            <input type="password" id="changePassCurrent" class="form-control-clean" required placeholder="Ketik kata sandi saat ini" style="padding-right: 2.75rem;">
+                            <button type="button" class="btn-toggle-password" onclick="App.togglePasswordVisibility('changePassCurrent', this)" style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; padding: 4px; line-height: 1; color: var(--text-muted); display: flex; align-items: center; justify-content: center;" title="Lihat password">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="form-group-clean">
+                        <label>Password Baru *</label>
+                        <div style="position: relative;">
+                            <input type="password" id="changePassNew" class="form-control-clean" required placeholder="Ketik kata sandi baru (min. 3 karakter)" style="padding-right: 2.75rem;">
+                            <button type="button" class="btn-toggle-password" onclick="App.togglePasswordVisibility('changePassNew', this)" style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; padding: 4px; line-height: 1; color: var(--text-muted); display: flex; align-items: center; justify-content: center;" title="Lihat password">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="form-group-clean">
+                        <label>Konfirmasi Password Baru *</label>
+                        <div style="position: relative;">
+                            <input type="password" id="changePassConfirm" class="form-control-clean" required placeholder="Ketik ulang kata sandi baru" style="padding-right: 2.75rem;">
+                            <button type="button" class="btn-toggle-password" onclick="App.togglePasswordVisibility('changePassConfirm', this)" style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; padding: 4px; line-height: 1; color: var(--text-muted); display: flex; align-items: center; justify-content: center;" title="Lihat password">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-card-footer">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">
+                        💾 Simpan Password Baru
+                    </button>
+                    <button type="button" class="btn btn-outline" onclick="Forms.closeModal('modalChangePassword')">
                         Batal
                     </button>
                 </div>

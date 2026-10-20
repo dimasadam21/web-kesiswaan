@@ -118,39 +118,42 @@ const AuthManager = {
         const cleanPass = String(password).trim();
 
         const teachers = StorageManager.getTeachers();
-        let match = teachers.find(t => 
-            String(t.username).trim().toLowerCase() === cleanUser && 
-            String(t.password).trim() === cleanPass
-        );
+        const currentTeacher = teachers.find(t => String(t.username).trim().toLowerCase() === cleanUser);
+        let match = null;
 
-        // Cek langsung kecocokan kredensial bawaan admin & kesiswaan agar tidak pernah terkunci
-        if (cleanUser === "admin" && (cleanPass === "123" || cleanPass === "admin" || cleanPass === "admin123" || cleanPass === "123456")) {
-            match = DEFAULT_TEACHERS.find(t => t.username === "admin") || match;
-        } else if (cleanUser === "kesiswaan" && (cleanPass === "123" || cleanPass === "kesiswaan" || cleanPass === "kesiswaan123")) {
-            match = DEFAULT_TEACHERS.find(t => t.username === "kesiswaan") || match;
-        } else if (cleanUser === "walikelas" && (cleanPass === "123" || cleanPass === "walikelas")) {
-            match = { ...DEFAULT_TEACHERS.find(t => t.username === "walikelas"), kelas: "X TKP", roleLabel: "Wali Kelas X TKP" };
-        }
-
-        // Fallback verifikasi 60 Akun Wali Kelas SMK Negeri 1 Magelang
-        if (!match && typeof DAFTAR_WALI_KELAS_MASTER !== 'undefined') {
-            const wali = DAFTAR_WALI_KELAS_MASTER.find(w => 
-                String(w.username).trim().toLowerCase() === cleanUser && 
-                (String(w.password).trim() === cleanPass || cleanPass === "123" || cleanPass === `${w.username}123`)
-            );
-            if (wali) {
-                match = {
-                    username: wali.username,
-                    password: wali.password || `${wali.username}123`,
-                    name: wali.nama,
-                    role: "guru",
-                    roleLabel: `Wali Kelas ${wali.kode}`,
-                    kelas: wali.kode,
-                    sekbid: "-",
-                    pokja: "-",
-                    pembina: "-",
-                    icon: "🧑‍🏫"
-                };
+        if (currentTeacher) {
+            // Password WAJIB cocok persis dengan kata sandi yang tersimpan di sistem
+            const storedPass = String(currentTeacher.password || "").trim();
+            if (storedPass && cleanPass === storedPass) {
+                match = currentTeacher;
+            }
+        } else {
+            // Fallback akun bawaan jika akun belum pernah terdaftar di penyimpanan lokal
+            if (cleanUser === "admin" && (cleanPass === "123" || cleanPass === "admin")) {
+                match = DEFAULT_TEACHERS.find(t => t.username === "admin");
+            } else if (cleanUser === "kesiswaan" && (cleanPass === "123" || cleanPass === "kesiswaan")) {
+                match = DEFAULT_TEACHERS.find(t => t.username === "kesiswaan");
+            } else if (cleanUser === "walikelas" && (cleanPass === "123" || cleanPass === "walikelas")) {
+                match = { ...DEFAULT_TEACHERS.find(t => t.username === "walikelas"), kelas: "X TKP", roleLabel: "Wali Kelas X TKP" };
+            } else if (typeof DAFTAR_WALI_KELAS_MASTER !== 'undefined') {
+                const wali = DAFTAR_WALI_KELAS_MASTER.find(w => 
+                    String(w.username).trim().toLowerCase() === cleanUser && 
+                    (String(w.password).trim() === cleanPass || cleanPass === "123" || cleanPass === `${w.username}123`)
+                );
+                if (wali) {
+                    match = {
+                        username: wali.username,
+                        password: wali.password || `${wali.username}123`,
+                        name: wali.nama,
+                        role: "guru",
+                        roleLabel: `Wali Kelas ${wali.kode}`,
+                        kelas: wali.kode,
+                        sekbid: "-",
+                        pokja: "-",
+                        pembina: "-",
+                        icon: "🧑‍🏫"
+                    };
+                }
             }
         }
 
@@ -178,6 +181,8 @@ const AuthManager = {
     logout() {
         this.currentUser = null;
         sessionStorage.removeItem(AUTH_KEY);
+        const pInput = document.getElementById("loginTeacherPassword");
+        if (pInput) pInput.value = "";
         this.notifyListeners();
     },
 

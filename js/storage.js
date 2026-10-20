@@ -2152,7 +2152,7 @@ const StorageManager = {
                     name: payload.name,
                     roleLabel: payload.roleLabel,
                     kelas: payload.kelas,
-                    password: payload.password
+                    password: data.teachers[foundIndex].password || payload.password
                 };
                 updatedCount++;
             }
