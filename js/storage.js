@@ -859,6 +859,9 @@ const StorageManager = {
             if (typeof SyncManager !== "undefined") {
                 SyncManager.broadcast("ACHIEVEMENTS_UPDATED", { achievementId });
             }
+            if (window.SupabaseClient && typeof SupabaseClient.deleteAchievement === "function") {
+                SupabaseClient.deleteAchievement(achievementId);
+            }
         }
         return found;
     },
@@ -1186,6 +1189,11 @@ const StorageManager = {
         const index = data.students.findIndex(s => s.id === studentId);
         if (index === -1) throw new Error("Siswa tidak ditemukan");
 
+        const defaultUser = (typeof AuthManager !== "undefined" && AuthManager.getCurrentUser) ? AuthManager.getCurrentUser() : null;
+        const defaultPencatat = defaultUser 
+            ? `${defaultUser.name} (${defaultUser.roleLabel || (defaultUser.role === 'superadmin' ? 'Super Administrator IT' : (defaultUser.kelas ? 'Wali Kelas ' + defaultUser.kelas : 'Guru'))})` 
+            : "Guru Piket";
+
         const item = {
             id: "PL-" + Date.now(),
             tanggal: violationData.tanggal || new Date().toISOString().split("T")[0],
@@ -1193,7 +1201,7 @@ const StorageManager = {
             kategori: violationData.kategori || "Kedisiplinan",
             poin: Number(violationData.poin) || 5,
             sanksi: violationData.sanksi || "Pembinaan lisan",
-            pencatat: violationData.pencatat || "Guru Piket"
+            pencatat: violationData.pencatat || defaultPencatat
         };
 
         if (!data.students[index].pelanggaran) data.students[index].pelanggaran = [];
@@ -1215,6 +1223,11 @@ const StorageManager = {
         const data = this.getData();
         const index = data.students.findIndex(s => s.id === studentId);
         if (index === -1) throw new Error("Siswa tidak ditemukan");
+
+        const defaultUser = (typeof AuthManager !== "undefined" && AuthManager.getCurrentUser) ? AuthManager.getCurrentUser() : null;
+        const defaultPencatat = defaultUser 
+            ? `${defaultUser.name} (${defaultUser.roleLabel || (defaultUser.role === 'superadmin' ? 'Super Administrator IT' : (defaultUser.kelas ? 'Wali Kelas ' + defaultUser.kelas : 'Pembina Prestasi'))})` 
+            : "Tim Kesiswaan";
 
         const poinMap = {
             "Internasional": 100,
@@ -1239,7 +1252,7 @@ const StorageManager = {
             poin: calcPoin,
             foto: achievementData.foto || achievementData.piagam || defaultFoto,
             keterangan: achievementData.keterangan || `${achievementData.peringkat || 'Juara'} ${achievementData.tingkat || ''} (${achievementData.penyelenggara || '-'})`,
-            pencatat: achievementData.pencatat || "Tim Kesiswaan"
+            pencatat: achievementData.pencatat || defaultPencatat
         };
 
         if (!data.students[index].prestasi) data.students[index].prestasi = [];
@@ -1978,6 +1991,9 @@ const StorageManager = {
             if (typeof SyncManager !== "undefined") {
                 SyncManager.broadcast("VIOLATIONS_UPDATED", { studentId, violationId });
             }
+            if (window.SupabaseClient && typeof SupabaseClient.deleteViolation === "function") {
+                SupabaseClient.deleteViolation(violationId);
+            }
             return true;
         }
         return false;
@@ -2005,6 +2021,9 @@ const StorageManager = {
         if (typeof SyncManager !== "undefined") {
             SyncManager.broadcast("VIOLATIONS_UPDATED", { studentId, violationId });
         }
+        if (window.SupabaseClient && typeof SupabaseClient.pushViolation === "function") {
+            SupabaseClient.pushViolation(student.pelanggaran[index], student.nisn);
+        }
         return student.pelanggaran[index];
     },
 
@@ -2027,6 +2046,9 @@ const StorageManager = {
         this.saveData(data);
         if (typeof SyncManager !== "undefined") {
             SyncManager.broadcast("ACHIEVEMENTS_UPDATED", { studentId, achievementId });
+        }
+        if (window.SupabaseClient && typeof SupabaseClient.pushAchievement === "function") {
+            SupabaseClient.pushAchievement(student.prestasi[index], student.nisn);
         }
         return student.prestasi[index];
     },

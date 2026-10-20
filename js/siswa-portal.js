@@ -264,7 +264,10 @@ const SiswaPortal = {
                         <tr>
                             <td style="border: 1px solid #000; padding: 6px; text-align: center;">${i + 1}</td>
                             <td style="border: 1px solid #000; padding: 6px;">${pr.tanggal}</td>
-                            <td style="border: 1px solid #000; padding: 6px; font-weight: 600;">${pr.nama}</td>
+                            <td style="border: 1px solid #000; padding: 6px; font-weight: 600;">
+                                ${pr.nama}
+                                ${pr.pencatat ? `<div style="font-size: 7.5pt; color: #475569; font-weight: normal; margin-top: 1px;">👨‍🏫 Pencatat: ${pr.pencatat}</div>` : ''}
+                            </td>
                             <td style="border: 1px solid #000; padding: 6px;">${pr.tingkat} (${pr.peringkat})</td>
                             <td style="border: 1px solid #000; padding: 6px;">${pr.penyelenggara || '-'}</td>
                         </tr>
@@ -293,7 +296,10 @@ const SiswaPortal = {
                         <tr>
                             <td style="border: 1px solid #000; padding: 6px; text-align: center;">${i + 1}</td>
                             <td style="border: 1px solid #000; padding: 6px;">${pl.tanggal}</td>
-                            <td style="border: 1px solid #000; padding: 6px; font-weight: 600;">${pl.nama}</td>
+                            <td style="border: 1px solid #000; padding: 6px; font-weight: 600;">
+                                ${pl.nama}
+                                ${pl.pencatat ? `<div style="font-size: 7.5pt; color: #475569; font-weight: normal; margin-top: 1px;">👨‍🏫 Guru Pelapor: ${pl.pencatat}</div>` : ''}
+                            </td>
                             <td style="border: 1px solid #000; padding: 6px; text-align: center; color: #b91c1c; font-weight: bold;">+${pl.poin}</td>
                             <td style="border: 1px solid #000; padding: 6px;">${pl.sanksi || '-'}</td>
                         </tr>

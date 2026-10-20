@@ -663,6 +663,7 @@ const AdminPortal = {
                                         <td>
                                             <div style="font-weight: 600;">${Forms.escapeHtml(p.tingkat || 'Sekolah')}</div>
                                             <div style="font-size: 0.72rem; color: var(--text-muted);">${Forms.escapeHtml(p.penyelenggara || '-')}</div>
+                                            <div style="font-size: 0.7rem; color: #475569; margin-top: 2px;">👨‍🏫 Dicatat: <strong>${Forms.escapeHtml(p.pencatat || 'Tim Kesiswaan')}</strong></div>
                                         </td>
                                         <td>
                                             <div style="display: flex; gap: 4px; align-items: center; flex-wrap: wrap;">
@@ -1010,8 +1011,9 @@ const AdminPortal = {
             // Pelanggaran summary
             let violSummaryHtml = '';
             if (item.violPoints > 0) {
+                const latestViol = (s.pelanggaran || [])[0];
                 const recentViols = (s.pelanggaran || []).slice(0, 2).map(v => 
-                    `<span style="display: inline-block; background: #fee2e2; color: #991b1b; font-size: 0.68rem; font-weight: 600; padding: 1px 6px; border-radius: 4px; margin-top: 2px; margin-right: 3px; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${Forms.escapeHtml(v.nama)} (${v.poin} Poin)">${Forms.escapeHtml(v.nama)} (+${v.poin})</span>`
+                    `<span style="display: inline-block; background: #fee2e2; color: #991b1b; font-size: 0.68rem; font-weight: 600; padding: 1px 6px; border-radius: 4px; margin-top: 2px; margin-right: 3px; max-width: 155px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${Forms.escapeHtml(v.nama)} (+${v.poin} Poin) • Dicatat oleh: ${Forms.escapeHtml(v.pencatat || 'Guru')}">${Forms.escapeHtml(v.nama)} (+${v.poin})</span>`
                 ).join('');
                 violSummaryHtml = `
                     <div>
@@ -1019,6 +1021,7 @@ const AdminPortal = {
                         <span style="font-size: 0.72rem; color: var(--text-muted); margin-left: 4px;">(${item.violCount} Kasus)</span>
                     </div>
                     <div style="line-height: 1.2;">${recentViols}${(s.pelanggaran || []).length > 2 ? `<span style="font-size: 0.65rem; color: var(--text-muted);">+${(s.pelanggaran || []).length - 2} lainnya</span>` : ''}</div>
+                    ${latestViol && latestViol.pencatat ? `<div style="font-size: 0.7rem; color: #64748b; margin-top: 2px; font-weight: 500;" title="Guru Pengisi: ${Forms.escapeHtml(latestViol.pencatat)}">👨‍🏫 Dicatat: <strong>${Forms.escapeHtml(latestViol.pencatat)}</strong></div>` : ''}
                 `;
             } else {
                 violSummaryHtml = `<span style="color: #16a34a; font-size: 0.8rem; font-weight: 600;">✨ 0 Poin</span>`;
@@ -1027,14 +1030,16 @@ const AdminPortal = {
             // Prestasi summary
             let achSummaryHtml = '';
             if (item.achCount > 0) {
+                const latestAch = (s.prestasi || [])[0];
                 const recentAch = (s.prestasi || []).slice(0, 1).map(p => 
-                    `<div style="font-size: 0.72rem; color: #15803d; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 150px;" title="${Forms.escapeHtml(p.peringkat || '')} ${Forms.escapeHtml(p.nama || '')}">🏆 ${Forms.escapeHtml(p.peringkat || 'Juara')} - ${Forms.escapeHtml(p.nama || '')}</div>`
+                    `<div style="font-size: 0.72rem; color: #15803d; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 175px;" title="${Forms.escapeHtml(p.peringkat || '')} ${Forms.escapeHtml(p.nama || '')} • Dicatat oleh: ${Forms.escapeHtml(p.pencatat || 'Tim Kesiswaan')}">🏆 ${Forms.escapeHtml(p.peringkat || 'Juara')} - ${Forms.escapeHtml(p.nama || '')}</div>`
                 ).join('');
                 achSummaryHtml = `
                     <div>
                         <strong style="color: var(--success); font-size: 0.95rem;">${item.achCount} Prestasi</strong>
                     </div>
                     ${recentAch}
+                    ${latestAch && latestAch.pencatat ? `<div style="font-size: 0.7rem; color: #64748b; margin-top: 2px; font-weight: 500;" title="Guru Pengisi: ${Forms.escapeHtml(latestAch.pencatat)}">👨‍🏫 Dicatat: <strong>${Forms.escapeHtml(latestAch.pencatat)}</strong></div>` : ''}
                 `;
             } else {
                 achSummaryHtml = `<span style="color: var(--text-muted); font-size: 0.8rem;">-</span>`;
@@ -1126,6 +1131,7 @@ const AdminPortal = {
                         <div style="display: flex; gap: 0.35rem; align-items: center; flex-wrap: wrap;">
                             <span class="status-pill pill-gray" style="font-size: 0.7rem;">${p.tingkat}</span>
                             <span style="font-size: 0.75rem; color: var(--text-muted);">📅 ${p.tanggal}</span>
+                            ${p.pencatat ? `<span class="status-pill pill-blue" style="font-size: 0.68rem; font-weight: 600;" title="Pencatat Prestasi">👨‍🏫 ${Forms.escapeHtml(p.pencatat)}</span>` : ''}
                             ${p.piagam ? `<a href="${p.piagam}" target="_blank" class="status-pill pill-yellow" style="font-size: 0.7rem; text-decoration: none; font-weight: 600;">📜 Piagam</a>` : ''}
                         </div>
                         <button class="btn btn-outline btn-sm" style="color: var(--danger); border-color: var(--danger-border);" onclick="AdminPortal.handleDeleteAchievement('${p.id}', '${p.nama}')">
@@ -1529,7 +1535,9 @@ const AdminPortal = {
         if (!currentRec.violations) currentRec.violations = {};
 
         const user = AuthManager.getCurrentUser();
-        const pencatat = user ? user.name : "Wali Kelas";
+        const pencatat = user 
+            ? `${user.name} (${user.roleLabel || (user.kelas ? 'Wali Kelas ' + user.kelas : 'Guru')})` 
+            : "Wali Kelas";
 
         if (currentRec.status === 'hadir') {
             // Geser ke Alpha
@@ -1589,7 +1597,9 @@ const AdminPortal = {
         if (!currentRec.violations) currentRec.violations = {};
 
         const user = AuthManager.getCurrentUser();
-        const pencatat = user ? user.name : "Wali Kelas";
+        const pencatat = user 
+            ? `${user.name} (${user.roleLabel || (user.kelas ? 'Wali Kelas ' + user.kelas : 'Guru')})` 
+            : "Wali Kelas";
 
         currentRec.status = newKet;
 
@@ -1645,7 +1655,9 @@ const AdminPortal = {
         if (!currentRec.violations) currentRec.violations = {};
 
         const user = AuthManager.getCurrentUser();
-        const pencatat = user ? user.name : "Wali Kelas";
+        const pencatat = user 
+            ? `${user.name} (${user.roleLabel || (user.kelas ? 'Wali Kelas ' + user.kelas : 'Guru')})` 
+            : "Wali Kelas";
         const violKey = `${field}Id`;
 
         currentRec[field] = isChecked;

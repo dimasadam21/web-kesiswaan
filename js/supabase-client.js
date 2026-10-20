@@ -149,6 +149,15 @@ const SupabaseClient = {
 
             // Jalankan sinkronisasi penuh
             await this.pullFromCloud();
+
+            // Jalankan sinkronisasi background berkala agar data pelanggaran/prestasi yang diisi guru lain otomatis tampil
+            if (!this._syncInterval) {
+                this._syncInterval = setInterval(() => {
+                    if (this.isConnected && !this.isSyncing && typeof document !== "undefined" && !document.hidden) {
+                        this.pullFromCloud();
+                    }
+                }, 20000);
+            }
         } catch (err) {
             console.warn("Supabase tidak dapat dijangkau, menggunakan penyimpanan lokal:", err.message);
             this.isConnected = false;
@@ -336,6 +345,22 @@ const SupabaseClient = {
                 App.renderPublicDashboard();
             }
 
+            // Segarkan tabel siswa tercatat dan daftar prestasi di Admin Portal
+            if (window.AdminPortal) {
+                if (typeof AdminPortal.renderTeacherAllStudents === "function") {
+                    AdminPortal.renderTeacherAllStudents();
+                }
+                if (AdminPortal.selectedStudent && typeof AdminPortal.selectTargetStudent === "function") {
+                    AdminPortal.selectTargetStudent(AdminPortal.selectedStudent.id, true);
+                }
+                if (typeof AdminPortal.renderAdminPrestasiList === "function") {
+                    AdminPortal.renderAdminPrestasiList();
+                }
+            }
+            if (window.App && typeof App.initPrestasiSlider === "function") {
+                App.initPrestasiSlider();
+            }
+
             console.log("✅ Berhasil menyinkronkan data dari Supabase Cloud!");
         } catch (err) {
             console.error("Gagal sinkronisasi dari cloud:", err);
@@ -420,6 +445,17 @@ const SupabaseClient = {
         }
     },
 
+    async deleteViolation(id) {
+        if (!this.isConnected || !id) return;
+        try {
+            await this.request(`pelanggaran?id=eq.${encodeURIComponent(id)}`, {
+                method: "DELETE"
+            });
+        } catch (err) {
+            console.warn("Gagal menghapus pelanggaran dari Supabase:", err);
+        }
+    },
+
     async pushAchievement(achievement, nisn) {
         if (!this.isConnected) return;
         try {
@@ -446,6 +482,17 @@ const SupabaseClient = {
             });
         } catch (err) {
             console.warn("Gagal menyimpan prestasi ke Supabase:", err);
+        }
+    },
+
+    async deleteAchievement(id) {
+        if (!this.isConnected || !id) return;
+        try {
+            await this.request(`prestasi?id=eq.${encodeURIComponent(id)}`, {
+                method: "DELETE"
+            });
+        } catch (err) {
+            console.warn("Gagal menghapus prestasi dari Supabase:", err);
         }
     },
 

@@ -1189,7 +1189,29 @@
                         </div>
                     </div>
 
-                    <!-- 2. TANGGAL KEJADIAN (DI BAWAH NAMA SISWA) -->
+                    <!-- GURU PENCATAT / PELAPOR (TERISI OTOMATIS & TERSINKRONISASI) -->
+                    <div class="form-group-clean">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                            <label style="margin-bottom: 0;">👨‍🏫 Guru Pencatat / Pelapor *</label>
+                            <span class="status-pill pill-green" style="font-size: 0.68rem; font-weight: 700;">🔄 Sinkron Otomatis</span>
+                        </div>
+                        <input type="hidden" id="formPelanggaranPencatat" required>
+                        <div id="formPelanggaranGuruLockedBox" style="background: #f8fafc; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0.65rem 0.85rem; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; flex-wrap: wrap;">
+                            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                <span style="font-size: 1.3rem;">👨‍🏫</span>
+                                <div>
+                                    <strong id="formPelanggaranGuruNama" style="font-size: 0.92rem; color: var(--text-main);">Nama Guru</strong>
+                                    <div id="formPelanggaranGuruRole" style="font-size: 0.75rem; color: var(--text-muted);">Jabatan / Peran</div>
+                                </div>
+                            </div>
+                            <select id="formPelanggaranGuruSelect" class="form-control-clean" style="display: none; max-width: 220px; font-size: 0.75rem; padding: 4px 8px;"></select>
+                        </div>
+                        <span style="font-size: 0.7rem; color: var(--text-muted); display: block; margin-top: 3px;">
+                            💡 Otomatis mencatat akun guru yang sedang login. Super Admin / Kesiswaan dapat memilih guru lain jika mencatatkan laporan.
+                        </span>
+                    </div>
+
+                    <!-- 2. TANGGAL KEJADIAN (DI BAWAH NAMA SISWA & GURU) -->
                     <div class="form-group-clean">
                         <label>Tanggal Kejadian *</label>
                         <input type="date" id="formPelanggaranTanggal" class="form-control-clean" required>
@@ -1289,6 +1311,28 @@
                             </div>
                             <span class="status-pill pill-gray" style="font-size: 0.7rem; font-weight: 700;">🔒 Siswa Terkunci</span>
                         </div>
+                    </div>
+
+                    <!-- GURU PENCATAT / PEMBINA PRESTASI (TERISI OTOMATIS & TERSINKRONISASI) -->
+                    <div class="form-group-clean">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                            <label style="margin-bottom: 0;">👨‍🏫 Guru Pencatat / Pembina Prestasi *</label>
+                            <span class="status-pill pill-green" style="font-size: 0.68rem; font-weight: 700;">🔄 Sinkron Otomatis</span>
+                        </div>
+                        <input type="hidden" id="formPrestasiPencatat" required>
+                        <div id="formPrestasiGuruLockedBox" style="background: #f8fafc; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0.65rem 0.85rem; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; flex-wrap: wrap;">
+                            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                <span style="font-size: 1.3rem;">👨‍🏫</span>
+                                <div>
+                                    <strong id="formPrestasiGuruNama" style="font-size: 0.92rem; color: var(--text-main);">Nama Guru</strong>
+                                    <div id="formPrestasiGuruRole" style="font-size: 0.75rem; color: var(--text-muted);">Jabatan / Peran</div>
+                                </div>
+                            </div>
+                            <select id="formPrestasiGuruSelect" class="form-control-clean" style="display: none; max-width: 220px; font-size: 0.75rem; padding: 4px 8px;"></select>
+                        </div>
+                        <span style="font-size: 0.7rem; color: var(--text-muted); display: block; margin-top: 3px;">
+                            💡 Otomatis mencatat akun guru pembina/kesiswaan yang sedang login ke sistem.
+                        </span>
                     </div>
 
                     <!-- 2. JUARA BERAPA (DROPDOWN 1, 2, 3, HARAPAN 1 s.d HARAPAN 3) -->

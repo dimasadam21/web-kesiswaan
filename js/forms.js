@@ -393,8 +393,10 @@ const Forms = {
         // Reset pilihan katalog jenis pelanggaran
         this.populateDropdowns();
 
+        const editingItem = editingViolationId ? (student.pelanggaran || []).find(p => p.id === editingViolationId) : null;
+        this.syncTeacherRecorderViolation(editingItem);
+
         if (editingViolationId) {
-            const editingItem = (student.pelanggaran || []).find(p => p.id === editingViolationId);
             if (editingItem) {
                 document.getElementById("formPelanggaranTanggal").value = editingItem.tanggal || new Date().toISOString().split("T")[0];
                 document.getElementById("formPelanggaranNama").value = editingItem.nama || "";
@@ -441,6 +443,68 @@ const Forms = {
         this.updateViolationCalculation(student, null);
 
         this.openModal("modalViolation");
+    },
+
+    syncTeacherRecorderViolation(editingItem = null) {
+        const currentUser = AuthManager.getCurrentUser();
+        const guruNamaEl = document.getElementById("formPelanggaranGuruNama");
+        const guruRoleEl = document.getElementById("formPelanggaranGuruRole");
+        const guruInputEl = document.getElementById("formPelanggaranPencatat");
+        const guruSelectEl = document.getElementById("formPelanggaranGuruSelect");
+
+        let defaultGuruName = "Guru";
+        let defaultGuruRole = "Guru Piket / Kesiswaan";
+
+        if (currentUser) {
+            defaultGuruName = currentUser.name || "Guru";
+            defaultGuruRole = currentUser.roleLabel || (currentUser.role === "superadmin" ? "Super Administrator IT" : (currentUser.kelas ? `Wali Kelas ${currentUser.kelas}` : "Staf Kesiswaan"));
+        }
+
+        const defaultGuruString = `${defaultGuruName} (${defaultGuruRole})`;
+
+        if (editingItem && editingItem.pencatat) {
+            if (guruInputEl) guruInputEl.value = editingItem.pencatat;
+            if (guruNamaEl) guruNamaEl.textContent = editingItem.pencatat;
+            if (guruRoleEl) guruRoleEl.textContent = "Guru Pencatat Sebelumnya";
+        } else {
+            if (guruInputEl) guruInputEl.value = defaultGuruString;
+            if (guruNamaEl) guruNamaEl.textContent = defaultGuruName;
+            if (guruRoleEl) guruRoleEl.textContent = defaultGuruRole;
+        }
+
+        if (guruSelectEl) {
+            const teachers = (typeof StorageManager !== "undefined" && StorageManager.getTeachers) ? StorageManager.getTeachers() : [];
+            const canSelectOther = AuthManager.isSuperAdmin() || AuthManager.isStaffKesiswaan();
+            if (canSelectOther && teachers.length > 0) {
+                guruSelectEl.style.display = "block";
+                guruSelectEl.innerHTML = `<option value="">-- Tetap Gunakan Akun Saya (${defaultGuruName}) --</option>` + 
+                    teachers.map(t => {
+                        const tRole = t.roleLabel || t.role || (t.kelas ? `Wali Kelas ${t.kelas}` : 'Guru');
+                        const fullVal = `${t.name} (${tRole})`;
+                        const isSel = editingItem && editingItem.pencatat === fullVal ? 'selected' : '';
+                        return `<option value="${Forms.escapeHtml(fullVal)}" ${isSel}>${Forms.escapeHtml(t.name)} - ${Forms.escapeHtml(tRole)}</option>`;
+                    }).join('');
+                guruSelectEl.onchange = (e) => {
+                    if (e.target.value) {
+                        if (guruInputEl) guruInputEl.value = e.target.value;
+                        const idx = e.target.value.indexOf(" (");
+                        if (idx > -1) {
+                            if (guruNamaEl) guruNamaEl.textContent = e.target.value.substring(0, idx);
+                            if (guruRoleEl) guruRoleEl.textContent = e.target.value.substring(idx + 2, e.target.value.length - 1);
+                        } else {
+                            if (guruNamaEl) guruNamaEl.textContent = e.target.value;
+                            if (guruRoleEl) guruRoleEl.textContent = "Guru";
+                        }
+                    } else {
+                        if (guruInputEl) guruInputEl.value = defaultGuruString;
+                        if (guruNamaEl) guruNamaEl.textContent = defaultGuruName;
+                        if (guruRoleEl) guruRoleEl.textContent = defaultGuruRole;
+                    }
+                };
+            } else {
+                guruSelectEl.style.display = "none";
+            }
+        }
     },
 
     openEditStudentViolationModal(studentId, violationId) {
@@ -490,7 +554,64 @@ const Forms = {
         if (tingkatSelect) tingkatSelect.value = "";
         this.updatePrestasiPointsCalculation();
 
+        // Sinkronisasi otomatis Guru Pencatat / Pembina Prestasi
+        this.syncTeacherRecorderAchievement();
+
         this.openModal("modalAchievement");
+    },
+
+    syncTeacherRecorderAchievement() {
+        const currentUser = AuthManager.getCurrentUser();
+        const guruNamaEl = document.getElementById("formPrestasiGuruNama");
+        const guruRoleEl = document.getElementById("formPrestasiGuruRole");
+        const guruInputEl = document.getElementById("formPrestasiPencatat");
+        const guruSelectEl = document.getElementById("formPrestasiGuruSelect");
+
+        let defaultGuruName = "Tim Kesiswaan";
+        let defaultGuruRole = "Pembina Prestasi Siswa";
+
+        if (currentUser) {
+            defaultGuruName = currentUser.name || "Tim Kesiswaan";
+            defaultGuruRole = currentUser.roleLabel || (currentUser.role === "superadmin" ? "Super Administrator IT" : (currentUser.kelas ? `Wali Kelas ${currentUser.kelas}` : "Pembina Prestasi / Kesiswaan"));
+        }
+
+        const defaultGuruString = `${defaultGuruName} (${defaultGuruRole})`;
+        if (guruInputEl) guruInputEl.value = defaultGuruString;
+        if (guruNamaEl) guruNamaEl.textContent = defaultGuruName;
+        if (guruRoleEl) guruRoleEl.textContent = defaultGuruRole;
+
+        if (guruSelectEl) {
+            const teachers = (typeof StorageManager !== "undefined" && StorageManager.getTeachers) ? StorageManager.getTeachers() : [];
+            const canSelectOther = AuthManager.isSuperAdmin() || AuthManager.isStaffKesiswaan();
+            if (canSelectOther && teachers.length > 0) {
+                guruSelectEl.style.display = "block";
+                guruSelectEl.innerHTML = `<option value="">-- Tetap Gunakan Akun Saya (${defaultGuruName}) --</option>` + 
+                    teachers.map(t => {
+                        const tRole = t.roleLabel || t.role || (t.kelas ? `Wali Kelas ${t.kelas}` : 'Guru');
+                        const fullVal = `${t.name} (${tRole})`;
+                        return `<option value="${Forms.escapeHtml(fullVal)}">${Forms.escapeHtml(t.name)} - ${Forms.escapeHtml(tRole)}</option>`;
+                    }).join('');
+                guruSelectEl.onchange = (e) => {
+                    if (e.target.value) {
+                        if (guruInputEl) guruInputEl.value = e.target.value;
+                        const idx = e.target.value.indexOf(" (");
+                        if (idx > -1) {
+                            if (guruNamaEl) guruNamaEl.textContent = e.target.value.substring(0, idx);
+                            if (guruRoleEl) guruRoleEl.textContent = e.target.value.substring(idx + 2, e.target.value.length - 1);
+                        } else {
+                            if (guruNamaEl) guruNamaEl.textContent = e.target.value;
+                            if (guruRoleEl) guruRoleEl.textContent = "Pembina Prestasi";
+                        }
+                    } else {
+                        if (guruInputEl) guruInputEl.value = defaultGuruString;
+                        if (guruNamaEl) guruNamaEl.textContent = defaultGuruName;
+                        if (guruRoleEl) guruRoleEl.textContent = defaultGuruRole;
+                    }
+                };
+            } else {
+                guruSelectEl.style.display = "none";
+            }
+        }
     },
 
     openStudentModal(fromManage = false) {
@@ -526,6 +647,13 @@ const Forms = {
         const sanksi = document.getElementById("formPelanggaranSanksi").value;
         const kategori = document.getElementById("formPelanggaranKategori").value || "Kedisiplinan";
 
+        const pencatatInput = document.getElementById("formPelanggaranPencatat");
+        const defaultUser = AuthManager.getCurrentUser();
+        const fallbackPencatat = defaultUser 
+            ? `${defaultUser.name} (${defaultUser.roleLabel || (defaultUser.role === 'superadmin' ? 'Super Administrator' : 'Guru')})` 
+            : "Guru Piket";
+        const pencatat = (pencatatInput && pencatatInput.value.trim()) ? pencatatInput.value.trim() : fallbackPencatat;
+
         if (!studentId) {
             App.showToast("Siswa target belum terpilih!");
             return;
@@ -544,7 +672,7 @@ const Forms = {
                     poin: Number(poin),
                     tanggal,
                     sanksi,
-                    pencatat: AuthManager.getCurrentUser() ? AuthManager.getCurrentUser().name : "Guru"
+                    pencatat
                 });
                 this.editingViolationId = null;
                 this.closeAllModals();
@@ -567,7 +695,7 @@ const Forms = {
                     poin: Number(poin),
                     tanggal,
                     sanksi,
-                    pencatat: AuthManager.getCurrentUser() ? AuthManager.getCurrentUser().name : "Guru Piket"
+                    pencatat
                 });
 
                 this.closeAllModals();
@@ -608,6 +736,13 @@ const Forms = {
         const fotoUrlInput = document.getElementById("formPrestasiFoto")?.value.trim();
         const foto = this.uploadedPrestasiFotoUrl || fotoUrlInput || piagam || undefined;
 
+        const pencatatInput = document.getElementById("formPrestasiPencatat");
+        const defaultUser = AuthManager.getCurrentUser();
+        const fallbackPencatat = defaultUser 
+            ? `${defaultUser.name} (${defaultUser.roleLabel || (defaultUser.role === 'superadmin' ? 'Super Administrator' : 'Pembina Prestasi')})` 
+            : "Tim Kesiswaan";
+        const pencatat = (pencatatInput && pencatatInput.value.trim()) ? pencatatInput.value.trim() : fallbackPencatat;
+
         if (!studentId) {
             App.showToast("Siswa target belum terpilih!");
             return;
@@ -632,7 +767,7 @@ const Forms = {
                 tanggal,
                 foto,
                 keterangan,
-                pencatat: AuthManager.getCurrentUser() ? AuthManager.getCurrentUser().name : "Tim Kesiswaan"
+                pencatat
             });
 
             this.closeAllModals();
