@@ -1649,6 +1649,14 @@ const Forms = {
     },
 
     openExportStudentsModal() {
+        // Otomatis sinkronkan siswa master jika data belum mencapai 2.000 siswa
+        if (typeof StorageManager !== 'undefined') {
+            const curStudents = StorageManager.getStudents();
+            if (!curStudents || curStudents.length < 2000) {
+                StorageManager.syncAllStudentsMaster(true);
+            }
+        }
+
         this.exportStudentSearchQuery = "";
         this.exportStudentClassFilter = "";
         this.exportStudentCurrentPage = 1;
@@ -2663,6 +2671,11 @@ const Forms = {
     },
 
     openManageTeachersModal() {
+        // Otomatis sinkronkan 60 akun wali kelas resmi jika belum terdaftar
+        if (typeof StorageManager !== 'undefined' && typeof StorageManager.syncAllTeachersMaster === 'function') {
+            StorageManager.syncAllTeachersMaster(true);
+        }
+
         this.teacherSearchQuery = "";
         const searchInput = document.getElementById("searchTeacherInput");
         if (searchInput) searchInput.value = "";

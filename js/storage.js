@@ -214,8 +214,20 @@ const StorageManager = {
             }
         }
 
-        // Pastikan cache siswa dimuat
-        this.getStudents();
+        // Pastikan cache siswa dimuat & otomatis sinkronkan data master jika belum lengkap
+        const curStudents = this.getStudents();
+        if (!curStudents || curStudents.length < 2000) {
+            this.syncAllStudentsMaster(true);
+        }
+
+        // Otomatisasi sinkronisasi 60 akun wali kelas resmi jika belum terdaftar
+        if (typeof DAFTAR_WALI_KELAS_MASTER !== 'undefined' && Array.isArray(DAFTAR_WALI_KELAS_MASTER)) {
+            const curTeachers = this.getTeachers();
+            if (!curTeachers || curTeachers.length < 50) {
+                this.syncAllTeachersMaster(true);
+            }
+        }
+
         // Inisialisasi IndexedDB sebagai backup tahan kuota
         this.initIndexedDB();
     },

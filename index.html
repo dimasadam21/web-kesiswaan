@@ -459,12 +459,6 @@
                             <button class="hub-btn hub-btn-slate" onclick="Forms.openManageTeachersModal()" title="Kelola Akun Guru & Tim Kesiswaan">
                                 👥 Kelola Guru
                             </button>
-                            <button class="hub-btn" onclick="Forms.handleSyncAllStudents()" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: #ffffff;" title="Sinkronkan seluruh data 2.107 siswa ke seluruh akun guru & wali kelas">
-                                🔄 Sinkron Siswa
-                            </button>
-                            <button class="hub-btn" onclick="Forms.handleSyncAllTeachers()" style="background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%); color: #ffffff;" title="Sinkronkan seluruh akun guru & 60 wali kelas resmi">
-                                🔄 Sinkron Guru
-                            </button>
                         </div>
                     </div>
 
@@ -2330,6 +2324,13 @@
                             <button type="button" class="btn btn-outline btn-sm" onclick="Forms.exportTeachersToExcel()" style="font-size: 0.76rem; padding: 0.35rem 0.65rem; border-color: #93c5fd; color: #1d4ed8; background: #eff6ff;" title="Ekspor data akun guru (Nama Lengkap, Sebagai Jabatan Utama, Username, Password) ke Excel (.xlsx)">
                                 📥 Ekspor (.xlsx)
                             </button>
+                            <!-- Tombol Sinkronkan Data Guru -->
+                            <button type="button" class="btn btn-sm" onclick="Forms.handleSyncAllTeachers()" style="font-size: 0.76rem; padding: 0.35rem 0.65rem; color: #ffffff; background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%); border: none; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;" title="Sinkronkan master 60 akun wali kelas resmi">
+                                🔄 Sinkronkan Guru
+                            </button>
+                            <span style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.72rem; background: #ecfdf5; color: #047857; padding: 3px 7px; border-radius: 6px; font-weight: 600; border: 1px solid #a7f3d0;" title="Akun guru dan 60 wali kelas resmi disinkronkan otomatis">
+                                🟢 Sinkron Otomatis: Aktif
+                            </span>
                             <!-- Hidden File Input untuk Impor Guru -->
                             <input type="file" id="importTeachersFileInput" accept=".xlsx, .xls, .csv" style="display: none;" onchange="Forms.handleImportTeachersFile(event)">
                         </div>
