@@ -352,8 +352,8 @@ const Forms = {
     },
 
     openViolationModal(preselectedStudentId = null, editingViolationId = null) {
-        if (AuthManager.isWaliKelas()) {
-            App.showToast("Akses dibatasi. Wali Kelas hanya memiliki hak akses melihat data siswa.");
+        if (!AuthManager.canManageStudentRecords()) {
+            App.showToast("Akses dibatasi. Akun Anda tidak memiliki hak akses mencatat pelanggaran siswa.");
             return;
         }
 
@@ -512,8 +512,8 @@ const Forms = {
     },
 
     openAchievementModal(preselectedStudentId = null) {
-        if (AuthManager.isWaliKelas()) {
-            App.showToast("Akses dibatasi. Wali Kelas hanya memiliki hak akses melihat data siswa.");
+        if (!AuthManager.canManageStudentRecords()) {
+            App.showToast("Akses dibatasi. Akun Anda tidak memiliki hak akses mencatat prestasi siswa.");
             return;
         }
 
@@ -886,8 +886,8 @@ const Forms = {
 
     // 3B. EDIT PROFIL SISWA (LENGKAP SESUAI FORMAT EXCEL IMPOR)
     openEditStudentModal(studentId, fromManage = false) {
-        if (AuthManager.isWaliKelas()) {
-            App.showToast("Akses dibatasi. Wali Kelas hanya memiliki hak akses melihat data siswa.");
+        if (!AuthManager.canManageStudentRecords()) {
+            App.showToast("Akses dibatasi. Akun Anda tidak memiliki hak akses mengubah profil siswa.");
             return;
         }
         this.isEditingFromManageStudents = !!fromManage;
@@ -1797,13 +1797,13 @@ const Forms = {
         this.exportStudentCurrentPage = 1;
         this.exportStudentPageSize = 50;
 
-        const isWaliKelas = AuthManager.isWaliKelas();
+        const canManageRecords = AuthManager.canManageStudentRecords();
         const btnAdd = document.getElementById("btnExportAddNewStudent");
         const btnRestore = document.getElementById("btnExportRestoreMaster");
         const btnReset = document.getElementById("btnExportResetZero");
-        if (btnAdd) btnAdd.style.display = isWaliKelas ? "none" : "inline-flex";
-        if (btnRestore) btnRestore.style.display = isWaliKelas ? "none" : "inline-flex";
-        if (btnReset) btnReset.style.display = isWaliKelas ? "none" : "inline-flex";
+        if (btnAdd) btnAdd.style.display = canManageRecords ? "inline-flex" : "none";
+        if (btnRestore) btnRestore.style.display = canManageRecords ? "inline-flex" : "none";
+        if (btnReset) btnReset.style.display = canManageRecords ? "inline-flex" : "none";
 
         const searchInput = document.getElementById("exportStudentSearchInput");
         if (searchInput) searchInput.value = "";
@@ -2119,7 +2119,7 @@ const Forms = {
                         </span>
                     </td>
                     <td style="padding: 6px 10px; text-align: center; white-space: nowrap;">
-                        ${!isWaliKelas ? `
+                        ${AuthManager.canManageStudentRecords() ? `
                         <button type="button" class="btn btn-outline btn-sm" onclick="Forms.openEditStudentModal('${this.escapeHtml(s.id)}', true)" style="padding: 4px 8px; font-size: 0.74rem; font-weight: 600; color: #0284c7; border-color: #7dd3fc; background: #f0f9ff; margin-right: 4px;" title="Edit Biodata Siswa">
                             ✏️ Edit
                         </button>

@@ -91,13 +91,15 @@ const AdminPortal = {
 
         const isAdminKesiswaan = !isSuperAdmin && !isWaliKelas;
 
-        // Sembunyikan tombol catat pelanggaran, prestasi & edit profil untuk Wali Kelas (hanya melihat)
+        const canManageRecords = AuthManager.canManageStudentRecords();
+
+        // Tampilkan tombol catat pelanggaran, prestasi & edit profil HANYA untuk 21 akun resmi yang berhak
         const btnTargetAddVio = document.getElementById("btnTargetAddViolation");
         const btnTargetAddAch = document.getElementById("btnTargetAddAchievement");
         const btnTargetEditStu = document.getElementById("btnTargetEditStudent");
-        if (btnTargetAddVio) btnTargetAddVio.style.display = isWaliKelas ? "none" : "inline-flex";
-        if (btnTargetAddAch) btnTargetAddAch.style.display = isWaliKelas ? "none" : "inline-flex";
-        if (btnTargetEditStu) btnTargetEditStu.style.display = isWaliKelas ? "none" : "inline-flex";
+        if (btnTargetAddVio) btnTargetAddVio.style.display = canManageRecords ? "inline-flex" : "none";
+        if (btnTargetAddAch) btnTargetAddAch.style.display = canManageRecords ? "inline-flex" : "none";
+        if (btnTargetEditStu) btnTargetEditStu.style.display = canManageRecords ? "inline-flex" : "none";
 
         // Tampilkan tombol tab Presensi & Rekap Riwayat HANYA untuk Wali Kelas
         const btnPresensi = document.getElementById("adminTabBtnPresensi");
@@ -509,14 +511,14 @@ const AdminPortal = {
             card.style.display = "block";
         }
 
-        // Kontrol tombol aksi pada kartu siswa terpilih: Wali Kelas hanya melihat
-        const isWaliKelas = AuthManager.isWaliKelas();
+        // Kontrol tombol aksi pada kartu siswa terpilih: 21 Akun Resmi & Admin diizinkan penuh
+        const canManageRecords = AuthManager.canManageStudentRecords();
         const btnTargetAddVio = document.getElementById("btnTargetAddViolation");
         const btnTargetAddAch = document.getElementById("btnTargetAddAchievement");
         const btnTargetEditStu = document.getElementById("btnTargetEditStudent");
-        if (btnTargetAddVio) btnTargetAddVio.style.display = isWaliKelas ? "none" : "inline-flex";
-        if (btnTargetAddAch) btnTargetAddAch.style.display = isWaliKelas ? "none" : "inline-flex";
-        if (btnTargetEditStu) btnTargetEditStu.style.display = isWaliKelas ? "none" : "inline-flex";
+        if (btnTargetAddVio) btnTargetAddVio.style.display = canManageRecords ? "inline-flex" : "none";
+        if (btnTargetAddAch) btnTargetAddAch.style.display = canManageRecords ? "inline-flex" : "none";
+        if (btnTargetEditStu) btnTargetEditStu.style.display = canManageRecords ? "inline-flex" : "none";
 
         // Render riwayat pelanggaran & prestasi siswa pada tab kartu
         this.renderTargetStudentRecords(student);
@@ -554,6 +556,7 @@ const AdminPortal = {
     renderTargetStudentRecords(student) {
         if (!student) return;
         const isWaliKelas = AuthManager.isWaliKelas();
+        const canManageRecords = AuthManager.canManageStudentRecords();
 
         // 1. Render Riwayat Pelanggaran Siswa
         const vContent = document.getElementById("targetStudentViolationsContent");
@@ -600,7 +603,7 @@ const AdminPortal = {
                                         </td>
                                         <td style="font-size: 0.76rem; color: #475569;">${Forms.escapeHtml(v.sanksi || '-')}</td>
                                         <td style="text-align: center; white-space: nowrap;">
-                                            ${!isWaliKelas ? `
+                                            ${canManageRecords ? `
                                             <button type="button" class="btn btn-outline btn-sm" onclick="Forms.openEditStudentViolationModal('${student.id}', '${v.id}')" style="padding: 2px 7px; font-size: 0.72rem; color: #0284c7; border-color: #7dd3fc; background: #f0f9ff; margin-right: 3px;" title="Ubah data pelanggaran ini">
                                                 ✏️ Ubah
                                             </button>
@@ -673,7 +676,7 @@ const AdminPortal = {
                                             </div>
                                         </td>
                                         <td style="text-align: center; white-space: nowrap;">
-                                            ${!isWaliKelas ? `
+                                            ${canManageRecords ? `
                                             <button type="button" class="btn btn-outline btn-sm" onclick="AdminPortal.handleDeleteAchievement('${p.id}', '${Forms.escapeHtml(p.nama || 'Prestasi')}')" style="padding: 2px 7px; font-size: 0.72rem; color: #dc2626; border-color: #fca5a5; background: #fef2f2;" title="Hapus catatan prestasi ini">
                                                 🗑️ Hapus
                                             </button>
@@ -692,8 +695,8 @@ const AdminPortal = {
     },
 
     handleDeleteStudentViolation(studentId, violationId, violationName) {
-        if (AuthManager.isWaliKelas()) {
-            App.showToast("Wali Kelas hanya memiliki hak akses melihat data.");
+        if (!AuthManager.canManageStudentRecords()) {
+            App.showToast("Akses dibatasi. Akun Anda tidak memiliki hak akses menghapus catatan pelanggaran.");
             return;
         }
         if (!confirm(`Yakin ingin menghapus catatan pelanggaran "${violationName || 'ini'}"? Poin pelanggaran siswa akan otomatis berkurang.`)) {
@@ -714,8 +717,8 @@ const AdminPortal = {
 
     // 3. Tombol-Tombol Aksi pada Siswa yang Dituju
     actionAddViolation() {
-        if (AuthManager.isWaliKelas()) {
-            App.showToast("Akses dibatasi. Wali Kelas hanya memiliki hak akses melihat data siswa.");
+        if (!AuthManager.canManageStudentRecords()) {
+            App.showToast("Akses dibatasi. Akun Anda tidak memiliki hak akses mencatat pelanggaran siswa.");
             return;
         }
         if (!this.selectedStudent) {
@@ -727,8 +730,8 @@ const AdminPortal = {
     },
 
     actionAddAchievement() {
-        if (AuthManager.isWaliKelas()) {
-            App.showToast("Akses dibatasi. Wali Kelas hanya memiliki hak akses melihat data siswa.");
+        if (!AuthManager.canManageStudentRecords()) {
+            App.showToast("Akses dibatasi. Akun Anda tidak memiliki hak akses mencatat prestasi siswa.");
             return;
         }
         if (!this.selectedStudent) {
@@ -827,6 +830,7 @@ const AdminPortal = {
         const searchQuery = (this.teacherTableSearchQuery || '').toLowerCase().trim();
         const classFilter = this.teacherTableClassFilter || '';
         const isWaliKelas = AuthManager.isWaliKelas();
+        const canManageRecords = AuthManager.canManageStudentRecords();
 
         this.populateTableClassFilter(students);
 
@@ -976,7 +980,7 @@ const AdminPortal = {
                             <button type="button" class="btn btn-outline btn-sm" onclick="Forms.openManageStudentsModal()">
                                 👥 Buka Seluruh Data 2.107 Siswa
                             </button>
-                            ${!isWaliKelas ? `
+                            ${canManageRecords ? `
                             <button type="button" class="btn btn-danger btn-sm" onclick="Forms.openViolationModal()">
                                 ⚠️ + Catat Pelanggaran
                             </button>
@@ -1066,7 +1070,7 @@ const AdminPortal = {
                             <button class="btn ${isSelected ? 'btn-primary' : 'btn-outline'} btn-sm" onclick="AdminPortal.selectTargetStudent('${s.id}')" style="padding: 3px 8px; font-size: 0.75rem;">
                                 ${isSelected ? '✓ Terpilih' : '👉 Pilih'}
                             </button>
-                            ${!isWaliKelas ? `
+                            ${canManageRecords ? `
                             <button class="btn btn-danger btn-sm" onclick="Forms.openViolationModal('${s.id}')" style="padding: 3px 8px; font-size: 0.75rem;" title="Catat Pelanggaran Siswa Ini">
                                 ⚠️ + Pelanggaran
                             </button>

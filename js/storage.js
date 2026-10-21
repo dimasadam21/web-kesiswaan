@@ -220,12 +220,12 @@ const StorageManager = {
             this.syncAllStudentsMaster(true);
         }
 
-        // Otomatisasi sinkronisasi 60 akun wali kelas resmi jika belum terdaftar
-        if (typeof DAFTAR_WALI_KELAS_MASTER !== 'undefined' && Array.isArray(DAFTAR_WALI_KELAS_MASTER)) {
-            const curTeachers = this.getTeachers();
-            if (!curTeachers || curTeachers.length < 50) {
-                this.syncAllTeachersMaster(true);
-            }
+        // Otomatisasi sinkronisasi 21 akun kesiswaan & 60 akun wali kelas resmi jika belum terdaftar lengkap
+        const curTeachers = this.getTeachers();
+        const requiredUsers = ["admin", "morlan", "rahmat", "heni", "shobirin", "adam", "toto", "uut", "heru", "helen", "asri", "qulyani", "arum", "nining", "azis", "hafida", "heri", "yaskur", "uies", "yuni", "indra"];
+        const missingUser = !curTeachers || requiredUsers.some(u => !curTeachers.some(t => String(t.username || '').trim().toLowerCase() === u));
+        if (missingUser || curTeachers.length < 50) {
+            this.syncAllTeachersMaster(true);
         }
 
         // Inisialisasi IndexedDB sebagai backup tahan kuota
@@ -2192,13 +2192,35 @@ const StorageManager = {
             }
         });
 
-        if (!data.teachers.some(t => t.username.toLowerCase() === "admin")) {
-            const defAdmin = DEFAULT_TEACHERS.find(t => t.username === "admin");
-            if (defAdmin) data.teachers.unshift(defAdmin);
+        // Sinkronisasi seluruh 21 Akun Utama DEFAULT_TEACHERS (Kesiswaan & Admin)
+        if (typeof DEFAULT_TEACHERS !== 'undefined' && Array.isArray(DEFAULT_TEACHERS)) {
+            DEFAULT_TEACHERS.forEach(dt => {
+                const cleanU = String(dt.username).trim().toLowerCase();
+                const fIdx = data.teachers.findIndex(t => String(t.username).trim().toLowerCase() === cleanU);
+                if (fIdx === -1) {
+                    data.teachers.push({ ...dt });
+                    addedCount++;
+                } else {
+                    data.teachers[fIdx] = {
+                        ...data.teachers[fIdx],
+                        name: dt.name,
+                        role: dt.role,
+                        roleLabel: dt.roleLabel,
+                        sekbid: dt.sekbid || data.teachers[fIdx].sekbid || "-",
+                        pembina: dt.pembina || data.teachers[fIdx].pembina || "-",
+                        pokja: dt.pokja || data.teachers[fIdx].pokja || "-",
+                        kelas: dt.kelas || data.teachers[fIdx].kelas || "-",
+                        icon: dt.icon || data.teachers[fIdx].icon || (dt.role === "superadmin" ? "👑" : "👨‍🏫"),
+                        password: data.teachers[fIdx].password || dt.password
+                    };
+                    updatedCount++;
+                }
+            });
         }
-        if (!data.teachers.some(t => t.username.toLowerCase() === "kesiswaan")) {
-            const defKes = DEFAULT_TEACHERS.find(t => t.username === "kesiswaan");
-            if (defKes) data.teachers.push(defKes);
+
+        if (!data.teachers.some(t => t.username.toLowerCase() === "admin")) {
+            const defAdmin = (typeof DEFAULT_TEACHERS !== 'undefined') ? DEFAULT_TEACHERS.find(t => t.username === "admin") : null;
+            if (defAdmin) data.teachers.unshift(defAdmin);
         }
 
         this.saveData(data);

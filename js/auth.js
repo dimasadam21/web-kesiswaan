@@ -32,14 +32,16 @@ const AuthManager = {
     },
 
     isSuperAdmin() {
-        return this.currentUser && this.currentUser.role === "superadmin";
+        if (!this.currentUser) return false;
+        const u = (this.currentUser.username || "").toLowerCase();
+        return this.currentUser.role === "superadmin" || u === "admin" || u === "indra";
     },
 
     isWaliKelas() {
         if (!this.currentUser) return false;
-        if (this.currentUser.role === "superadmin") return false;
+        if (this.isSuperAdmin()) return false;
         const username = (this.currentUser.username || "").toLowerCase();
-        if (username === "kesiswaan" || username === "admin") return false;
+        if (username === "kesiswaan" || username === "admin" || username === "indra") return false;
         const roleLabel = (this.currentUser.roleLabel || "").toLowerCase();
         const kelas = this.currentUser.kelas;
         return roleLabel.includes("wali kelas") || (kelas && kelas !== "-");
@@ -47,12 +49,47 @@ const AuthManager = {
 
     isStaffKesiswaan() {
         if (!this.currentUser) return false;
-        if (this.currentUser.role === "superadmin") return true;
+        if (this.isSuperAdmin()) return true;
         return !this.isWaliKelas();
     },
 
     isAdminKesiswaan() {
         return this.isStaffKesiswaan();
+    },
+
+    // Daftar 21 Akun Resmi yang Memiliki Hak Akses Lengkap (Tambah Pelanggaran, Prestasi, Cetak Rapor & Edit Profil)
+    KESISWAAN_OPERATOR_USERNAMES: [
+        "admin",
+        "morlan",
+        "rahmat",
+        "heni",
+        "shobirin",
+        "adam",
+        "toto",
+        "uut",
+        "heru",
+        "helen",
+        "asri",
+        "qulyani",
+        "arum",
+        "nining",
+        "azis",
+        "hafida",
+        "heri",
+        "yaskur",
+        "uies",
+        "yuni",
+        "indra",
+        "kesiswaan" // alias waka
+    ],
+
+    canManageStudentRecords() {
+        if (!this.currentUser) return false;
+        if (this.isSuperAdmin()) return true;
+        const u = (this.currentUser.username || "").toLowerCase().trim();
+        if (this.KESISWAAN_OPERATOR_USERNAMES.includes(u)) return true;
+        if (this.isStaffKesiswaan()) return true;
+        return false;
     },
 
     getCurrentUser() {
@@ -127,33 +164,38 @@ const AuthManager = {
             if (storedPass && cleanPass === storedPass) {
                 match = currentTeacher;
             }
-        } else {
-            // Fallback akun bawaan jika akun belum pernah terdaftar di penyimpanan lokal
-            if (cleanUser === "admin" && (cleanPass === "123" || cleanPass === "admin")) {
-                match = DEFAULT_TEACHERS.find(t => t.username === "admin");
-            } else if (cleanUser === "kesiswaan" && (cleanPass === "123" || cleanPass === "kesiswaan")) {
-                match = DEFAULT_TEACHERS.find(t => t.username === "kesiswaan");
-            } else if (cleanUser === "walikelas" && (cleanPass === "123" || cleanPass === "walikelas")) {
-                match = { ...DEFAULT_TEACHERS.find(t => t.username === "walikelas"), kelas: "X TKP", roleLabel: "Wali Kelas X TKP" };
-            } else if (typeof DAFTAR_WALI_KELAS_MASTER !== 'undefined') {
-                const wali = DAFTAR_WALI_KELAS_MASTER.find(w => 
-                    String(w.username).trim().toLowerCase() === cleanUser && 
-                    (String(w.password).trim() === cleanPass || cleanPass === "123" || cleanPass === `${w.username}123`)
-                );
-                if (wali) {
-                    match = {
-                        username: wali.username,
-                        password: wali.password || `${wali.username}123`,
-                        name: wali.nama,
-                        role: "guru",
-                        roleLabel: `Wali Kelas ${wali.kode}`,
-                        kelas: wali.kode,
-                        sekbid: "-",
-                        pokja: "-",
-                        pembina: "-",
-                        icon: "🧑‍🏫"
-                    };
+        }
+
+        // Fallback akun bawaan DEFAULT_TEACHERS jika akun belum tersinkron di localStorage
+        if (!match && typeof DEFAULT_TEACHERS !== 'undefined') {
+            const defTeacher = DEFAULT_TEACHERS.find(t => String(t.username).trim().toLowerCase() === cleanUser);
+            if (defTeacher) {
+                const defPass = String(defTeacher.password || "").trim();
+                if (cleanPass === defPass || (cleanUser === "admin" && (cleanPass === "123" || cleanPass === "admin"))) {
+                    match = defTeacher;
                 }
+            }
+        }
+
+        // Fallback untuk 60 Wali Kelas Master
+        if (!match && typeof DAFTAR_WALI_KELAS_MASTER !== 'undefined') {
+            const wali = DAFTAR_WALI_KELAS_MASTER.find(w => 
+                String(w.username).trim().toLowerCase() === cleanUser && 
+                (String(w.password).trim() === cleanPass || cleanPass === "123" || cleanPass === `${w.username}123`)
+            );
+            if (wali) {
+                match = {
+                    username: wali.username,
+                    password: wali.password || `${wali.username}123`,
+                    name: wali.nama,
+                    role: "guru",
+                    roleLabel: `Wali Kelas ${wali.kode}`,
+                    kelas: wali.kode,
+                    sekbid: "-",
+                    pokja: "-",
+                    pembina: "-",
+                    icon: "🧑‍🏫"
+                };
             }
         }
 
@@ -170,7 +212,7 @@ const AuthManager = {
             sekbid: match.sekbid || "-",
             pokja: match.pokja || "-",
             pembina: match.pembina || "-",
-            icon: match.icon || "👨‍🏫"
+            icon: match.icon || (match.role === "superadmin" ? "👑" : "👨‍🏫")
         };
 
         sessionStorage.setItem(AUTH_KEY, JSON.stringify(this.currentUser));
