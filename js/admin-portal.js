@@ -709,6 +709,9 @@ const AdminPortal = {
             if (typeof this.renderClassAttendance === "function") {
                 this.renderClassAttendance();
             }
+            if (typeof App.renderPublicRekapitulasi === "function") {
+                App.renderPublicRekapitulasi();
+            }
             App.showToast(`Catatan pelanggaran "${violationName}" berhasil dihapus.`);
         } else {
             App.showToast("Gagal menghapus catatan pelanggaran.");
@@ -1157,6 +1160,9 @@ const AdminPortal = {
                     this.selectTargetStudent(this.selectedStudent.id, true);
                 }
                 App.initPrestasiSlider();
+                if (typeof App.renderPublicRekapitulasi === "function") {
+                    App.renderPublicRekapitulasi();
+                }
                 App.showToast(`Prestasi "${namaPrestasi}" berhasil dihapus.`);
             } else {
                 App.showToast("Gagal menghapus data prestasi.");

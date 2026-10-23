@@ -686,6 +686,10 @@ const Forms = {
                     SiswaPortal.renderMyStudentPortal(studentId);
                 }
 
+                if (window.App && typeof App.renderPublicRekapitulasi === "function") {
+                    App.renderPublicRekapitulasi();
+                }
+
                 const student = StorageManager.getStudentById(studentId);
                 App.showToast(`Catatan pelanggaran siswa ${student ? student.nama : ''} (${poin} Poin) berhasil diperbarui.`);
             } else {
@@ -707,6 +711,10 @@ const Forms = {
 
                 if (AuthManager.isStudent() && AuthManager.getCurrentUser().studentId === studentId) {
                     SiswaPortal.renderMyStudentPortal(studentId);
+                }
+
+                if (window.App && typeof App.renderPublicRekapitulasi === "function") {
+                    App.renderPublicRekapitulasi();
                 }
 
                 const student = StorageManager.getStudentById(studentId);
@@ -784,6 +792,11 @@ const Forms = {
 
             // Refresh Slider Prestasi Dasbor Utama
             App.initPrestasiSlider();
+
+            // Refresh Papan Rekapitulasi Terbuka
+            if (window.App && typeof App.renderPublicRekapitulasi === "function") {
+                App.renderPublicRekapitulasi();
+            }
 
             const student = StorageManager.getStudentById(studentId);
             App.showToast(`Prestasi ${student.nama} (${peringkat} ${tingkat} - ${nama}) berhasil disimpan!`);

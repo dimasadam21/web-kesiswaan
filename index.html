@@ -149,6 +149,7 @@
             <div class="dashboard-jump-nav-bar">
                 <span class="jump-nav-label">🧭 Akses Langsung Konten:</span>
                 <div class="jump-nav-pills">
+                    <button type="button" class="jump-nav-pill" onclick="App.scrollToSection('dashboardRekapitulasiSection')">📊 Rekapan Siswa</button>
                     <button type="button" class="jump-nav-pill" onclick="App.scrollToSection('dashboardPengumumanSection')">📢 Pengumuman</button>
                     <button type="button" class="jump-nav-pill" onclick="App.scrollToSection('dashboardPrestasiSection')">🏆 Galeri Prestasi</button>
                     <button type="button" class="jump-nav-pill" onclick="App.scrollToSection('dashboardKegiatanSection')">📋 Daftar Kegiatan</button>
@@ -201,6 +202,128 @@
 
                 <!-- INDIKATOR TITIK SLIDER -->
                 <div id="sliderDotsBox" class="slider-dots-box"></div>
+            </div>
+
+            <!-- =================================================================
+                 PAPAM REKAPITULASI PELANGGARAN & PRESTASI SISWA TERPADU (TERBUKA)
+                 Dapat dipantau oleh siapa saja (Siswa, Orang Tua, Guru, Publik)
+                 ================================================================= -->
+            <div id="dashboardRekapitulasiSection" class="rekapitulasi-section">
+                <div class="section-title-wrap">
+                    <div class="section-title-left">
+                        <div class="section-badge-icon" style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); color: #1d4ed8; border-color: #93c5fd;">📊</div>
+                        <div>
+                            <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                                <h3 class="section-main-heading">Papan Rekapitulasi Pelanggaran &amp; Prestasi Siswa</h3>
+                                <span class="status-indicator-live" title="Data Otomatis Terhubung &amp; Real-Time"></span>
+                            </div>
+                            <p class="section-sub-heading">Rekapan terbuka seluruh catatan kedisiplinan dan torehan prestasi yang telah diinput oleh bapak/ibu guru &amp; tim kesiswaan • Otomatis tersinkron &amp; dapat dilihat oleh siapa saja</p>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                        <button type="button" class="btn btn-outline btn-sm" onclick="App.printPublicRekap()" title="Cetak Rekapan Resmi">
+                            🖨️ Cetak Rekap
+                        </button>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="App.exportPublicRekapToExcel()" title="Unduh File Excel">
+                            📊 Ekspor Excel
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 4 KARTU STATISTIK RINGKASAN REKAPITULASI -->
+                <div class="rekap-kpi-grid">
+                    <div class="rekap-kpi-card danger">
+                        <div class="rekap-kpi-icon">⚠️</div>
+                        <div class="rekap-kpi-info">
+                            <span class="rekap-kpi-label">Siswa Melanggar</span>
+                            <div class="rekap-kpi-number" id="publicRekapKpiSiswaMelanggar">0 Siswa</div>
+                            <span class="rekap-kpi-sub" id="publicRekapKpiTotalPoin">0 Total Poin</span>
+                        </div>
+                    </div>
+                    <div class="rekap-kpi-card success">
+                        <div class="rekap-kpi-icon">🏆</div>
+                        <div class="rekap-kpi-info">
+                            <span class="rekap-kpi-label">Siswa Berprestasi</span>
+                            <div class="rekap-kpi-number" id="publicRekapKpiSiswaPrestasi">0 Siswa</div>
+                            <span class="rekap-kpi-sub" id="publicRekapKpiTotalPrestasi">0 Capaian Prestasi</span>
+                        </div>
+                    </div>
+                    <div class="rekap-kpi-card warning">
+                        <div class="rekap-kpi-icon">🚨</div>
+                        <div class="rekap-kpi-info">
+                            <span class="rekap-kpi-label">Batas Panggilan / SP</span>
+                            <div class="rekap-kpi-number" id="publicRekapKpiPerluPerhatian">0 Siswa</div>
+                            <span class="rekap-kpi-sub">Akumulasi ≥ 31 Poin</span>
+                        </div>
+                    </div>
+                    <div class="rekap-kpi-card primary">
+                        <div class="rekap-kpi-icon">🛡️</div>
+                        <div class="rekap-kpi-info">
+                            <span class="rekap-kpi-label">Siswa Tertib &amp; Disiplin</span>
+                            <div class="rekap-kpi-number" id="publicRekapKpiSiswaTertib">100%</div>
+                            <span class="rekap-kpi-sub" id="publicRekapKpiTertibCount">0 Siswa Bersih</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TOOLBAR KONTROL: TABS TAMPILAN, PENCARIAN, FILTER KELAS & FILTER SANKSI -->
+                <div class="rekap-control-panel">
+                    <div class="rekap-tabs-row">
+                        <button type="button" class="rekap-tab-btn active" id="publicRekapTabBtnPelanggaran" onclick="App.setPublicRekapTab('pelanggaran')">
+                            ⚠️ Siswa Melanggar <span id="publicRekapBadgePelanggaran" class="rekap-counter-pill danger">0</span>
+                        </button>
+                        <button type="button" class="rekap-tab-btn" id="publicRekapTabBtnPrestasi" onclick="App.setPublicRekapTab('prestasi')">
+                            🏆 Siswa Berprestasi <span id="publicRekapBadgePrestasi" class="rekap-counter-pill success">0</span>
+                        </button>
+                        <button type="button" class="rekap-tab-btn" id="publicRekapTabBtnAll" onclick="App.setPublicRekapTab('all')">
+                            👥 Semua Tercatat <span id="publicRekapBadgeAll" class="rekap-counter-pill primary">0</span>
+                        </button>
+                    </div>
+
+                    <div class="rekap-filters-row">
+                        <div class="rekap-search-box">
+                            <span class="rekap-search-icon">🔍</span>
+                            <input type="text" id="publicRekapSearchInput" class="form-control-clean" placeholder="Cari nama siswa, NISN, kelas, kasus pelanggaran, atau nama lomba..." oninput="App.handlePublicRekapSearch(this.value)">
+                            <button type="button" id="btnClearPublicRekapSearch" onclick="App.clearPublicRekapSearch()" style="display:none;" class="rekap-clear-btn">✕</button>
+                        </div>
+                        <div class="rekap-select-filters">
+                            <select id="publicRekapClassFilter" class="form-control-clean" onchange="App.handlePublicRekapClassFilter(this.value)">
+                                <option value="">🌐 Semua Kelas</option>
+                            </select>
+                            <select id="publicRekapStatusFilter" class="form-control-clean" onchange="App.handlePublicRekapStatusFilter(this.value)">
+                                <option value="">⚖️ Semua Status</option>
+                                <option value="sp3">🚨 SP 3 / Konferensi Kasus (≥100 Poin)</option>
+                                <option value="sp2">🔴 SP 2 (76-99 Poin)</option>
+                                <option value="sp1">🟠 SP 1 (51-75 Poin)</option>
+                                <option value="panggilan">🟡 Panggilan Ortu I (31-50 Poin)</option>
+                                <option value="peringatan">🟡 Peringatan Tertulis (16-30 Poin)</option>
+                                <option value="aman">🟢 Pembinaan Ringan (0-15 Poin)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TABEL DATA REKAPAN -->
+                <div class="table-responsive rekap-table-container">
+                    <table class="table-modern" id="tablePublicRekap">
+                        <thead id="publicRekapTableHeader">
+                            <!-- Diisi dinamis via JS sesuai tab aktif -->
+                        </thead>
+                        <tbody id="publicRekapTableBody">
+                            <!-- Diisi dinamis via JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- FOOTER REKAPITULASI DENGAN KETERANGAN -->
+                <div class="rekap-footer-bar">
+                    <div class="rekap-footer-notes">
+                        <span>ℹ️ <strong>Catatan:</strong> Seluruh poin pelanggaran mengacu pada Tata Tertib Resmi SMK Negeri 1 Magelang. Siswa berprestasi mendapatkan apresiasi dan piagam penghargaan resmi sekolah.</span>
+                    </div>
+                    <div id="publicRekapShowingText" style="font-weight: 700; color: var(--text-main); font-size: 0.85rem;">
+                        Menampilkan 0 data
+                    </div>
+                </div>
             </div>
 
             <!-- 3. DAFTAR KEGIATAN KESISWAAN -->
@@ -3615,6 +3738,81 @@
                     <button type="submit" class="btn btn-primary">💾 Simpan Jadwal Kegiatan</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         MODAL RINCIAN RIWAYAT SISWA (TERBUKA UNTUK PUBLIK / SIAPA SAJA)
+         ===================================================================== -->
+    <div id="modalPublicStudentDetail" class="modal-backdrop">
+        <div class="modal-card modal-lg" style="max-width: 820px;">
+            <div class="modal-card-header" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: #ffffff;">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <div style="font-size: 1.5rem;">🎓</div>
+                    <div>
+                        <h3 style="margin: 0; font-size: 1.15rem; color: #ffffff;">Rincian Catatan Kedisiplinan &amp; Prestasi Siswa</h3>
+                        <p style="margin: 2px 0 0 0; font-size: 0.78rem; color: #94a3b8;">Transparansi catatan resmi sekolah SMK Negeri 1 Magelang</p>
+                    </div>
+                </div>
+                <button type="button" class="modal-close" onclick="App.closePublicStudentDetailModal()" style="color: #cbd5e1;">✕</button>
+            </div>
+            <div class="modal-card-body" style="padding: 1.25rem;">
+                <!-- Header Profil Siswa -->
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; padding-bottom: 1rem; border-bottom: 1px solid var(--border); margin-bottom: 1rem;">
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <img id="publicStudentModalFoto" src="" alt="Foto Siswa" style="width: 64px; height: 64px; border-radius: 12px; object-fit: cover; border: 2px solid var(--border); box-shadow: var(--shadow-soft);">
+                        <div>
+                            <h3 id="publicStudentModalNama" style="font-size: 1.2rem; color: var(--text-main); margin-bottom: 2px;">Nama Siswa</h3>
+                            <div id="publicStudentModalInfo" style="font-size: 0.825rem; color: var(--text-muted);">NISN: - • Kelas: -</div>
+                            <div id="publicStudentModalWali" style="font-size: 0.78rem; color: #1e40af; font-weight: 600; margin-top: 2px;">Wali Kelas: -</div>
+                        </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div id="publicStudentModalStatusPill" class="status-pill pill-green">Aman</div>
+                        <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;">Indeks Disiplin: <strong id="publicStudentModalSaldoKebaikan" style="color: var(--primary);">100/100</strong></div>
+                    </div>
+                </div>
+
+                <!-- 3 Kartu Mini Ringkasan -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.75rem; margin-bottom: 1.25rem;">
+                    <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 0.65rem 0.85rem;">
+                        <span style="font-size: 0.72rem; color: #991b1b; font-weight: 700; text-transform: uppercase;">Poin Pelanggaran</span>
+                        <div id="publicStudentModalPoinPelanggaran" style="font-size: 1.35rem; font-weight: 800; color: #b91c1c;">0 Poin</div>
+                    </div>
+                    <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 0.65rem 0.85rem;">
+                        <span style="font-size: 0.72rem; color: #166534; font-weight: 700; text-transform: uppercase;">Kejuaraan &amp; Prestasi</span>
+                        <div id="publicStudentModalCountPrestasi" style="font-size: 1.35rem; font-weight: 800; color: #15803d;">0 Capaian</div>
+                    </div>
+                    <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 0.65rem 0.85rem;">
+                        <span style="font-size: 0.72rem; color: #1e40af; font-weight: 700; text-transform: uppercase;">Status Sistem</span>
+                        <div style="font-size: 1.1rem; font-weight: 800; color: #1d4ed8; margin-top: 3px;">Terkonfirmasi</div>
+                    </div>
+                </div>
+
+                <!-- Tabs Riwayat -->
+                <div style="display: flex; gap: 0.5rem; border-bottom: 2px solid #e2e8f0; margin-bottom: 0.85rem;">
+                    <button type="button" id="publicModalTabBtnPelanggaran" class="simple-tab-btn active" onclick="App.switchPublicStudentModalTab('pelanggaran')" style="font-size: 0.85rem; padding: 0.45rem 1rem;">
+                        ⚠️ Catatan Pelanggaran &amp; Sanksi
+                    </button>
+                    <button type="button" id="publicModalTabBtnPrestasi" class="simple-tab-btn" onclick="App.switchPublicStudentModalTab('prestasi')" style="font-size: 0.85rem; padding: 0.45rem 1rem;">
+                        🏆 Catatan Prestasi &amp; Penghargaan
+                    </button>
+                </div>
+
+                <!-- Konten Tab Pelanggaran -->
+                <div id="publicModalPanePelanggaran"></div>
+
+                <!-- Konten Tab Prestasi -->
+                <div id="publicModalPanePrestasi" style="display: none;"></div>
+            </div>
+            <div class="modal-card-footer" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                <button type="button" class="btn btn-outline btn-sm" onclick="App.printStudentRaporFromPublic()" title="Cetak Lembar Catatan Siswa Resmi">
+                    🖨️ Cetak Lembar Rapor Siswa
+                </button>
+                <button type="button" class="btn btn-primary btn-sm" onclick="App.closePublicStudentDetailModal()">
+                    Tutup
+                </button>
+            </div>
         </div>
     </div>
 

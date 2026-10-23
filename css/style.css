@@ -4432,5 +4432,289 @@ body.has-wallpaper-active .tata-tertib-section {
     }
 }
 
+/* ==========================================================================
+   PAPAN REKAPITULASI PELANGGARAN & PRESTASI SISWA TERPADU (TERBUKA)
+   ========================================================================== */
+.rekapitulasi-section {
+    background: #ffffff;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg, 16px);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-card);
+    transition: all 0.3s ease;
+}
+
+body.has-wallpaper-active .rekapitulasi-section {
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.90);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+}
+
+/* 4 Kartu KPI */
+.rekap-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.rekap-kpi-card {
+    border-radius: 12px;
+    padding: 1rem 1.15rem;
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.rekap-kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px rgba(0,0,0,0.06);
+}
+
+.rekap-kpi-card.danger {
+    background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+    border: 1px solid #fecaca;
+    color: #991b1b;
+}
+
+.rekap-kpi-card.success {
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+    border: 1px solid #bbf7d0;
+    color: #166534;
+}
+
+.rekap-kpi-card.warning {
+    background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+    border: 1px solid #fde68a;
+    color: #92400e;
+}
+
+.rekap-kpi-card.primary {
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    border: 1px solid #bfdbfe;
+    color: #1e40af;
+}
+
+.rekap-kpi-icon {
+    font-size: 1.85rem;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.rekap-kpi-info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.rekap-kpi-label {
+    font-size: 0.725rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    opacity: 0.85;
+}
+
+.rekap-kpi-number {
+    font-size: 1.35rem;
+    font-weight: 900;
+    line-height: 1.2;
+    margin: 2px 0;
+}
+
+.rekap-kpi-sub {
+    font-size: 0.75rem;
+    font-weight: 600;
+    opacity: 0.85;
+}
+
+/* Control Panel */
+.rekap-control-panel {
+    background: #f8fafc;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 0.85rem 1rem;
+    margin-bottom: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.rekap-tabs-row {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 0.65rem;
+}
+
+.rekap-tab-btn {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 0.45rem 0.95rem;
+    font-size: 0.825rem;
+    font-weight: 700;
+    color: var(--text-main);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.rekap-tab-btn:hover {
+    background: #f1f5f9;
+    border-color: #94a3b8;
+}
+
+.rekap-tab-btn.active {
+    background: var(--primary, #2563eb);
+    color: #ffffff;
+    border-color: var(--primary, #2563eb);
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+}
+
+.rekap-counter-pill {
+    padding: 1px 7px;
+    border-radius: 99px;
+    font-size: 0.72rem;
+    font-weight: 800;
+}
+
+.rekap-counter-pill.danger {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.rekap-counter-pill.success {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.rekap-counter-pill.primary {
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+
+.rekap-tab-btn.active .rekap-counter-pill {
+    background: rgba(255, 255, 255, 0.25);
+    color: #ffffff;
+}
+
+.rekap-filters-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.rekap-search-box {
+    position: relative;
+    flex: 1;
+    min-width: 250px;
+}
+
+.rekap-search-icon {
+    position: absolute;
+    left: 0.85rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    pointer-events: none;
+}
+
+.rekap-search-box input {
+    padding-left: 2.35rem;
+    padding-right: 2rem;
+    font-size: 0.85rem;
+    width: 100%;
+}
+
+.rekap-clear-btn {
+    position: absolute;
+    right: 0.65rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #e2e8f0;
+    border: none;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    font-size: 0.72rem;
+    color: #475569;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.rekap-select-filters {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.rekap-select-filters select {
+    padding: 0.45rem 0.85rem;
+    font-size: 0.825rem;
+    font-weight: 600;
+}
+
+.rekap-table-container {
+    max-height: 62vh;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: #ffffff;
+}
+
+.rekap-footer-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 0.85rem;
+    padding-top: 0.85rem;
+    border-top: 1px solid var(--border);
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+    .rekap-kpi-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+    .rekap-filters-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .rekap-select-filters {
+        flex-direction: column;
+    }
+    .rekap-select-filters select {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .rekap-kpi-grid {
+        grid-template-columns: 1fr;
+    }
+    .rekap-tabs-row {
+        flex-direction: column;
+    }
+    .rekap-tab-btn {
+        width: 100%;
+        justify-content: space-between;
+    }
+}
+
 
 

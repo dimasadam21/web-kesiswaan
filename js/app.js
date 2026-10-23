@@ -301,6 +301,7 @@ const App = {
         this.renderDashboardTataTertib('all');
         this.renderDashboardAgendaTerdekat();
         this.renderDashboardSekbid(0);
+        this.initPublicRekapitulasi();
     },
     initQuoteTimer() {
         if (this._quoteIntervalTimer) {
@@ -1308,6 +1309,753 @@ const App = {
             toast.style.transition = "opacity 0.3s ease";
             setTimeout(() => toast.remove(), 300);
         }, 3200);
+    },
+
+    // =========================================================================
+    // 3.6 PAPAN REKAPITULASI PELANGGARAN & PRESTASI SISWA (TERBUKA / DAPAT DILIHAT SIAPA SAJA)
+    // =========================================================================
+    publicRekapTab: 'pelanggaran', // 'pelanggaran' | 'prestasi' | 'all'
+    publicRekapSearchQuery: '',
+    publicRekapClassFilter: '',
+    publicRekapStatusFilter: '',
+    selectedPublicStudentId: null,
+    publicStudentDetailTab: 'pelanggaran',
+
+    initPublicRekapitulasi() {
+        this.populatePublicRekapClassFilter();
+        this.renderPublicRekapitulasi();
+    },
+
+    setPublicRekapTab(tab) {
+        this.publicRekapTab = tab;
+        const btnPel = document.getElementById("publicRekapTabBtnPelanggaran");
+        const btnPres = document.getElementById("publicRekapTabBtnPrestasi");
+        const btnAll = document.getElementById("publicRekapTabBtnAll");
+
+        if (btnPel) btnPel.classList.toggle("active", tab === 'pelanggaran');
+        if (btnPres) btnPres.classList.toggle("active", tab === 'prestasi');
+        if (btnAll) btnAll.classList.toggle("active", tab === 'all');
+
+        this.renderPublicRekapitulasi();
+    },
+
+    handlePublicRekapSearch(val) {
+        this.publicRekapSearchQuery = (val || '').toLowerCase().trim();
+        const clearBtn = document.getElementById("btnClearPublicRekapSearch");
+        if (clearBtn) clearBtn.style.display = this.publicRekapSearchQuery ? "inline-block" : "none";
+        this.renderPublicRekapitulasi();
+    },
+
+    clearPublicRekapSearch() {
+        this.publicRekapSearchQuery = '';
+        const input = document.getElementById("publicRekapSearchInput");
+        if (input) input.value = '';
+        const clearBtn = document.getElementById("btnClearPublicRekapSearch");
+        if (clearBtn) clearBtn.style.display = "none";
+        this.renderPublicRekapitulasi();
+    },
+
+    handlePublicRekapClassFilter(val) {
+        this.publicRekapClassFilter = val || '';
+        this.renderPublicRekapitulasi();
+    },
+
+    handlePublicRekapStatusFilter(val) {
+        this.publicRekapStatusFilter = val || '';
+        this.renderPublicRekapitulasi();
+    },
+
+    populatePublicRekapClassFilter() {
+        const select = document.getElementById("publicRekapClassFilter");
+        if (!select) return;
+        const students = StorageManager.getStudents() || [];
+        const classesSet = new Set();
+        students.forEach(s => {
+            if (s.kelas) classesSet.add(s.kelas);
+        });
+        const sortedClasses = Array.from(classesSet).sort((a, b) => {
+            return StorageManager.normalizeClassName(a).localeCompare(StorageManager.normalizeClassName(b));
+        });
+        const curVal = select.value;
+        select.innerHTML = `<option value="">🌐 Semua Kelas</option>` + sortedClasses.map(c => `
+            <option value="${this.escapeHtml(c)}" ${c === curVal ? 'selected' : ''}>${this.escapeHtml(c)}</option>
+        `).join('');
+    },
+
+    renderPublicRekapitulasi() {
+        const thead = document.getElementById("publicRekapTableHeader");
+        const tbody = document.getElementById("publicRekapTableBody");
+        if (!tbody || !thead) return;
+
+        const allRecorded = (typeof StorageManager !== "undefined" && StorageManager.getAllRecordedStudents) 
+            ? StorageManager.getAllRecordedStudents() 
+            : [];
+        const allStudents = (typeof StorageManager !== "undefined" && StorageManager.getStudents) 
+            ? StorageManager.getStudents() 
+            : [];
+        const totalStudentsCount = allStudents.length || 2107;
+
+        // Hitung KPI Global
+        const violStudents = allRecorded.filter(x => x.violPoints > 0);
+        const achStudents = allRecorded.filter(x => x.achCount > 0);
+        const totalViolPoints = violStudents.reduce((acc, x) => acc + (x.violPoints || 0), 0);
+        const totalAchCount = achStudents.reduce((acc, x) => acc + (x.achCount || 0), 0);
+        const perluPerhatianCount = violStudents.filter(x => x.violPoints >= 31).length;
+        const totalTertibCount = Math.max(0, totalStudentsCount - violStudents.length);
+        const persenDisiplin = ((totalTertibCount / Math.max(1, totalStudentsCount)) * 100).toFixed(1);
+
+        // Update Kartu KPI
+        const kpiMelanggarEl = document.getElementById("publicRekapKpiSiswaMelanggar");
+        const kpiPoinEl = document.getElementById("publicRekapKpiTotalPoin");
+        const kpiPrestasiEl = document.getElementById("publicRekapKpiSiswaPrestasi");
+        const kpiAchCountEl = document.getElementById("publicRekapKpiTotalPrestasi");
+        const kpiPerhatianEl = document.getElementById("publicRekapKpiPerluPerhatian");
+        const kpiTertibEl = document.getElementById("publicRekapKpiSiswaTertib");
+        const kpiTertibCountEl = document.getElementById("publicRekapKpiTertibCount");
+
+        if (kpiMelanggarEl) kpiMelanggarEl.textContent = `${violStudents.length} Siswa`;
+        if (kpiPoinEl) kpiPoinEl.textContent = `${totalViolPoints} Total Poin`;
+        if (kpiPrestasiEl) kpiPrestasiEl.textContent = `${achStudents.length} Siswa`;
+        if (kpiAchCountEl) kpiAchCountEl.textContent = `${totalAchCount} Capaian Prestasi`;
+        if (kpiPerhatianEl) kpiPerhatianEl.textContent = `${perluPerhatianCount} Siswa`;
+        if (kpiTertibEl) kpiTertibEl.textContent = `${persenDisiplin}%`;
+        if (kpiTertibCountEl) kpiTertibCountEl.textContent = `${totalTertibCount} Siswa Bersih`;
+
+        // Update Counter Tab Badges
+        const badgePel = document.getElementById("publicRekapBadgePelanggaran");
+        const badgePres = document.getElementById("publicRekapBadgePrestasi");
+        const badgeAll = document.getElementById("publicRekapBadgeAll");
+        if (badgePel) badgePel.textContent = violStudents.length;
+        if (badgePres) badgePres.textContent = achStudents.length;
+        if (badgeAll) badgeAll.textContent = allRecorded.length;
+
+        // Filter berdasarkan tab aktif
+        let filtered = [];
+        if (this.publicRekapTab === 'pelanggaran') {
+            filtered = [...violStudents];
+            filtered.sort((a, b) => {
+                if (b.violPoints !== a.violPoints) return b.violPoints - a.violPoints;
+                return (a.student.nama || '').localeCompare(b.student.nama || '');
+            });
+        } else if (this.publicRekapTab === 'prestasi') {
+            filtered = [...achStudents];
+            filtered.sort((a, b) => {
+                if (b.achCount !== a.achCount) return b.achCount - a.achCount;
+                return (a.student.nama || '').localeCompare(b.student.nama || '');
+            });
+        } else {
+            // all
+            filtered = [...allRecorded];
+            filtered.sort((a, b) => {
+                if (b.violPoints !== a.violPoints) return b.violPoints - a.violPoints;
+                if (b.achCount !== a.achCount) return b.achCount - a.achCount;
+                return (a.student.nama || '').localeCompare(b.student.nama || '');
+            });
+        }
+
+        // Filter Kelas jika dipilih
+        if (this.publicRekapClassFilter) {
+            filtered = filtered.filter(x => StorageManager.isClassMatch(x.student.kelas, this.publicRekapClassFilter));
+        }
+
+        // Filter Status Sanksi
+        if (this.publicRekapStatusFilter) {
+            const f = this.publicRekapStatusFilter;
+            filtered = filtered.filter(x => {
+                const pts = x.violPoints || 0;
+                if (f === 'sp3') return pts >= 100;
+                if (f === 'sp2') return pts >= 76 && pts <= 99;
+                if (f === 'sp1') return pts >= 51 && pts <= 75;
+                if (f === 'panggilan') return pts >= 31 && pts <= 50;
+                if (f === 'peringatan') return pts >= 16 && pts <= 30;
+                if (f === 'aman') return pts <= 15;
+                return true;
+            });
+        }
+
+        // Filter Kata Kunci Pencarian
+        if (this.publicRekapSearchQuery) {
+            const q = this.publicRekapSearchQuery;
+            filtered = filtered.filter(x => {
+                const s = x.student || {};
+                const nama = (s.nama || '').toLowerCase();
+                const nisn = (s.nisn || '').toLowerCase();
+                const nis = (s.nis || '').toLowerCase();
+                const kelas = (s.kelas || '').toLowerCase();
+                const wali = (s.waliKelas || '').toLowerCase();
+                const pelStr = (s.pelanggaran || []).map(p => `${p.nama} ${p.sanksi} ${p.pencatat}`).join(' ').toLowerCase();
+                const achStr = (s.prestasi || []).map(pr => `${pr.nama} ${pr.peringkat} ${pr.penyelenggara} ${pr.tingkat} ${pr.pencatat}`).join(' ').toLowerCase();
+                return nama.includes(q) || nisn.includes(q) || nis.includes(q) || kelas.includes(q) || wali.includes(q) || pelStr.includes(q) || achStr.includes(q);
+            });
+        }
+
+        // Update indikator teks jumlah data yang tampil
+        const showingEl = document.getElementById("publicRekapShowingText");
+        if (showingEl) {
+            showingEl.textContent = `Menampilkan ${filtered.length} siswa tercatat`;
+        }
+
+        // Render Header & Body Tabel sesuai tab aktif
+        const tab = this.publicRekapTab;
+        if (tab === 'pelanggaran') {
+            thead.innerHTML = `
+                <tr style="background: #f8fafc; border-bottom: 2px solid #cbd5e1;">
+                    <th style="width: 50px; text-align: center;">No</th>
+                    <th style="min-width: 230px;">Siswa & Kelas</th>
+                    <th style="width: 140px; text-align: center;">Akumulasi Poin</th>
+                    <th style="min-width: 250px;">Kasus Pelanggaran Terbaru</th>
+                    <th style="min-width: 170px;">Guru / Kesiswaan Pencatat</th>
+                    <th style="width: 120px; text-align: center;">Aksi</th>
+                </tr>
+            `;
+        } else if (tab === 'prestasi') {
+            thead.innerHTML = `
+                <tr style="background: #f8fafc; border-bottom: 2px solid #cbd5e1;">
+                    <th style="width: 50px; text-align: center;">No</th>
+                    <th style="min-width: 230px;">Siswa & Kelas</th>
+                    <th style="min-width: 250px;">Kejuaraan & Prestasi Terakhir</th>
+                    <th style="width: 150px;">Tingkat & Tanggal</th>
+                    <th style="min-width: 170px;">Bukti & Pembina</th>
+                    <th style="width: 120px; text-align: center;">Aksi</th>
+                </tr>
+            `;
+        } else {
+            // all
+            thead.innerHTML = `
+                <tr style="background: #f8fafc; border-bottom: 2px solid #cbd5e1;">
+                    <th style="width: 50px; text-align: center;">No</th>
+                    <th style="min-width: 230px;">Siswa & Kelas</th>
+                    <th style="width: 140px; text-align: center;">Pelanggaran</th>
+                    <th style="width: 140px; text-align: center;">Prestasi</th>
+                    <th style="min-width: 220px;">Status Pembinaan Sekolah</th>
+                    <th style="width: 120px; text-align: center;">Aksi</th>
+                </tr>
+            `;
+        }
+
+        if (filtered.length === 0) {
+            let emptyIcon = "✨";
+            let emptyTitle = "Belum Ada Siswa Tercatat";
+            let emptyDesc = "Seluruh siswa berada dalam kondisi tertib dan bersih (0 poin). Data pelanggaran maupun prestasi yang diinput oleh semua guru otomatis langsung tampil di sini.";
+            if (this.publicRekapSearchQuery || this.publicRekapClassFilter || this.publicRekapStatusFilter) {
+                emptyIcon = "🔍";
+                emptyTitle = "Tidak Ada Data yang Cocok";
+                emptyDesc = "Coba ubah kata kunci pencarian atau sesuaikan pilihan filter kelas / status di atas.";
+            } else if (tab === 'pelanggaran') {
+                emptyIcon = "🛡️";
+                emptyTitle = "Seluruh Siswa Tertib & Bersih";
+                emptyDesc = "Tidak ada catatan pelanggaran siswa pada periode ini. Saat guru atau kesiswaan menginput pelanggaran, data akan otomatis tertera di papan terbuka ini.";
+            } else if (tab === 'prestasi') {
+                emptyIcon = "🏆";
+                emptyTitle = "Belum Ada Catatan Prestasi";
+                emptyDesc = "Belum ada torehan kejuaraan siswa yang diinputkan oleh tim kesiswaan / pembina prestasi.";
+            }
+
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" style="text-align: center; padding: 3rem 1.5rem; color: var(--text-muted); background: #fafafa;">
+                        <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">${emptyIcon}</div>
+                        <strong style="color: var(--text-main); font-size: 1.1rem; display: block; margin-bottom: 6px;">${emptyTitle}</strong>
+                        <p style="font-size: 0.85rem; max-width: 500px; margin: 0 auto; line-height: 1.5;">${emptyDesc}</p>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        tbody.innerHTML = filtered.map((item, idx) => {
+            const s = item.student;
+            const st = item.status;
+            const fallbackAvatar = s.gender === "P" 
+                ? "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=160&q=80" 
+                : "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=160&q=80";
+
+            const studentCol = `
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <img src="${s.foto || fallbackAvatar}" alt="${this.escapeHtml(s.nama)}" onerror="this.src='${fallbackAvatar}'" style="width: 40px; height: 40px; border-radius: 8px; object-fit: cover; border: 1px solid var(--border); flex-shrink: 0;">
+                    <div style="min-width: 0;">
+                        <strong style="color: var(--text-main); font-size: 0.9rem; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                            ${this.escapeHtml(s.nama)}
+                        </strong>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">
+                            <span>NISN: ${s.nisn || '-'}</span> • <strong style="color: #1e40af;">${this.escapeHtml(s.kelas || '-')}</strong>
+                        </div>
+                        <div style="font-size: 0.7rem; color: #64748b; margin-top: 1px;">
+                            Wali: ${this.escapeHtml(s.waliKelas || '-')}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            const actionBtn = `
+                <button type="button" class="btn btn-outline btn-sm" onclick="App.openPublicStudentDetailModal('${s.id}')" style="font-size: 0.76rem; padding: 0.35rem 0.65rem; display: inline-flex; align-items: center; gap: 4px; border-radius: 6px;" title="Lihat riwayat lengkap kedisiplinan dan prestasi siswa ini">
+                    👁️ Riwayat
+                </button>
+            `;
+
+            if (tab === 'pelanggaran') {
+                const lp = item.lastPelanggaran || {};
+                const pelCount = item.violCount || 1;
+                return `
+                    <tr>
+                        <td style="text-align: center; font-weight: 700; color: var(--text-muted);">${idx + 1}</td>
+                        <td>${studentCol}</td>
+                        <td style="text-align: center;">
+                            <span class="status-pill pill-red" style="font-weight: 800; font-size: 0.82rem; padding: 3px 8px; display: inline-block;">
+                                ${item.violPoints} Poin
+                            </span>
+                            <div style="margin-top: 4px;">
+                                <span class="status-pill ${st.badgeClass}" style="font-size: 0.68rem; padding: 1px 6px;">
+                                    ${st.statusText}
+                                </span>
+                            </div>
+                        </td>
+                        <td>
+                            <strong style="color: #991b1b; display: block; font-size: 0.85rem;">
+                                ${this.escapeHtml(lp.nama || '-')}
+                            </strong>
+                            <div style="font-size: 0.75rem; color: #475569; margin-top: 2px;">
+                                📅 ${lp.tanggal || '-'} • Sanksi: <em>${this.escapeHtml(lp.sanksi || '-')}</em>
+                            </div>
+                            ${pelCount > 1 ? `<div style="font-size: 0.7rem; color: #b91c1c; font-weight: 600; margin-top: 2px;">+ ${pelCount - 1} pelanggaran lainnya</div>` : ''}
+                        </td>
+                        <td>
+                            <div style="font-size: 0.8rem; font-weight: 600; color: var(--text-main);">
+                                👨‍🏫 ${this.escapeHtml(lp.pencatat || 'Guru Piket')}
+                            </div>
+                            <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 1px;">
+                                Kategori: ${this.escapeHtml(lp.kategori || 'Kedisiplinan')}
+                            </div>
+                        </td>
+                        <td style="text-align: center;">${actionBtn}</td>
+                    </tr>
+                `;
+            } else if (tab === 'prestasi') {
+                const lp = item.lastPrestasi || {};
+                const achCount = item.achCount || 1;
+                return `
+                    <tr>
+                        <td style="text-align: center; font-weight: 700; color: var(--text-muted);">${idx + 1}</td>
+                        <td>${studentCol}</td>
+                        <td>
+                            <strong style="color: #166534; display: block; font-size: 0.88rem;">
+                                ${this.escapeHtml(lp.nama || '-')}
+                            </strong>
+                            <div style="display: flex; gap: 4px; align-items: center; margin-top: 3px; flex-wrap: wrap;">
+                                <span class="badge" style="background: #dcfce7; color: #166534; font-size: 0.72rem; font-weight: 700; padding: 2px 7px; border-radius: 99px;">
+                                    🏆 ${this.escapeHtml(lp.peringkat || 'Juara')}
+                                </span>
+                                <span style="font-size: 0.75rem; color: var(--text-muted);">${this.escapeHtml(lp.penyelenggara || '-')}</span>
+                            </div>
+                            ${achCount > 1 ? `<div style="font-size: 0.7rem; color: #15803d; font-weight: 600; margin-top: 2px;">+ ${achCount - 1} kejuaraan lainnya</div>` : ''}
+                        </td>
+                        <td>
+                            <span class="status-pill pill-blue" style="font-size: 0.72rem;">${this.escapeHtml(lp.tingkat || 'Sekolah')}</span>
+                            <div style="font-size: 0.74rem; color: var(--text-muted); margin-top: 4px; font-family: monospace;">📅 ${lp.tanggal || '-'}</div>
+                        </td>
+                        <td>
+                            <div style="display: flex; gap: 4px; align-items: center; flex-wrap: wrap; margin-bottom: 4px;">
+                                ${lp.piagam ? `<a href="${lp.piagam}" target="_blank" class="status-pill pill-yellow" style="font-size: 0.68rem; text-decoration: none; padding: 1px 6px;">📜 Piagam</a>` : ''}
+                                ${lp.foto ? `<a href="${lp.foto}" target="_blank" class="status-pill pill-blue" style="font-size: 0.68rem; text-decoration: none; padding: 1px 6px;">📸 Foto</a>` : ''}
+                                ${!lp.piagam && !lp.foto ? '<span style="font-size: 0.7rem; color: var(--text-muted);">-</span>' : ''}
+                            </div>
+                            <div style="font-size: 0.75rem; color: #334155;">
+                                Pembina: <strong>${this.escapeHtml(lp.pencatat || 'Tim Kesiswaan')}</strong>
+                            </div>
+                        </td>
+                        <td style="text-align: center;">${actionBtn}</td>
+                    </tr>
+                `;
+            } else {
+                // all
+                return `
+                    <tr>
+                        <td style="text-align: center; font-weight: 700; color: var(--text-muted);">${idx + 1}</td>
+                        <td>${studentCol}</td>
+                        <td style="text-align: center;">
+                            <span class="status-pill ${item.violPoints > 0 ? 'pill-red' : 'pill-green'}" style="font-weight: 800; font-size: 0.8rem;">
+                                ${item.violPoints} Poin
+                            </span>
+                            <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 2px;">${item.violCount} Kasus</div>
+                        </td>
+                        <td style="text-align: center;">
+                            <span class="status-pill ${item.achCount > 0 ? 'pill-green' : 'pill-gray'}" style="font-weight: 800; font-size: 0.8rem;">
+                                ${item.achCount} Prestasi
+                            </span>
+                        </td>
+                        <td>
+                            <span class="status-pill ${st.badgeClass}" style="font-size: 0.75rem;">
+                                ${st.statusText}
+                            </span>
+                            <div style="font-size: 0.73rem; color: #475569; margin-top: 3px;">
+                                ${this.escapeHtml(st.actionText || '-')}
+                            </div>
+                        </td>
+                        <td style="text-align: center;">${actionBtn}</td>
+                    </tr>
+                `;
+            }
+        }).join('');
+    },
+
+    openPublicStudentDetailModal(studentId) {
+        const student = StorageManager.getStudentById(studentId);
+        if (!student) {
+            this.showToast("Data siswa tidak ditemukan.");
+            return;
+        }
+
+        this.selectedPublicStudentId = studentId;
+        const st = StorageManager.calculateStudentStatus(student);
+
+        const modal = document.getElementById("modalPublicStudentDetail");
+        if (!modal) return;
+
+        const fallbackAvatar = student.gender === "P" 
+            ? "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=240&q=80" 
+            : "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=240&q=80";
+
+        const imgEl = document.getElementById("publicStudentModalFoto");
+        if (imgEl) {
+            imgEl.src = student.foto || fallbackAvatar;
+            imgEl.onerror = () => { imgEl.src = fallbackAvatar; };
+        }
+
+        const nameEl = document.getElementById("publicStudentModalNama");
+        if (nameEl) nameEl.textContent = student.nama;
+
+        const infoEl = document.getElementById("publicStudentModalInfo");
+        if (infoEl) infoEl.textContent = `NISN: ${student.nisn || '-'} • NIS: ${student.nis || '-'} • Kelas: ${student.kelas || '-'} (${student.jurusan || '-'})`;
+
+        const waliEl = document.getElementById("publicStudentModalWali");
+        if (waliEl) waliEl.textContent = `Wali Kelas: ${student.waliKelas || '-'}`;
+
+        const poinPelEl = document.getElementById("publicStudentModalPoinPelanggaran");
+        if (poinPelEl) poinPelEl.textContent = `${st.totalPoinPelanggaran} Poin`;
+
+        const statusPelEl = document.getElementById("publicStudentModalStatusPill");
+        if (statusPelEl) {
+            statusPelEl.className = `status-pill ${st.badgeClass}`;
+            statusPelEl.textContent = st.statusText;
+        }
+
+        const countPresEl = document.getElementById("publicStudentModalCountPrestasi");
+        if (countPresEl) countPresEl.textContent = `${(student.prestasi || []).length} Capaian`;
+
+        const saldoKebaikanEl = document.getElementById("publicStudentModalSaldoKebaikan");
+        if (saldoKebaikanEl) saldoKebaikanEl.textContent = `${st.saldoPoinKebaikan}/100`;
+
+        this.switchPublicStudentModalTab('pelanggaran');
+
+        modal.classList.add("show");
+        document.body.style.overflow = "hidden";
+    },
+
+    closePublicStudentDetailModal() {
+        const modal = document.getElementById("modalPublicStudentDetail");
+        if (modal) modal.classList.remove("show");
+        document.body.style.overflow = "auto";
+        this.selectedPublicStudentId = null;
+    },
+
+    switchPublicStudentModalTab(tab) {
+        this.publicStudentDetailTab = tab;
+        const btnPel = document.getElementById("publicModalTabBtnPelanggaran");
+        const btnPres = document.getElementById("publicModalTabBtnPrestasi");
+        const panePel = document.getElementById("publicModalPanePelanggaran");
+        const panePres = document.getElementById("publicModalPanePrestasi");
+
+        if (btnPel) btnPel.classList.toggle("active", tab === 'pelanggaran');
+        if (btnPres) btnPres.classList.toggle("active", tab === 'prestasi');
+        if (panePel) panePel.style.display = tab === 'pelanggaran' ? 'block' : 'none';
+        if (panePres) panePres.style.display = tab === 'prestasi' ? 'block' : 'none';
+
+        if (!this.selectedPublicStudentId) return;
+        const student = StorageManager.getStudentById(this.selectedPublicStudentId);
+        if (!student) return;
+
+        if (tab === 'pelanggaran') {
+            const list = student.pelanggaran || [];
+            if (!panePel) return;
+            if (list.length === 0) {
+                panePel.innerHTML = `
+                    <div style="padding: 2rem; text-align: center; color: var(--text-muted); background: #f0fdf4; border-radius: 8px;">
+                        <div style="font-size: 2rem; margin-bottom: 0.25rem;">✨</div>
+                        <strong style="color: #166534;">Siswa Tidak Memiliki Catatan Pelanggaran</strong>
+                        <p style="font-size: 0.8rem; margin-top: 4px;">Catatan kedisiplinan siswa ini 100% bersih (0 poin).</p>
+                    </div>
+                `;
+            } else {
+                panePel.innerHTML = `
+                    <div class="table-responsive">
+                        <table class="table-modern" style="font-size: 0.82rem;">
+                            <thead>
+                                <tr style="background: #fef2f2;">
+                                    <th style="width: 40px; text-align: center;">No</th>
+                                    <th style="width: 100px;">Tanggal</th>
+                                    <th>Jenis Pelanggaran</th>
+                                    <th style="width: 70px; text-align: center;">Poin</th>
+                                    <th>Sanksi / Tindak Lanjut</th>
+                                    <th>Guru / Pencatat</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${list.map((p, i) => `
+                                    <tr>
+                                        <td style="text-align: center; font-weight: 700;">${i + 1}</td>
+                                        <td style="font-family: monospace; white-space: nowrap;">📅 ${p.tanggal || '-'}</td>
+                                        <td>
+                                            <strong style="color: #991b1b;">${this.escapeHtml(p.nama || '-')}</strong>
+                                            <div style="font-size: 0.7rem; color: var(--text-muted);">Kategori: ${this.escapeHtml(p.kategori || 'Kedisiplinan')}</div>
+                                        </td>
+                                        <td style="text-align: center;">
+                                            <span class="status-pill pill-red" style="font-weight: 800;">+${p.poin || 0}</span>
+                                        </td>
+                                        <td>${this.escapeHtml(p.sanksi || '-')}</td>
+                                        <td><strong>${this.escapeHtml(p.pencatat || 'Guru')}</strong></td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+        } else {
+            const list = student.prestasi || [];
+            if (!panePres) return;
+            if (list.length === 0) {
+                panePres.innerHTML = `
+                    <div style="padding: 2rem; text-align: center; color: var(--text-muted); background: #f8fafc; border-radius: 8px;">
+                        <div style="font-size: 2rem; margin-bottom: 0.25rem;">🏆</div>
+                        <strong style="color: var(--text-main);">Belum Ada Catatan Prestasi</strong>
+                        <p style="font-size: 0.8rem; margin-top: 4px;">Siswa belum tercatat meraih kejuaraan pada sistem.</p>
+                    </div>
+                `;
+            } else {
+                panePres.innerHTML = `
+                    <div class="table-responsive">
+                        <table class="table-modern" style="font-size: 0.82rem;">
+                            <thead>
+                                <tr style="background: #f0fdf4;">
+                                    <th style="width: 40px; text-align: center;">No</th>
+                                    <th style="width: 100px;">Tanggal</th>
+                                    <th>Nama Kejuaraan / Prestasi</th>
+                                    <th style="width: 130px;">Tingkat & Peringkat</th>
+                                    <th>Penyelenggara / Pembina</th>
+                                    <th style="width: 100px; text-align: center;">Bukti</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${list.map((pr, i) => `
+                                    <tr>
+                                        <td style="text-align: center; font-weight: 700;">${i + 1}</td>
+                                        <td style="font-family: monospace; white-space: nowrap;">📅 ${pr.tanggal || '-'}</td>
+                                        <td>
+                                            <strong style="color: #166534;">${this.escapeHtml(pr.nama || '-')}</strong>
+                                        </td>
+                                        <td>
+                                            <span class="badge" style="background: #dcfce7; color: #166534; font-weight: 700; font-size: 0.72rem; padding: 2px 7px; border-radius: 99px;">
+                                                🏆 ${this.escapeHtml(pr.peringkat || 'Juara')}
+                                            </span>
+                                            <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 2px;">Tingkat ${this.escapeHtml(pr.tingkat || 'Sekolah')}</div>
+                                        </td>
+                                        <td>
+                                            <div>${this.escapeHtml(pr.penyelenggara || '-')}</div>
+                                            <div style="font-size: 0.72rem; color: #475569; margin-top: 2px;">Pembina: <strong>${this.escapeHtml(pr.pencatat || 'Tim Kesiswaan')}</strong></div>
+                                        </td>
+                                        <td style="text-align: center;">
+                                            <div style="display: flex; gap: 4px; justify-content: center; flex-wrap: wrap;">
+                                                ${pr.piagam ? `<a href="${pr.piagam}" target="_blank" class="status-pill pill-yellow" style="font-size: 0.68rem; text-decoration: none;">📜 Piagam</a>` : ''}
+                                                ${pr.foto ? `<a href="${pr.foto}" target="_blank" class="status-pill pill-blue" style="font-size: 0.68rem; text-decoration: none;">📸 Foto</a>` : ''}
+                                                ${!pr.piagam && !pr.foto ? '<span style="color: var(--text-muted);">-</span>' : ''}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+        }
+    },
+
+    printStudentRaporFromPublic(studentId) {
+        if (!studentId && this.selectedPublicStudentId) {
+            studentId = this.selectedPublicStudentId;
+        }
+        if (!studentId) return;
+        if (window.AdminPortal && typeof AdminPortal.selectTargetStudent === "function" && typeof AdminPortal.actionPrintReport === "function") {
+            AdminPortal.selectTargetStudent(studentId, true);
+            AdminPortal.actionPrintReport();
+        } else if (window.SiswaPortal && typeof SiswaPortal.printRaporKarakter === "function") {
+            SiswaPortal.renderMyStudentPortal(studentId);
+            SiswaPortal.printRaporKarakter();
+        } else {
+            window.print();
+        }
+    },
+
+    printPublicRekap() {
+        const printWindow = window.open('', '_blank', 'width=900,height=700');
+        if (!printWindow) {
+            window.print();
+            return;
+        }
+
+        const allRecorded = StorageManager.getAllRecordedStudents();
+        const tab = this.publicRekapTab;
+        let titleTab = "Rekapitulasi Pelanggaran & Prestasi Siswa";
+        if (tab === 'pelanggaran') titleTab = "Rekapitulasi Siswa Tercatat Pelanggaran";
+        if (tab === 'prestasi') titleTab = "Rekapitulasi Siswa Berprestasi";
+
+        let filtered = [...allRecorded];
+        if (tab === 'pelanggaran') filtered = filtered.filter(x => x.violPoints > 0);
+        else if (tab === 'prestasi') filtered = filtered.filter(x => x.achCount > 0);
+
+        if (this.publicRekapClassFilter) {
+            filtered = filtered.filter(x => StorageManager.isClassMatch(x.student.kelas, this.publicRekapClassFilter));
+        }
+
+        const cfg = StorageManager.getConfig() || {};
+        const nowStr = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+
+        printWindow.document.write(`
+            <!DOCTYPE html>
+            <html lang="id">
+            <head>
+                <meta charset="UTF-8">
+                <title>${titleTab} - ${cfg.schoolName || 'SMK Negeri 1 Magelang'}</title>
+                <style>
+                    body { font-family: Arial, sans-serif; margin: 20px; font-size: 11pt; color: #111; }
+                    .kop { text-align: center; border-bottom: 3px double #000; padding-bottom: 10px; margin-bottom: 16px; }
+                    .kop h2 { margin: 0; font-size: 14pt; }
+                    .kop h3 { margin: 2px 0; font-size: 12pt; }
+                    .kop p { margin: 2px 0; font-size: 9pt; color: #444; }
+                    .title { text-align: center; font-size: 13pt; font-weight: bold; margin-bottom: 4px; text-transform: uppercase; }
+                    .meta { text-align: center; font-size: 9pt; color: #555; margin-bottom: 15px; }
+                    table { width: 100%; border-collapse: collapse; font-size: 9.5pt; }
+                    th, td { border: 1px solid #444; padding: 6px 8px; }
+                    th { background: #f2f2f2; font-weight: bold; }
+                    .ttd-box { margin-top: 30px; display: flex; justify-content: flex-end; }
+                    .ttd-inner { width: 260px; text-align: center; }
+                    @media print {
+                        @page { size: portrait; margin: 15mm; }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="kop">
+                    <h2>PEMERINTAH PROVINSI JAWA TENGAH</h2>
+                    <h3>DINAS PENDIDIKAN DAN KEBUDAYAAN</h3>
+                    <h2>${cfg.schoolName || 'SMK NEGERI 1 MAGELANG'}</h2>
+                    <p>${cfg.schoolAddress || 'Jl. Cawang No. 2, Magelang'}</p>
+                </div>
+                <div class="title">${titleTab}</div>
+                <div class="meta">Filter: ${this.publicRekapClassFilter ? 'Kelas ' + this.publicRekapClassFilter : 'Seluruh Kelas'} • Dicetak pada: ${nowStr}</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 30px;">No</th>
+                            <th>Nama Siswa</th>
+                            <th style="width: 85px;">NISN</th>
+                            <th style="width: 75px;">Kelas</th>
+                            <th style="width: 65px; text-align: center;">Poin</th>
+                            <th>Status / Kasus Terakhir / Prestasi</th>
+                            <th style="width: 140px;">Guru / Pencatat</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${filtered.length === 0 ? '<tr><td colspan="7" style="text-align: center; padding: 20px;">Tidak ada data siswa tercatat.</td></tr>' : filtered.map((x, i) => `
+                            <tr>
+                                <td style="text-align: center;">${i + 1}</td>
+                                <td><strong>${x.student.nama}</strong></td>
+                                <td>${x.student.nisn || '-'}</td>
+                                <td>${x.student.kelas || '-'}</td>
+                                <td style="text-align: center; font-weight: bold; color: ${x.violPoints > 0 ? '#b91c1c' : '#15803d'};">
+                                    ${x.violPoints || 0}
+                                </td>
+                                <td>
+                                    ${tab === 'prestasi' && x.lastPrestasi 
+                                        ? `<strong>${x.lastPrestasi.nama}</strong> (${x.lastPrestasi.peringkat} - Tingkat ${x.lastPrestasi.tingkat})` 
+                                        : (x.lastPelanggaran 
+                                            ? `<strong>${x.lastPelanggaran.nama}</strong> (Status: ${x.status.statusText})` 
+                                            : x.status.statusText)}
+                                </td>
+                                <td>${(tab === 'prestasi' && x.lastPrestasi ? x.lastPrestasi.pencatat : (x.lastPelanggaran ? x.lastPelanggaran.pencatat : '-')) || 'Tim Kesiswaan'}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+                <div class="ttd-box">
+                    <div class="ttd-inner">
+                        <div>Magelang, ${nowStr}</div>
+                        <div style="margin-top: 4px; font-weight: bold;">Waka Kesiswaan</div>
+                        <div style="margin-top: 55px; font-weight: bold; text-decoration: underline;">${cfg.headOfStudentAffairs || 'Morlan Purba Sibarani, S.Pd., M.Si.'}</div>
+                        <div>${cfg.headOfStudentAffairsNip || 'NIP. 19740315 200501 1 004'}</div>
+                    </div>
+                </div>
+                <script>
+                    window.onload = function() { window.print(); };
+                </script>
+            </body>
+            </html>
+        `);
+        printWindow.document.close();
+    },
+
+    exportPublicRekapToExcel() {
+        const allRecorded = StorageManager.getAllRecordedStudents();
+        const tab = this.publicRekapTab;
+        let filtered = [...allRecorded];
+        if (tab === 'pelanggaran') filtered = filtered.filter(x => x.violPoints > 0);
+        else if (tab === 'prestasi') filtered = filtered.filter(x => x.achCount > 0);
+
+        if (this.publicRekapClassFilter) {
+            filtered = filtered.filter(x => StorageManager.isClassMatch(x.student.kelas, this.publicRekapClassFilter));
+        }
+
+        const rows = [
+            ["No", "Nama Siswa", "NIS", "NISN", "Kelas", "Jurusan", "Wali Kelas", "Total Poin Pelanggaran", "Status Sanksi", "Total Prestasi", "Kasus / Prestasi Terakhir", "Tanggal", "Pencatat"]
+        ];
+
+        filtered.forEach((x, i) => {
+            const s = x.student;
+            const lp = x.lastPelanggaran;
+            const lpr = x.lastPrestasi;
+            const kasusText = tab === 'prestasi' && lpr ? lpr.nama : (lp ? lp.nama : '-');
+            const tglText = tab === 'prestasi' && lpr ? lpr.tanggal : (lp ? lp.tanggal : '-');
+            const pencatatText = tab === 'prestasi' && lpr ? lpr.pencatat : (lp ? lp.pencatat : '-');
+
+            rows.push([
+                i + 1,
+                s.nama || '',
+                s.nis || '',
+                s.nisn || '',
+                s.kelas || '',
+                s.jurusan || '',
+                s.waliKelas || '',
+                x.violPoints || 0,
+                x.status.statusText || 'Aman',
+                x.achCount || 0,
+                kasusText,
+                tglText,
+                pencatatText
+            ]);
+        });
+
+        const csvContent = "\uFEFF" + rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\r\n");
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        const dateStr = new Date().toISOString().split("T")[0];
+        a.download = `Rekap_Kesiswaan_SMKN1_Magelang_${this.publicRekapTab}_${dateStr}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        this.showToast("File rekapan Excel berhasil diunduh!");
     }
 };
 

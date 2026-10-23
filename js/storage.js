@@ -125,6 +125,11 @@ const SyncManager = {
             App.initPrestasiSlider();
         }
 
+        // Segarkan otomatis papan rekapitulasi siswa terbuka (pelanggaran & prestasi)
+        if (window.App && typeof App.renderPublicRekapitulasi === "function") {
+            App.renderPublicRekapitulasi();
+        }
+
         // Segarkan portal siswa jika akun siswa sedang login
         if (window.AuthManager && typeof AuthManager.isStudent === "function" && AuthManager.isStudent() && window.SiswaPortal) {
             const curStudent = AuthManager.getCurrentUser();
@@ -182,34 +187,11 @@ const StorageManager = {
             this.resetAllStudentRecordsToZero();
         }
 
-        // Sinkronisasi otomatis master tata tertib & poin pelanggaran resmi Super Admin
-        // (Alpha 15 poin, Atribut / Seragam 10 poin, Rambut / Make up 10 poin)
+        // Sinkronisasi otomatis master tata tertib & 17 poin pelanggaran resmi SMK Negeri 1 Magelang
         const curData = this.getData();
-        if (curData && Array.isArray(curData.violationsMaster)) {
-            let updated = false;
-            curData.violationsMaster.forEach(v => {
-                if (v.id === "P04" || v.id === "P05" || (v.nama && (v.nama.toLowerCase().includes("tanpa keterangan") || v.nama.toLowerCase().includes("alpha baik pelajaran")))) {
-                    if (v.poin !== 15) { v.poin = 15; updated = true; }
-                }
-                if (v.id === "P06" || v.id === "P07" || (v.nama && (v.nama.toLowerCase().includes("atribut seragam") || v.nama.toLowerCase().includes("pakaian ketat")))) {
-                    if (v.poin !== 10) { v.poin = 10; updated = true; }
-                }
-            });
-            if (curData.tataTertib && Array.isArray(curData.tataTertib)) {
-                curData.tataTertib.forEach(tt => {
-                    if (tt.id === "TT-01" && Array.isArray(tt.butirAturan)) {
-                        tt.butirAturan = tt.butirAturan.map(b => b.replace("Poin 10", "Poin 15"));
-                        updated = true;
-                    }
-                    if (tt.id === "TT-02") {
-                        if (tt.poinRentang !== "Poin 10") {
-                            tt.poinRentang = "Poin 10";
-                            updated = true;
-                        }
-                    }
-                });
-            }
-            if (updated) {
+        if (curData) {
+            if (!curData.violationsMaster || curData.violationsMaster.length < 17 || !curData.violationsMaster.some(v => v.id === "P17")) {
+                curData.violationsMaster = JSON.parse(JSON.stringify(MASTER_PELANGGARAN));
                 this.saveData(curData);
             }
         }
@@ -1159,6 +1141,7 @@ const StorageManager = {
         }
 
         const totalPoinPelanggaran = hasPel ? pel.reduce((acc, curr) => acc + (Number(curr.poin) || 0), 0) : 0;
+        const totalPoinPrestasi = hasPres ? pres.reduce((acc, curr) => acc + (Number(curr.poin) || 0), 0) : 0;
         const totalPrestasi = hasPres ? pres.length : 0;
         
         const rules = this.getRules();
@@ -1173,7 +1156,7 @@ const StorageManager = {
 
         return {
             totalPoinPelanggaran,
-            totalPoinPrestasi: 0,
+            totalPoinPrestasi,
             totalPrestasi,
             saldoPoinKebaikan: Math.max(0, 100 - totalPoinPelanggaran),
             statusText: ruleMatch ? ruleMatch.status : "Aman",
@@ -1182,6 +1165,33 @@ const StorageManager = {
             isBermasalah: totalPoinPelanggaran >= 31,
             isBerprestasi: totalPrestasi > 0
         };
+    },
+
+    // REKAPITULASI OTOMATIS SELURUH SISWA TERCATAT PELANGGARAN & PRESTASI (DAPAT DIAKSES PUBLIK)
+    getAllRecordedStudents() {
+        const students = this.getStudents() || [];
+        const result = [];
+        for (let i = 0; i < students.length; i++) {
+            const s = students[i];
+            const hasPel = Array.isArray(s.pelanggaran) && s.pelanggaran.length > 0;
+            const hasPres = Array.isArray(s.prestasi) && s.prestasi.length > 0;
+            if (hasPel || hasPres) {
+                const status = this.calculateStudentStatus(s);
+                result.push({
+                    student: s,
+                    status,
+                    hasPel,
+                    hasPres,
+                    violPoints: status.totalPoinPelanggaran,
+                    achPoints: status.totalPoinPrestasi,
+                    violCount: hasPel ? s.pelanggaran.length : 0,
+                    achCount: hasPres ? s.prestasi.length : 0,
+                    lastPelanggaran: hasPel ? s.pelanggaran[0] : null,
+                    lastPrestasi: hasPres ? s.prestasi[0] : null
+                });
+            }
+        }
+        return result;
     },
 
     addViolation(studentId, violationData) {

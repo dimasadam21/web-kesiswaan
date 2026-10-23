@@ -839,20 +839,23 @@ const DEFAULT_ATTENDANCE_SCHEDULE = {
 };
 
 const MASTER_PELANGGARAN = [
-    { id: "P01", kategori: "Kedisiplinan", nama: "Terlambat masuk sekolah (1-15 menit)", poin: 5 },
-    { id: "P02", kategori: "Kedisiplinan", nama: "Terlambat masuk sekolah (>15 menit)", poin: 10 },
-    { id: "P03", kategori: "Kedisiplinan", nama: "Keluar kelas/sekolah tanpa izin (Membolos)", poin: 20 },
-    { id: "P04", kategori: "Kedisiplinan", nama: "Tidak masuk tanpa keterangan/Alpha baik pelajaran/upacara/senam", poin: 15 },
-    { id: "P05", kategori: "Kedisiplinan", nama: "Tidak masuk sekolah tanpa keterangan (Alfa)", poin: 15 },
-    { id: "P06", kategori: "Kerapian", nama: "Atribut seragam tidak lengkap/tidak benar", poin: 10 },
-    { id: "P07", kategori: "Kerapian", nama: "Pakaian ketat, tidak dimasukkan, atau tidak sesuai jadwal", poin: 10 },
-    { id: "P08", kategori: "Kerapian", nama: "Rambut panjang (untuk putra)/dicat (untuk putra&putri)/make up berlebih", poin: 10 },
-    { id: "P09", kategori: "Etika", nama: "Menggunakan HP saat KBM tanpa instruksi guru", poin: 10 },
-    { id: "P10", kategori: "Etika", nama: "Bersikap tidak sopan / membantah guru atau karyawan", poin: 25 },
-    { id: "P11", kategori: "Berat", nama: "Merokok / membawa rokok atau vape di lingkungan sekolah", poin: 40 },
-    { id: "P12", kategori: "Berat", nama: "Terlibat perkelahian / tawuran di dalam atau luar sekolah", poin: 75 },
-    { id: "P13", kategori: "Berat", nama: "Melakukan perundungan (Bullying) fisik atau verbal", poin: 50 },
-    { id: "P14", kategori: "Berat", nama: "Membawa senjata tajam atau benda berbahaya", poin: 80 }
+    { id: "P01", no: 1, kategori: "Kerapian", nama: "Atribut seragam tidak lengkap/tidak benar", poin: 10 },
+    { id: "P02", no: 2, kategori: "Kerapian", nama: "Rambut panjang (untuk putra)/dicat (untuk putra&putri)/make up berlebih", poin: 10 },
+    { id: "P03", no: 3, kategori: "Ketertiban", nama: "Melakukan corat coret fasilitas sekolah tanpa ijin", poin: 10 },
+    { id: "P04", no: 4, kategori: "Kedisiplinan", nama: "Tidak masuk tanpa keterangan/Alpha baik pelajaran/upacara/senam", poin: 15 },
+    { id: "P05", no: 5, kategori: "Kedisiplinan", nama: "Terlambat masuk sekolah", poin: 15 },
+    { id: "P06", no: 6, kategori: "Kedisiplinan", nama: "Meninggalkan sekolah tanpa izin/membolos/melompat tembok", poin: 20 },
+    { id: "P07", no: 7, kategori: "Ketertiban", nama: "Masuk lompat pagar", poin: 20 },
+    { id: "P08", no: 8, kategori: "Larangan", nama: "Membawa atau menghisap rokok/vapor (rokok electric) di sekolah", poin: 20 },
+    { id: "P09", no: 9, kategori: "Ketertiban", nama: "Merusak fasilitas sekolah", poin: 50 },
+    { id: "P10", no: 10, kategori: "Larangan", nama: "Membawa Senjata Tajam/barang porno/terlarang di Sekolah", poin: 50 },
+    { id: "P11", no: 11, kategori: "Etika", nama: "Menghina kepala sekolah/tenaga pendidikan/tenaga kependidikan/berpacaran", poin: 50 },
+    { id: "P12", no: 12, kategori: "Larangan", nama: "Berjudi/Pinjol", poin: 75 },
+    { id: "P13", no: 13, kategori: "Berat", nama: "Mencuri/ Bullying", poin: 100 },
+    { id: "P14", no: 14, kategori: "Berat", nama: "Berkelahi/Tawuran/Tindakan demonstratif/Kekerasan", poin: 150 },
+    { id: "P15", no: 15, kategori: "Berat", nama: "Memakai/Mengedarkan Narkoba dan sejenisnya", poin: 150 },
+    { id: "P16", no: 16, kategori: "Berat", nama: "Tindak Asusila/Menikah", poin: 150 },
+    { id: "P17", no: 17, kategori: "Berat", nama: "Membuat status dan atau konten medsos dan atau komentar medsos yang mengandung unsur SARA/Provokatif/Pelecehan/Merusak nama baik sekolah atau warga sekolah atau di luar warga sekolah.", poin: 150 }
 ];
 
 const MASTER_PRESTASI = [
