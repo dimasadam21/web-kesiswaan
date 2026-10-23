@@ -823,6 +823,15 @@ const AdminPortal = {
         }
     },
 
+    seedOfficialRecords() {
+        const count = StorageManager.seedOfficialTeacherInputs(true);
+        this.renderTeacherAllStudents();
+        if (window.App && typeof App.renderPublicRekapitulasi === "function") {
+            App.renderPublicRekapitulasi();
+        }
+        App.showToast(`✅ Berhasil memuat ${count} data rekapan siswa yang diinput oleh guru & tim kesiswaan!`);
+    },
+
     // 4. Render Tabel Siapa Saja Siswa Tercatat Pelanggaran maupun Prestasi
     renderTeacherAllStudents() {
         const tbody = document.getElementById("teacherAllStudentsTableBody");
@@ -991,6 +1000,9 @@ const AdminPortal = {
                                 🏆 + Catat Prestasi
                             </button>
                             ` : ''}
+                            <button type="button" class="btn btn-primary btn-sm" onclick="AdminPortal.seedOfficialRecords()" title="Muat otomatis seluruh catatan pelanggaran & torehan prestasi dari guru & tim kesiswaan">
+                                ⚡ Muat Catatan Guru & Kesiswaan
+                            </button>
                         </div>
                     </td>
                 </tr>

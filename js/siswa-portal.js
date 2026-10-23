@@ -17,14 +17,16 @@ const SiswaPortal = {
 
         // Header info siswa
         document.getElementById("studentWelcomeName").textContent = student.nama;
-        document.getElementById("studentWelcomeSub").textContent = `NISN: ${student.nisn} • Kelas: ${student.kelas} (${student.jurusan}) • Wali Kelas: ${student.waliKelas}`;
+        const idText = student.nisn || student.nis || student.id || "-";
+        const jurusanText = (student.jurusan && student.jurusan !== "-") ? ` (${student.jurusan})` : "";
+        document.getElementById("studentWelcomeSub").textContent = `ID/NISN: ${idText} • Kelas: ${student.kelas}${jurusanText} • Wali Kelas: ${student.waliKelas || '-'}`;
 
         // 3 Kotak Poin
         document.getElementById("studentPoinPelanggaran").textContent = `${status.totalPoinPelanggaran}`;
         document.getElementById("studentActionTindakan").textContent = status.actionText;
 
-        document.getElementById("studentPoinPrestasi").textContent = `${(student.prestasi || []).length}`;
-        document.getElementById("studentPrestasiCount").textContent = `${(student.prestasi || []).length} Capaian Resmi`;
+        document.getElementById("studentPoinPrestasi").textContent = `${status.totalPoinPrestasi || 0}`;
+        document.getElementById("studentPrestasiCount").textContent = `${(student.prestasi || []).length} Capaian Resmi (${status.totalPoinPrestasi || 0} Poin)`;
 
         document.getElementById("studentIndeksNilai").textContent = `${status.saldoPoinKebaikan}/100`;
 

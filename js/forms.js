@@ -3116,6 +3116,24 @@ const Forms = {
         }
     },
 
+    openEditMyProfileModal() {
+        if (!AuthManager.isLoggedIn() || !AuthManager.currentUser) {
+            App.showToast("Silakan login terlebih dahulu.");
+            return;
+        }
+        if (AuthManager.isStudent()) {
+            const sid = AuthManager.currentUser.studentId;
+            if (typeof this.openEditStudentModal === "function") {
+                this.openEditStudentModal(sid);
+            }
+        } else {
+            const uname = AuthManager.currentUser.username;
+            if (uname) {
+                this.openEditTeacherModal(uname);
+            }
+        }
+    },
+
     openEditTeacherModal(username) {
         const teacher = StorageManager.getTeacherByUsername(username);
         if (!teacher) {

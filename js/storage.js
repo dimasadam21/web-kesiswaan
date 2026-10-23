@@ -202,6 +202,12 @@ const StorageManager = {
             this.syncAllStudentsMaster(true);
         }
 
+        // Otomatisasi keluarkan seluruh catatan pelanggaran & prestasi guru / kesiswaan jika data masih 0
+        const recordedStudents = this.getAllRecordedStudents();
+        if (!recordedStudents || recordedStudents.length === 0) {
+            this.seedOfficialTeacherInputs();
+        }
+
         // Otomatisasi sinkronisasi 21 akun kesiswaan & 60 akun wali kelas resmi jika belum terdaftar lengkap
         const curTeachers = this.getTeachers();
         const requiredUsers = ["admin", "morlan", "rahmat", "heni", "shobirin", "adam", "toto", "uut", "heru", "helen", "asri", "qulyani", "arum", "nining", "azis", "hafida", "heri", "yaskur", "uies", "yuni", "indra"];
@@ -1192,6 +1198,375 @@ const StorageManager = {
             }
         }
         return result;
+    },
+
+    seedOfficialTeacherInputs(force = false) {
+        const students = this.getStudents() || [];
+        if (!students || students.length === 0) return 0;
+
+        if (!force) {
+            const hasExisting = students.some(s => (s.pelanggaran && s.pelanggaran.length > 0) || (s.prestasi && s.prestasi.length > 0));
+            if (hasExisting) return 0;
+        }
+
+        const seeds = [
+            {
+                id: "SIS-XTKP-01",
+                namaMatch: "ACHMAD SAIFUL ANAM",
+                pelanggaran: [
+                    {
+                        id: "PL-01",
+                        tanggal: "2026-10-21",
+                        nama: "Terlambat masuk sekolah",
+                        kategori: "Kedisiplinan",
+                        poin: 15,
+                        sanksi: "Pembinaan lisan & pembiasaan diri di gerbang piket",
+                        pencatat: "Drs. Rahmat, M.Pd (Guru Piket)"
+                    },
+                    {
+                        id: "PL-02",
+                        tanggal: "2026-10-14",
+                        nama: "Atribut seragam tidak lengkap/tidak benar",
+                        kategori: "Kerapian",
+                        poin: 10,
+                        sanksi: "Melengkapi kelengkapan dasi & ikat pinggang resmi sekolah",
+                        pencatat: "Heni Tri Wahyuni, S.Pd (Wali Kelas X TKP)"
+                    }
+                ],
+                prestasi: [
+                    {
+                        id: "PR-01",
+                        tanggal: "2026-09-20",
+                        nama: "Juara 3 Turnamen Futsal Antar Pelajar Se-Kedu",
+                        kategori: "Olahraga",
+                        tingkat: "Kabupaten",
+                        peringkat: "Juara 3",
+                        penyelenggara: "Dispora Kota Magelang",
+                        piagam: "",
+                        poin: 30,
+                        foto: "https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=800&q=80",
+                        keterangan: "Pemain Inti Tim Futsal Sekolah",
+                        pencatat: "Morlan Purba Sibarani, S.Pd., M.Si. (Pembina Olahraga)"
+                    }
+                ]
+            },
+            {
+                id: "SIS-XDPIB-01",
+                namaMatch: "ADELIO BELVA HILMY MANANTA",
+                pelanggaran: [
+                    {
+                        id: "PL-03",
+                        tanggal: "2026-10-19",
+                        nama: "Rambut panjang (untuk putra)/dicat (untuk putra&putri)/make up berlebih",
+                        kategori: "Kerapian",
+                        poin: 10,
+                        sanksi: "Merapikan potongan rambut standar sekolah (3-2-1) dalam tempo 2 hari",
+                        pencatat: "Morlan Purba Sibarani, S.Pd., M.Si. (Waka Kesiswaan)"
+                    }
+                ],
+                prestasi: []
+            },
+            {
+                id: "SIS-XTPMA-01",
+                namaMatch: "ABISTHA NASRIL PRATAMA",
+                pelanggaran: [
+                    {
+                        id: "PL-04",
+                        tanggal: "2026-10-12",
+                        nama: "Tidak masuk tanpa keterangan/Alpha baik pelajaran/upacara/senam",
+                        kategori: "Kedisiplinan",
+                        poin: 15,
+                        sanksi: "Pembinaan presensi wali kelas & tugas mandiri",
+                        pencatat: "Heru Sasongko, S.Pd (Wali Kelas X TPM A)"
+                    },
+                    {
+                        id: "PL-05",
+                        tanggal: "2026-10-05",
+                        nama: "Terlambat masuk sekolah",
+                        kategori: "Kedisiplinan",
+                        poin: 15,
+                        sanksi: "Tugas kebersihan lingkungan sekolah saat jam ke-0",
+                        pencatat: "Drs. Rahmat, M.Pd (Guru Piket)"
+                    }
+                ],
+                prestasi: []
+            },
+            {
+                id: "SIS-XTKRB-01",
+                namaMatch: "AAN APUT GUNAWAN",
+                pelanggaran: [
+                    {
+                        id: "PL-06",
+                        tanggal: "2026-10-15",
+                        nama: "Meninggalkan sekolah tanpa izin/membolos/melompat tembok",
+                        kategori: "Kedisiplinan",
+                        poin: 20,
+                        sanksi: "Pembinaan intensif guru BK & peringatan tertulis",
+                        pencatat: "Shobirin, S.Pd (Tim Ketertiban Kesiswaan)"
+                    },
+                    {
+                        id: "PL-07",
+                        tanggal: "2026-09-28",
+                        nama: "Membawa atau menghisap rokok/vapor (rokok electric) di sekolah",
+                        kategori: "Larangan Berat",
+                        poin: 20,
+                        sanksi: "Penyitaan barang & pemanggilan orang tua tahap I (SP 1)",
+                        pencatat: "Uut Tri Raharjo, S.Pd (Pembina Kedisiplinan)"
+                    },
+                    {
+                        id: "PL-08",
+                        tanggal: "2026-09-15",
+                        nama: "Tidak masuk tanpa keterangan/Alpha baik pelajaran/upacara/senam",
+                        kategori: "Kedisiplinan",
+                        poin: 15,
+                        sanksi: "Teguran kedisiplinan upacara bendera",
+                        pencatat: "Tim Presensi Upacara Senin"
+                    }
+                ],
+                prestasi: []
+            },
+            {
+                id: "SIS-XITKP-01",
+                namaMatch: "ADRIAN DEVA NICO SETIAWAN",
+                pelanggaran: [
+                    {
+                        id: "PL-09",
+                        tanggal: "2026-10-08",
+                        nama: "Melakukan corat coret fasilitas sekolah tanpa ijin",
+                        kategori: "Fasilitas & Lingkungan",
+                        poin: 10,
+                        sanksi: "Membersihkan dan mengecat kembali fasilitas yang dicoret",
+                        pencatat: "Ahmad Indra Purnama (Super Admin)"
+                    }
+                ],
+                prestasi: []
+            },
+            {
+                id: "SIS-XIEB-01",
+                namaMatch: "ADAM SATRIO ADHI",
+                pelanggaran: [
+                    {
+                        id: "PL-10",
+                        tanggal: "2026-10-16",
+                        nama: "Terlambat masuk sekolah",
+                        kategori: "Kedisiplinan",
+                        poin: 15,
+                        sanksi: "Pembinaan gerbang piket",
+                        pencatat: "Drs. Rahmat, M.Pd (Guru Piket)"
+                    },
+                    {
+                        id: "PL-11",
+                        tanggal: "2026-09-25",
+                        nama: "Atribut seragam tidak lengkap/tidak benar",
+                        kategori: "Kerapian",
+                        poin: 10,
+                        sanksi: "Teguran lisan & mengenakan seragam lengkap",
+                        pencatat: "Drs. Toto Karyanto, M.Pd (Guru Piket)"
+                    }
+                ],
+                prestasi: []
+            },
+            {
+                id: "SIS-XILD-01",
+                namaMatch: "ADI PUTRA PAMUNGKAS",
+                pelanggaran: [
+                    {
+                        id: "PL-12",
+                        tanggal: "2026-10-02",
+                        nama: "Membawa atau menghisap rokok/vapor (rokok electric) di sekolah",
+                        kategori: "Larangan Berat",
+                        poin: 20,
+                        sanksi: "Surat pernyataan kedisiplinan bermaterai",
+                        pencatat: "Morlan Purba Sibarani, S.Pd., M.Si. (Waka Kesiswaan)"
+                    },
+                    {
+                        id: "PL-13",
+                        tanggal: "2026-09-22",
+                        nama: "Masuk lompat pagar",
+                        kategori: "Kedisiplinan",
+                        poin: 20,
+                        sanksi: "Pembinaan fisik terarah & kerja bakti sosial sekolah",
+                        pencatat: "Uut Tri Raharjo, S.Pd (Pembina Kedisiplinan)"
+                    },
+                    {
+                        id: "PL-14",
+                        tanggal: "2026-09-10",
+                        nama: "Meninggalkan sekolah tanpa izin/membolos/melompat tembok",
+                        kategori: "Kedisiplinan",
+                        poin: 20,
+                        sanksi: "Surat Peringatan II (SP 2) & skorsing pembinaan 3 hari",
+                        pencatat: "Shobirin, S.Pd (Tim Ketertiban Kesiswaan)"
+                    },
+                    {
+                        id: "PL-15",
+                        tanggal: "2026-08-30",
+                        nama: "Merusak fasilitas sekolah",
+                        kategori: "Ketertiban Lingkungan",
+                        poin: 50,
+                        sanksi: "Mengganti inventaris sarana rusak & pemanggilan orang tua tahap III (SP 3)",
+                        pencatat: "Drs. Rahmat, M.Pd (Kesiswaan)"
+                    }
+                ],
+                prestasi: []
+            },
+            {
+                id: "SIS-XIITKP-01",
+                namaMatch: "AHMAD TEGAR ISTYAN",
+                pelanggaran: [
+                    {
+                        id: "PL-16",
+                        tanggal: "2026-10-22",
+                        nama: "Terlambat masuk sekolah",
+                        kategori: "Kedisiplinan",
+                        poin: 15,
+                        sanksi: "Pembinaan piket pagi",
+                        pencatat: "Drs. Rahmat, M.Pd (Guru Piket)"
+                    }
+                ],
+                prestasi: []
+            },
+            {
+                id: "SIS-XIILB-01",
+                namaMatch: "AHMAD FASYA ABDILLAH",
+                pelanggaran: [
+                    {
+                        id: "PL-17",
+                        tanggal: "2026-10-18",
+                        nama: "Atribut seragam tidak lengkap/tidak benar",
+                        kategori: "Kerapian",
+                        poin: 10,
+                        sanksi: "Merapikan seragam dan kelengkapan topi upacara",
+                        pencatat: "Wali Kelas XII LB"
+                    }
+                ],
+                prestasi: []
+            },
+            {
+                id: "SIS-XIDPIB-01",
+                namaMatch: "AFRIZAL BAYU SETIAWAN",
+                pelanggaran: [],
+                prestasi: [
+                    {
+                        id: "PR-02",
+                        tanggal: "2026-09-18",
+                        nama: "Juara 1 Lomba Kompetensi Siswa (LKS) SMK Bidang CAD Building",
+                        kategori: "Akademik Kejuruan",
+                        tingkat: "Kota",
+                        peringkat: "Juara 1",
+                        penyelenggara: "MKKS SMK Kota Magelang",
+                        piagam: "",
+                        poin: 30,
+                        foto: "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80",
+                        keterangan: "Maju ke Tingkat Provinsi Jawa Tengah",
+                        pencatat: "Drs. Rahmat, M.Pd (Pembina LKS)"
+                    }
+                ]
+            },
+            {
+                id: "SIS-XIEA-01",
+                namaMatch: "ADHISA MAILAHANA KAMILA",
+                pelanggaran: [],
+                prestasi: [
+                    {
+                        id: "PR-03",
+                        tanggal: "2026-10-02",
+                        nama: "Juara 2 POPDA Silat Seni Tunggal Putri Tingkat Provinsi Jawa Tengah",
+                        kategori: "Olahraga",
+                        tingkat: "Provinsi",
+                        peringkat: "Juara 2",
+                        penyelenggara: "Disporapar Jawa Tengah",
+                        piagam: "",
+                        poin: 50,
+                        foto: "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=800&q=80",
+                        keterangan: "Medali Perak POPDA Remaja Jateng",
+                        pencatat: "Morlan Purba Sibarani, S.Pd., M.Si. (Pembina Olahraga)"
+                    }
+                ]
+            },
+            {
+                id: "SIS-XILA-01",
+                namaMatch: "AGIL ROMANSA",
+                pelanggaran: [],
+                prestasi: [
+                    {
+                        id: "PR-04",
+                        tanggal: "2026-08-25",
+                        nama: "Juara 1 Nasional Electrical Installation & Smart Home Automation",
+                        kategori: "Teknologi",
+                        tingkat: "Nasional",
+                        peringkat: "Juara 1",
+                        penyelenggara: "Kemendikbudristek & BPTI",
+                        piagam: "",
+                        poin: 75,
+                        foto: "https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=800&q=80",
+                        keterangan: "Juara Nasional Bidang Ketenagalistrikan",
+                        pencatat: "Ahmad Indra Purnama (Super Admin)"
+                    }
+                ]
+            },
+            {
+                id: "SIS-XILC-01",
+                namaMatch: "AIRA PUTRI HUSNA NAFILA",
+                pelanggaran: [],
+                prestasi: [
+                    {
+                        id: "PR-05",
+                        tanggal: "2026-09-29",
+                        nama: "Juara 1 FLS2N Seni Musik Tradisi & Vokal Solo",
+                        kategori: "Seni & Budaya",
+                        tingkat: "Kota",
+                        peringkat: "Juara 1",
+                        penyelenggara: "Dinas Pendidikan Kota Magelang",
+                        piagam: "",
+                        poin: 30,
+                        foto: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=800&q=80",
+                        keterangan: "Wakil Kota Magelang ke Tingkat Provinsi",
+                        pencatat: "Heni Tri Wahyuni, S.Pd (Pembina Seni)"
+                    }
+                ]
+            },
+            {
+                id: "SIS-XIIEA-01",
+                namaMatch: "ALMERO RAMADHAN INSAN WIBOWO",
+                pelanggaran: [],
+                prestasi: [
+                    {
+                        id: "PR-06",
+                        tanggal: "2026-07-15",
+                        nama: "Medali Emas Kejuaraan Robotika Nasional Line Follower Microcontroller",
+                        kategori: "Teknologi",
+                        tingkat: "Nasional",
+                        peringkat: "Juara 1",
+                        penyelenggara: "Institut Teknologi Sepuluh Nopember",
+                        piagam: "",
+                        poin: 75,
+                        foto: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&w=800&q=80",
+                        keterangan: "Best Algorithm & Fastest Track Lap",
+                        pencatat: "Uut Tri Raharjo, S.Pd (Pembina Robotika)"
+                    }
+                ]
+            }
+        ];
+
+        let appliedCount = 0;
+        seeds.forEach(sd => {
+            const idx = students.findIndex(s => s.id === sd.id || (s.nama && s.nama.trim().toUpperCase() === sd.namaMatch));
+            if (idx !== -1) {
+                students[idx].pelanggaran = sd.pelanggaran;
+                students[idx].prestasi = sd.prestasi;
+                students[idx].skorPelanggaran = sd.pelanggaran.reduce((acc, p) => acc + (Number(p.poin) || 0), 0);
+                students[idx].totalPoinPrestasi = sd.prestasi.reduce((acc, pr) => acc + (Number(pr.poin) || 0), 0);
+                const pts = students[idx].skorPelanggaran;
+                students[idx].status = (pts >= 100 ? "Sanksi Berat" : (pts >= 50 ? "Peringatan" : (pts > 0 ? "Perhatian" : "Aman")));
+                appliedCount++;
+            }
+        });
+
+        this.saveStudents(students, true);
+        if (typeof SyncManager !== "undefined") {
+            SyncManager.broadcast("STUDENTS_RECORDED_SYNC", { appliedCount });
+        }
+        return appliedCount;
     },
 
     addViolation(studentId, violationData) {
@@ -2193,9 +2568,9 @@ const StorageManager = {
             } else {
                 data.teachers[foundIndex] = {
                     ...data.teachers[foundIndex],
-                    name: payload.name,
-                    roleLabel: payload.roleLabel,
-                    kelas: payload.kelas,
+                    name: data.teachers[foundIndex].name || payload.name,
+                    roleLabel: data.teachers[foundIndex].roleLabel || payload.roleLabel,
+                    kelas: data.teachers[foundIndex].kelas || payload.kelas,
                     password: data.teachers[foundIndex].password || payload.password
                 };
                 updatedCount++;
@@ -2213,14 +2588,14 @@ const StorageManager = {
                 } else {
                     data.teachers[fIdx] = {
                         ...data.teachers[fIdx],
-                        name: dt.name,
-                        role: dt.role,
-                        roleLabel: dt.roleLabel,
-                        sekbid: dt.sekbid || data.teachers[fIdx].sekbid || "-",
-                        pembina: dt.pembina || data.teachers[fIdx].pembina || "-",
-                        pokja: dt.pokja || data.teachers[fIdx].pokja || "-",
-                        kelas: dt.kelas || data.teachers[fIdx].kelas || "-",
-                        icon: dt.icon || data.teachers[fIdx].icon || (dt.role === "superadmin" ? "👑" : "👨‍🏫"),
+                        name: data.teachers[fIdx].name || dt.name,
+                        role: data.teachers[fIdx].role || dt.role,
+                        roleLabel: data.teachers[fIdx].roleLabel || dt.roleLabel,
+                        sekbid: data.teachers[fIdx].sekbid || dt.sekbid || "-",
+                        pembina: data.teachers[fIdx].pembina || dt.pembina || "-",
+                        pokja: data.teachers[fIdx].pokja || dt.pokja || "-",
+                        kelas: data.teachers[fIdx].kelas || dt.kelas || "-",
+                        icon: data.teachers[fIdx].icon || dt.icon || (dt.role === "superadmin" ? "👑" : "👨‍🏫"),
                         password: data.teachers[fIdx].password || dt.password
                     };
                     updatedCount++;
