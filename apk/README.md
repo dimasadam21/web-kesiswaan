@@ -6,14 +6,14 @@ Dokumen ini berisi informasi resmi, panduan instalasi, dan aset build untuk apli
 
 ## 📦 Berkas yang Tersedia
 
-1. **`kesiswaan.apk`** (Ukuran: ~2.97 MB)
-   - Berkas siap install langsung di semua HP/Tablet Android.
+1. **`kesiswaan.apk`** (Ukuran: ~3.25 MB)
+   - Berkas siap install langsung di semua HP/Tablet Android dengan **icon perisai resmi baru**.
    - Universal (Mendukung ARM64, ARMv7, x86_64).
-   - Sudah ditandatangani secara resmi (Signed Release).
+   - Sudah ditandatangani secara resmi (Signed Release dengan keystore yang sama).
    - Dapat diunduh langsung melalui web di: `https://web-kesiswaan.vercel.app/kesiswaan.apk`
 
 2. **`Sistem-Informasi-Kesiswaan.aab`** (Android App Bundle)
-   - Format standar resmi Google Play Store.
+   - Format standar resmi Google Play Store (Versi 1.0.1 Build 2).
    - Siap diunggah ke Google Play Console jika ingin dipublikasikan ke Play Store.
 
 3. **`signing.keystore` & `signing-key-info.txt`**
@@ -32,10 +32,11 @@ Dokumen ini berisi informasi resmi, panduan instalasi, dan aset build untuk apli
 | :--- | :--- |
 | **Nama Aplikasi** | Sistem Informasi Kesiswaan (Kesiswaan) |
 | **Package ID** | `id.sch.kesiswaan.app` |
-| **Versi** | 1.0.0 (Build 1) |
+| **Versi** | 1.0.1 (Build 2) |
 | **Min SDK** | Android 7.0 Nougat (API 24) |
 | **Target SDK** | Android 15/16 (API 36) |
 | **Teknologi** | Google Trusted Web Activity (TWA) + Native WebView Fallback |
+| **Icon** | Logo Perisai Resmi Kesiswaan SMK Negeri 1 Magelang |
 | **Warna Tema** | Status Bar: `#0f172a` (Dark Slate), Aksen: `#2563eb` (Royal Blue) |
 | **Hosting Web** | `https://web-kesiswaan.vercel.app` |
 
