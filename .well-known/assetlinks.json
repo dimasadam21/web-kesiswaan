@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "id.sch.kesiswaan.app",
+      "sha256_cert_fingerprints": [
+        "F4:B1:E1:E4:F6:7E:77:EE:D6:83:F3:19:1C:DA:D4:41:A1:DB:52:F4:4D:2B:68:EA:67:44:45:00:C1:17:6E:49"
+      ]
+    }
+  }
+]

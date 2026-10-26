@@ -1751,6 +1751,22 @@ const App = {
         document.body.style.overflow = "hidden";
     },
 
+    openDownloadApkModal() {
+        const modal = document.getElementById("modalDownloadApk");
+        if (modal) {
+            modal.classList.add("show");
+            document.body.style.overflow = "hidden";
+        }
+    },
+
+    closeDownloadApkModal() {
+        const modal = document.getElementById("modalDownloadApk");
+        if (modal) {
+            modal.classList.remove("show");
+            document.body.style.overflow = "auto";
+        }
+    },
+
     closePublicStudentDetailModal() {
         const modal = document.getElementById("modalPublicStudentDetail");
         if (modal) modal.classList.remove("show");

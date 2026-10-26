@@ -44,6 +44,9 @@
 
             <!-- Status Pengguna di Header -->
             <div class="header-user-status">
+                <a href="kesiswaan.apk" download="kesiswaan.apk" class="btn btn-outline btn-sm" id="btnHeaderDownloadApk" title="Download Aplikasi Android SiKesiswaan (APK)" style="display: inline-flex; align-items: center; gap: 5px; font-weight: 600; text-decoration: none; border-radius: 9999px; padding: 0.35rem 0.75rem; font-size: 0.78rem; border-color: rgba(37,99,235,0.4); color: var(--primary);">
+                    <span>📱</span> Download APK
+                </a>
                 <div id="headerGuestPill" class="user-badge-pill" style="display: none; background: #f1f5f9; border-color: #e2e8f0; color: var(--text-muted);">
                     <span id="headerGuestBadgeText"></span>
                 </div>
@@ -90,6 +93,32 @@
                 <button class="quote-refresh-btn" id="quoteRefreshBtn" onclick="App.nextQuote()" title="Ganti Kata Mutiara (Rotasi)">
                     🔄
                 </button>
+            </div>
+
+            <!-- 1.5 BANNER DOWNLOAD APLIKASI ANDROID (APK) -->
+            <div class="apk-download-banner" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border: 1px solid rgba(255,255,255,0.12); border-radius: 14px; padding: 1.1rem 1.35rem; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; box-shadow: 0 4px 15px rgba(15, 23, 42, 0.12);">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <div style="width: 46px; height: 46px; border-radius: 12px; background: rgba(37, 99, 235, 0.2); border: 1px solid rgba(59, 130, 246, 0.4); display: flex; align-items: center; justify-content: center; font-size: 1.6rem; flex-shrink: 0;">
+                        📱
+                    </div>
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                            <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #ffffff;">Aplikasi Android SiKesiswaan (APK)</h3>
+                            <span style="background: #10b981; color: #ffffff; font-size: 0.68rem; font-weight: 800; padding: 2px 8px; border-radius: 9999px; text-transform: uppercase; letter-spacing: 0.5px;">Siap Install</span>
+                        </div>
+                        <p style="margin: 3px 0 0 0; font-size: 0.825rem; color: #94a3b8;">
+                            Pasang di HP/Tablet Android untuk akses lebih cepat, mode layar penuh native tanpa bilah browser, dan hemat memori.
+                        </p>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.65rem; flex-wrap: wrap;">
+                    <a href="kesiswaan.apk" download="kesiswaan.apk" class="btn btn-primary btn-sm" style="display: inline-flex; align-items: center; gap: 0.5rem; font-weight: 600; padding: 0.55rem 1.1rem; font-size: 0.85rem; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35); text-decoration: none;">
+                        ⬇️ Unduh APK (2.9 MB)
+                    </a>
+                    <button type="button" class="btn btn-outline btn-sm" onclick="App.openDownloadApkModal()" style="display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.55rem 0.9rem; font-size: 0.825rem; color: #e2e8f0; border-color: rgba(255,255,255,0.25);">
+                        ℹ️ Panduan Pasang
+                    </button>
+                </div>
             </div>
 
             <!-- 2. MENU LOG IN SISWA & GURU (DUA KARTU SIMETRIS & BERSIH) -->
@@ -3741,6 +3770,64 @@
                     <button type="submit" class="btn btn-primary">💾 Simpan Jadwal Kegiatan</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         MODAL DOWNLOAD & PANDUAN APLIKASI ANDROID (APK)
+         ===================================================================== -->
+    <div id="modalDownloadApk" class="modal-backdrop">
+        <div class="modal-card" style="max-width: 620px;">
+            <div class="modal-card-header" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: #ffffff;">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <div style="font-size: 1.6rem;">📱</div>
+                    <div>
+                        <h3 style="margin: 0; font-size: 1.15rem; color: #ffffff;">Download Aplikasi Android Kesiswaan</h3>
+                        <p style="margin: 2px 0 0 0; font-size: 0.78rem; color: #94a3b8;">Berkas APK resmi &amp; panduan instalasi di smartphone Android</p>
+                    </div>
+                </div>
+                <button type="button" class="modal-close" onclick="App.closeDownloadApkModal()" style="color: #cbd5e1;">✕</button>
+            </div>
+            <div class="modal-card-body" style="padding: 1.5rem;">
+                <!-- Card Info APK -->
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1rem 1.25rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.25rem;">
+                    <div style="display: flex; align-items: center; gap: 0.85rem;">
+                        <img src="icon-192.png" alt="Ikon SiKesiswaan" style="width: 52px; height: 52px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                        <div>
+                            <h4 style="margin: 0; font-size: 1rem; color: var(--text-main);">Sistem Informasi Kesiswaan</h4>
+                            <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 2px;">
+                                Versi 1.0.0 • Ukuran: 2.97 MB • Android 7.0+
+                            </div>
+                        </div>
+                    </div>
+                    <a href="kesiswaan.apk" download="kesiswaan.apk" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 6px; padding: 0.6rem 1.1rem; font-size: 0.88rem; font-weight: 700; text-decoration: none; box-shadow: 0 4px 12px rgba(37,99,235,0.3);">
+                        ⬇️ Download Sekarang
+                    </a>
+                </div>
+
+                <!-- Keunggulan -->
+                <h4 style="font-size: 0.92rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.65rem;">✨ Keunggulan Menggunakan APK:</h4>
+                <ul style="margin: 0 0 1.25rem 1.25rem; padding: 0; font-size: 0.825rem; color: var(--text-muted); line-height: 1.6;">
+                    <li><strong>Layar Penuh (Fullscreen Native):</strong> Bebas dari bilah navigasi &amp; alamat web browser.</li>
+                    <li><strong>Akses Instan:</strong> Ikon langsung tersedia di layar utama (Homescreen) HP Anda.</li>
+                    <li><strong>Auto-Update:</strong> Setiap pembaruan data dan fitur sekolah langsung muncul otomatis tanpa harus unduh ulang APK.</li>
+                    <li><strong>Akses Kamera &amp; Unggah Cepat:</strong> Memotret dan mengunggah foto bukti pelanggaran atau sertifikat prestasi langsung dari kamera HP.</li>
+                </ul>
+
+                <!-- Langkah Instalasi -->
+                <h4 style="font-size: 0.92rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.65rem;">📖 Cara Pasang di HP Android:</h4>
+                <ol style="margin: 0; padding-left: 1.25rem; font-size: 0.825rem; color: var(--text-muted); line-height: 1.65;">
+                    <li>Ketuk tombol <strong>Download Sekarang</strong> di atas untuk mengunduh <code>kesiswaan.apk</code>.</li>
+                    <li>Setelah selesai, buka file melalui notifikasi unduhan atau aplikasi <strong>File Manager / Pengelola File</strong>.</li>
+                    <li>Jika muncul peringatan <em>"Instal aplikasi tidak dikenal"</em>, buka <strong>Setelan (Settings)</strong> dan aktifkan <strong>"Izinkan dari sumber ini"</strong>.</li>
+                    <li>Ketuk <strong>Install (Pasang)</strong> dan tunggu proses selesai. Buka aplikasi dan nikmati kemudahan akses kesiswaan!</li>
+                </ol>
+            </div>
+            <div class="modal-card-footer" style="display: flex; justify-content: flex-end; gap: 0.5rem;">
+                <button type="button" class="btn btn-primary btn-sm" onclick="App.closeDownloadApkModal()">
+                    Mengerti &amp; Tutup
+                </button>
+            </div>
         </div>
     </div>
 
