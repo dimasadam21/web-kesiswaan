@@ -1,12 +1,12 @@
 // Service Worker untuk Sistem Kesiswaan PWA
-const CACHE_NAME = 'kesiswaan-app-v61';
+const CACHE_NAME = 'kesiswaan-app-v62';
 const STATIC_ASSETS = [
   './',
   './index.html',
+  './favicon.ico',
   './manifest.json',
-  './manifest.json?v=2',
+  './manifest.json?v=3',
   './logo-smk.png',
-  './logo-smk.png?v=2',
   './css/style.css',
   './css/print.css',
   './js/data.js',
@@ -20,11 +20,8 @@ const STATIC_ASSETS = [
   './js/forms.js',
   './js/app.js',
   './icon-192.png',
-  './icon-192.png?v=2',
   './icon-512.png',
-  './icon-512.png?v=2',
-  './icon-maskable.png',
-  './icon-maskable.png?v=2'
+  './icon-maskable.png'
 ];
 
 self.addEventListener('install', (event) => {
