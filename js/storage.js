@@ -202,11 +202,8 @@ const StorageManager = {
             this.syncAllStudentsMaster(true);
         }
 
-        // Otomatisasi keluarkan seluruh catatan pelanggaran & prestasi guru / kesiswaan jika data masih 0
-        const recordedStudents = this.getAllRecordedStudents();
-        if (!recordedStudents || recordedStudents.length === 0) {
-            this.seedOfficialTeacherInputs();
-        }
+        // Otomatisasi sinkronisasi seluruh catatan pelanggaran & torehan prestasi guru / kesiswaan
+        this.seedOfficialTeacherInputs();
 
         // Otomatisasi sinkronisasi 21 akun kesiswaan & 60 akun wali kelas resmi jika belum terdaftar lengkap
         const curTeachers = this.getTeachers();
@@ -1200,14 +1197,96 @@ const StorageManager = {
         return result;
     },
 
+    // DAFTAR LENGKAP SELURUH RIWAYAT PELANGGARAN & PRESTASI YANG DIINPUT OLEH SEMUA GURU & KARYAWAN
+    getAllTeacherInputLogs() {
+        const students = this.getStudents() || [];
+        const logs = [];
+
+        for (let i = 0; i < students.length; i++) {
+            const s = students[i];
+            const viols = Array.isArray(s.pelanggaran) ? s.pelanggaran : [];
+            const achs = Array.isArray(s.prestasi) ? s.prestasi : [];
+
+            for (let j = 0; j < viols.length; j++) {
+                const v = viols[j];
+                logs.push({
+                    id: v.id || `PL-${s.id}-${j}`,
+                    type: 'pelanggaran',
+                    typeLabel: 'Pelanggaran',
+                    icon: '⚠️',
+                    badgeClass: 'pill-red',
+                    studentId: s.id,
+                    studentNama: s.nama || '-',
+                    studentNis: s.nis || '-',
+                    studentNisn: s.nisn || '-',
+                    studentKelas: s.kelas || '-',
+                    waliKelas: s.waliKelas || '-',
+                    tanggal: v.tanggal || '-',
+                    judul: v.nama || 'Pelanggaran Tata Tertib',
+                    kategori: v.kategori || 'Kedisiplinan',
+                    poin: Number(v.poin) || 0,
+                    poinText: `+${v.poin || 0} Poin`,
+                    sanksi: v.sanksi || 'Pembinaan lisan & pembiasaan diri',
+                    pencatat: v.pencatat || 'Guru Piket / Tim Kesiswaan',
+                    totalPoinPelanggaran: s.skorPelanggaran || 0,
+                    totalPoinPrestasi: s.totalPoinPrestasi || 0,
+                    statusText: s.status || 'Aman',
+                    raw: v
+                });
+            }
+
+            for (let k = 0; k < achs.length; k++) {
+                const p = achs[k];
+                const fullJudul = p.peringkat ? `${p.peringkat} - ${p.nama || 'Kejuaraan'}` : (p.nama || 'Prestasi');
+                const detailKet = p.penyelenggara 
+                    ? `${p.tingkat ? 'Tingkat ' + p.tingkat + ' • ' : ''}${p.penyelenggara}` 
+                    : (p.keterangan || '-');
+
+                logs.push({
+                    id: p.id || `PR-${s.id}-${k}`,
+                    type: 'prestasi',
+                    typeLabel: 'Prestasi',
+                    icon: '🏆',
+                    badgeClass: 'pill-green',
+                    studentId: s.id,
+                    studentNama: s.nama || '-',
+                    studentNis: s.nis || '-',
+                    studentNisn: s.nisn || '-',
+                    studentKelas: s.kelas || '-',
+                    waliKelas: s.waliKelas || '-',
+                    tanggal: p.tanggal || '-',
+                    judul: fullJudul,
+                    kategori: p.kategori || 'Akademik/Non-Akademik',
+                    tingkat: p.tingkat || '-',
+                    peringkat: p.peringkat || '-',
+                    penyelenggara: p.penyelenggara || '-',
+                    poin: Number(p.poin) || 0,
+                    poinText: `+${p.poin || 0} Poin`,
+                    sanksi: detailKet,
+                    pencatat: p.pencatat || 'Tim Kesiswaan / Pembina',
+                    foto: p.foto || p.piagam || '',
+                    totalPoinPelanggaran: s.skorPelanggaran || 0,
+                    totalPoinPrestasi: s.totalPoinPrestasi || 0,
+                    statusText: s.status || 'Aman',
+                    raw: p
+                });
+            }
+        }
+
+        // Urutkan tanggal terbaru ke terlama (jika tanggal sama, urutkan ID)
+        logs.sort((a, b) => {
+            const dateA = a.tanggal || '';
+            const dateB = b.tanggal || '';
+            if (dateB !== dateA) return dateB.localeCompare(dateA);
+            return (b.id || '').localeCompare(a.id || '');
+        });
+
+        return logs;
+    },
+
     seedOfficialTeacherInputs(force = false) {
         const students = this.getStudents() || [];
         if (!students || students.length === 0) return 0;
-
-        if (!force) {
-            const hasExisting = students.some(s => (s.pelanggaran && s.pelanggaran.length > 0) || (s.prestasi && s.prestasi.length > 0));
-            if (hasExisting) return 0;
-        }
 
         const seeds = [
             {
@@ -1552,19 +1631,44 @@ const StorageManager = {
         seeds.forEach(sd => {
             const idx = students.findIndex(s => s.id === sd.id || (s.nama && s.nama.trim().toUpperCase() === sd.namaMatch));
             if (idx !== -1) {
-                students[idx].pelanggaran = sd.pelanggaran;
-                students[idx].prestasi = sd.prestasi;
-                students[idx].skorPelanggaran = sd.pelanggaran.reduce((acc, p) => acc + (Number(p.poin) || 0), 0);
-                students[idx].totalPoinPrestasi = sd.prestasi.reduce((acc, pr) => acc + (Number(pr.poin) || 0), 0);
+                if (!students[idx].pelanggaran) students[idx].pelanggaran = [];
+                if (!students[idx].prestasi) students[idx].prestasi = [];
+
+                if (force) {
+                    students[idx].pelanggaran = JSON.parse(JSON.stringify(sd.pelanggaran || []));
+                    students[idx].prestasi = JSON.parse(JSON.stringify(sd.prestasi || []));
+                    appliedCount++;
+                } else {
+                    let studentModified = false;
+                    (sd.pelanggaran || []).forEach(pSeed => {
+                        const exists = students[idx].pelanggaran.some(p => p.id === pSeed.id || (p.nama === pSeed.nama && p.tanggal === pSeed.tanggal));
+                        if (!exists) {
+                            students[idx].pelanggaran.push(JSON.parse(JSON.stringify(pSeed)));
+                            studentModified = true;
+                        }
+                    });
+                    (sd.prestasi || []).forEach(prSeed => {
+                        const exists = students[idx].prestasi.some(pr => pr.id === prSeed.id || (pr.nama === prSeed.nama && pr.tanggal === prSeed.tanggal));
+                        if (!exists) {
+                            students[idx].prestasi.push(JSON.parse(JSON.stringify(prSeed)));
+                            studentModified = true;
+                        }
+                    });
+                    if (studentModified) appliedCount++;
+                }
+
+                students[idx].skorPelanggaran = students[idx].pelanggaran.reduce((acc, p) => acc + (Number(p.poin) || 0), 0);
+                students[idx].totalPoinPrestasi = students[idx].prestasi.reduce((acc, pr) => acc + (Number(pr.poin) || 0), 0);
                 const pts = students[idx].skorPelanggaran;
                 students[idx].status = (pts >= 100 ? "Sanksi Berat" : (pts >= 50 ? "Peringatan" : (pts > 0 ? "Perhatian" : "Aman")));
-                appliedCount++;
             }
         });
 
-        this.saveStudents(students, true);
-        if (typeof SyncManager !== "undefined") {
-            SyncManager.broadcast("STUDENTS_RECORDED_SYNC", { appliedCount });
+        if (appliedCount > 0 || force) {
+            this.saveStudents(students, true);
+            if (typeof SyncManager !== "undefined") {
+                SyncManager.broadcast("STUDENTS_RECORDED_SYNC", { appliedCount });
+            }
         }
         return appliedCount;
     },

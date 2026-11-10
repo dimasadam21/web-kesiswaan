@@ -619,6 +619,9 @@
                             <button class="hub-btn hub-btn-slate" onclick="Forms.openManageTeachersModal()" title="Kelola Akun Guru & Tim Kesiswaan">
                                 👥 Kelola Guru
                             </button>
+                            <button class="hub-btn hub-btn-amber" onclick="AdminPortal.showTeacherInputLogView()" title="Lihat Rekap Seluruh Catatan yang Diinput Semua Guru &amp; Karyawan">
+                                📜 Riwayat Input Guru
+                            </button>
                         </div>
                     </div>
 
@@ -1069,17 +1072,34 @@
                                 <button type="button" class="filter-pill-btn" id="btnSortTop10" onclick="AdminPortal.setTopStudentsSort('top10')">
                                     🌟 10 Teratas
                                 </button>
+                                <button type="button" class="filter-pill-btn" id="btnSortRiwayatLog" onclick="AdminPortal.setTopStudentsSort('log')">
+                                    📜 Riwayat Input Guru &amp; Karyawan <span id="countBadgeRiwayatLog" class="pill-counter">0</span>
+                                </button>
                             </div>
                         </div>
                     </div>
 
                     <!-- TOOLBAR FILTER KELAS & PENCARIAN SISWA TERCATAT -->
                     <div class="top-students-toolbar" style="display: flex; gap: 0.75rem; align-items: center; justify-content: space-between; padding: 0.75rem 1.25rem; background: #f8fafc; border-bottom: 1px solid var(--border); flex-wrap: wrap;">
-                        <div style="display: flex; gap: 0.5rem; align-items: center; flex: 1; min-width: 260px;">
-                            <input type="text" id="teacherTableSearchInput" class="form-control-clean" placeholder="🔍 Cari nama siswa / NISN tercatat..." style="padding: 0.4rem 0.75rem; font-size: 0.85rem;" oninput="AdminPortal.handleTableSearch(this.value)">
+                        <div style="display: flex; gap: 0.5rem; align-items: center; flex: 1; min-width: 260px; flex-wrap: wrap;">
+                            <input type="text" id="teacherTableSearchInput" class="form-control-clean" placeholder="🔍 Cari nama siswa / NISN tercatat..." style="padding: 0.4rem 0.75rem; font-size: 0.85rem; flex: 1; min-width: 200px;" oninput="AdminPortal.handleTableSearch(this.value)">
                             <select id="teacherTableClassFilter" class="form-control-clean" style="padding: 0.4rem 0.75rem; font-size: 0.85rem; font-weight: 600; min-width: 140px;" onchange="AdminPortal.handleTableClassFilter(this.value)">
                                 <option value="">🌐 Semua Kelas</option>
                             </select>
+                            <select id="teacherLogPencatatFilter" class="form-control-clean" style="display: none; padding: 0.4rem 0.75rem; font-size: 0.85rem; font-weight: 600; min-width: 175px;" onchange="AdminPortal.handleLogPencatatFilter(this.value)">
+                                <option value="">👨‍🏫 Semua Guru &amp; Karyawan</option>
+                            </select>
+                            <select id="teacherLogTypeFilter" class="form-control-clean" style="display: none; padding: 0.4rem 0.75rem; font-size: 0.85rem; font-weight: 600; min-width: 135px;" onchange="AdminPortal.handleLogTypeFilter(this.value)">
+                                <option value="">🏷️ Semua Catatan</option>
+                                <option value="pelanggaran">⚠️ Pelanggaran</option>
+                                <option value="prestasi">🏆 Prestasi</option>
+                            </select>
+                            <button id="btnExportLogExcel" type="button" class="btn btn-outline btn-sm" style="display: none; padding: 0.38rem 0.75rem; font-size: 0.8rem; font-weight: 600;" onclick="AdminPortal.exportTeacherInputLogToExcel()" title="Ekspor Log Riwayat ke File Excel/CSV">
+                                📊 Ekspor Excel
+                            </button>
+                            <button id="btnPrintLog" type="button" class="btn btn-primary btn-sm" style="display: none; padding: 0.38rem 0.75rem; font-size: 0.8rem; font-weight: 600;" onclick="AdminPortal.printTeacherInputLog()" title="Cetak Rekap Riwayat Inputan Guru">
+                                🖨️ Cetak Log
+                            </button>
                         </div>
                         <div style="display: flex; gap: 0.5rem; align-items: center; font-size: 0.78rem;">
                             <span id="teacherTableStatusSummary" style="color: var(--text-muted); font-weight: 600;">
@@ -1091,14 +1111,14 @@
 
                     <div class="simple-table-container">
                         <table class="simple-table">
-                            <thead>
+                            <thead id="teacherTableHead">
                                 <tr>
                                     <th width="7%" style="text-align: center;">No</th>
-                                    <th width="30%">Nama Siswa & NISN</th>
-                                    <th width="15%">Kelas & Wali</th>
-                                    <th width="17%">Catatan Pelanggaran</th>
-                                    <th width="16%">Capaian Prestasi</th>
-                                    <th width="15%">Aksi</th>
+                                    <th width="28%">Nama Siswa &amp; NISN</th>
+                                    <th width="14%">Kelas &amp; Wali</th>
+                                    <th width="20%">Catatan Pelanggaran &amp; Guru Pencatat</th>
+                                    <th width="17%">Capaian Prestasi &amp; Pembina</th>
+                                    <th width="14%">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody id="teacherAllStudentsTableBody">
@@ -1108,7 +1128,7 @@
                     </div>
 
                     <div class="top-students-footer" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
-                        <span>💡 Data pelanggaran dan prestasi yang dicatat atau diubah oleh guru otomatis langsung tersinkronkan dan tertampil di daftar ini.</span>
+                        <span id="teacherTableFooterNote">💡 Data pelanggaran dan prestasi yang dicatat atau diubah oleh guru otomatis langsung tersinkronkan dan tertampil di daftar ini.</span>
                         <button type="button" class="btn btn-outline btn-sm" onclick="Forms.openManageStudentsModal()" style="font-size: 0.76rem; font-weight: 600; color: #0284c7; border-color: #7dd3fc; background: #f0f9ff; padding: 3px 10px; border-radius: 6px;">
                             👥 Kelola Seluruh Siswa
                         </button>

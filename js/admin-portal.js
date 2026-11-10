@@ -765,9 +765,11 @@ const AdminPortal = {
         SiswaPortal.openRaporKarakterModal(this.selectedStudent.id);
     },
 
-    topStudentsSort: 'pelanggaran', // 'pelanggaran' | 'prestasi' | 'recorded' | 'top10'
+    topStudentsSort: 'pelanggaran', // 'pelanggaran' | 'prestasi' | 'recorded' | 'top10' | 'log'
     teacherTableSearchQuery: '',
     teacherTableClassFilter: '',
+    teacherLogPencatatFilter: '',
+    teacherLogTypeFilter: '',
 
     setTopStudentsSort(mode) {
         this.topStudentsSort = mode;
@@ -775,11 +777,13 @@ const AdminPortal = {
         const btnPelanggaran = document.getElementById("btnSortPelanggaran");
         const btnAll = document.getElementById("btnSortAll");
         const btnTop10 = document.getElementById("btnSortTop10");
+        const btnLog = document.getElementById("btnSortRiwayatLog");
 
         if (btnPelanggaran) btnPelanggaran.classList.toggle("active", mode === 'pelanggaran');
         if (btnPrestasi) btnPrestasi.classList.toggle("active", mode === 'prestasi');
         if (btnAll) btnAll.classList.toggle("active", mode === 'recorded' || mode === 'max');
         if (btnTop10) btnTop10.classList.toggle("active", mode === 'top10');
+        if (btnLog) btnLog.classList.toggle("active", mode === 'log');
 
         this.renderTeacherAllStudents();
     },
@@ -792,6 +796,231 @@ const AdminPortal = {
     handleTableClassFilter(val) {
         this.teacherTableClassFilter = val || '';
         this.renderTeacherAllStudents();
+    },
+
+    handleLogPencatatFilter(val) {
+        this.teacherLogPencatatFilter = val || '';
+        this.renderTeacherAllStudents();
+    },
+
+    handleLogTypeFilter(val) {
+        this.teacherLogTypeFilter = val || '';
+        this.renderTeacherAllStudents();
+    },
+
+    populateLogPencatatFilter(logs) {
+        const select = document.getElementById("teacherLogPencatatFilter");
+        if (!select) return;
+        const currentVal = this.teacherLogPencatatFilter || '';
+        const pencatatSet = new Set();
+        (logs || []).forEach(l => {
+            if (l.pencatat && l.pencatat.trim()) pencatatSet.add(l.pencatat.trim());
+        });
+        const sorted = Array.from(pencatatSet).sort((a, b) => a.localeCompare(b));
+        select.innerHTML = '<option value="">👨‍🏫 Semua Guru &amp; Karyawan</option>' + 
+            sorted.map(p => `<option value="${Forms.escapeHtml(p)}" ${p === currentVal ? 'selected' : ''}>👨‍🏫 ${Forms.escapeHtml(p)}</option>`).join('');
+    },
+
+    showTeacherInputLogView() {
+        this.switchAdminTab('siswa');
+        this.setTopStudentsSort('log');
+        const card = document.querySelector(".top-students-card");
+        if (card) {
+            card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    },
+
+    showStudentHistoryModal(studentId) {
+        if (window.App && typeof App.openPublicStudentDetailModal === "function") {
+            App.openPublicStudentDetailModal(studentId);
+        } else {
+            this.selectTargetStudent(studentId);
+        }
+    },
+
+    exportTeacherInputLogToExcel() {
+        const allLogs = (StorageManager.getAllTeacherInputLogs && typeof StorageManager.getAllTeacherInputLogs === "function")
+            ? StorageManager.getAllTeacherInputLogs()
+            : [];
+        const searchQuery = (this.teacherTableSearchQuery || '').toLowerCase().trim();
+        const classFilter = this.teacherTableClassFilter || '';
+        const pencatatFilter = (this.teacherLogPencatatFilter || '').toLowerCase().trim();
+        const typeFilter = this.teacherLogTypeFilter || '';
+
+        let filtered = allLogs.filter(item => {
+            if (typeFilter && item.type !== typeFilter) return false;
+            if (classFilter && !StorageManager.isClassMatch(item.studentKelas, classFilter)) return false;
+            if (pencatatFilter && !(item.pencatat || '').toLowerCase().includes(pencatatFilter)) return false;
+            if (searchQuery) {
+                const q = searchQuery;
+                const nama = (item.studentNama || '').toLowerCase();
+                const nisn = (item.studentNisn || '').toLowerCase();
+                const kelas = (item.studentKelas || '').toLowerCase();
+                const pencatat = (item.pencatat || '').toLowerCase();
+                const judul = (item.judul || '').toLowerCase();
+                const sanksi = (item.sanksi || '').toLowerCase();
+                if (!nama.includes(q) && !nisn.includes(q) && !kelas.includes(q) && !pencatat.includes(q) && !judul.includes(q) && !sanksi.includes(q)) {
+                    return false;
+                }
+            }
+            return true;
+        });
+
+        const rows = [
+            ["No", "Tanggal", "Guru / Karyawan Pencatat", "Nama Siswa", "NIS", "NISN", "Kelas", "Wali Kelas", "Tipe Catatan", "Nama Kasus / Kejuaraan", "Poin", "Sanksi / Keterangan", "Total Poin Pelanggaran Siswa", "Total Prestasi Siswa", "Status Sanksi"]
+        ];
+
+        filtered.forEach((x, i) => {
+            rows.push([
+                i + 1,
+                x.tanggal || '',
+                x.pencatat || '',
+                x.studentNama || '',
+                x.studentNis || '',
+                x.studentNisn || '',
+                x.studentKelas || '',
+                x.waliKelas || '',
+                x.type === 'pelanggaran' ? 'Pelanggaran' : 'Prestasi',
+                x.judul || '',
+                x.poin || 0,
+                x.sanksi || '',
+                x.totalPoinPelanggaran || 0,
+                x.totalPoinPrestasi || 0,
+                x.statusText || 'Aman'
+            ]);
+        });
+
+        const csvContent = "\uFEFF" + rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\r\n");
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        const dateStr = new Date().toISOString().split("T")[0];
+        a.download = `Riwayat_Input_Guru_Karyawan_${dateStr}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        App.showToast("✅ Berhasil mengunduh riwayat inputan guru & karyawan ke format Excel/CSV");
+    },
+
+    printTeacherInputLog() {
+        const allLogs = (StorageManager.getAllTeacherInputLogs && typeof StorageManager.getAllTeacherInputLogs === "function")
+            ? StorageManager.getAllTeacherInputLogs()
+            : [];
+        const searchQuery = (this.teacherTableSearchQuery || '').toLowerCase().trim();
+        const classFilter = this.teacherTableClassFilter || '';
+        const pencatatFilter = (this.teacherLogPencatatFilter || '').toLowerCase().trim();
+        const typeFilter = this.teacherLogTypeFilter || '';
+
+        let filtered = allLogs.filter(item => {
+            if (typeFilter && item.type !== typeFilter) return false;
+            if (classFilter && !StorageManager.isClassMatch(item.studentKelas, classFilter)) return false;
+            if (pencatatFilter && !(item.pencatat || '').toLowerCase().includes(pencatatFilter)) return false;
+            if (searchQuery) {
+                const q = searchQuery;
+                const nama = (item.studentNama || '').toLowerCase();
+                const nisn = (item.studentNisn || '').toLowerCase();
+                const kelas = (item.studentKelas || '').toLowerCase();
+                const pencatat = (item.pencatat || '').toLowerCase();
+                const judul = (item.judul || '').toLowerCase();
+                const sanksi = (item.sanksi || '').toLowerCase();
+                if (!nama.includes(q) && !nisn.includes(q) && !kelas.includes(q) && !pencatat.includes(q) && !judul.includes(q) && !sanksi.includes(q)) {
+                    return false;
+                }
+            }
+            return true;
+        });
+
+        const cfg = StorageManager.getSchoolSettings();
+        const printWindow = window.open('', '_blank');
+        const now = new Date();
+        const nowStr = now.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+
+        printWindow.document.write(`
+            <!DOCTYPE html>
+            <html lang="id">
+            <head>
+                <meta charset="UTF-8">
+                <title>Rekap Riwayat Inputan Pelanggaran & Prestasi - SMKN 1 Magelang</title>
+                <style>
+                    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 11pt; color: #1e293b; padding: 25px; line-height: 1.4; }
+                    .header-box { text-align: center; border-bottom: 2.5px solid #0f172a; padding-bottom: 12px; margin-bottom: 18px; }
+                    .header-box h2 { margin: 0; font-size: 15pt; text-transform: uppercase; letter-spacing: 0.5px; color: #0f172a; }
+                    .header-box h3 { margin: 3px 0 0 0; font-size: 12pt; font-weight: 600; color: #334155; }
+                    .header-box p { margin: 3px 0 0 0; font-size: 9pt; color: #64748b; }
+                    .meta-info { margin-bottom: 14px; font-size: 9.5pt; display: flex; justify-content: space-between; }
+                    table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 9pt; }
+                    th, td { border: 1px solid #cbd5e1; padding: 6px 8px; vertical-align: top; }
+                    th { background: #f1f5f9; font-weight: 700; text-align: left; }
+                    .badge-pl { color: #991b1b; font-weight: bold; }
+                    .badge-pr { color: #15803d; font-weight: bold; }
+                    .ttd-box { margin-top: 35px; display: flex; justify-content: flex-end; }
+                    .ttd-inner { width: 260px; text-align: center; font-size: 10pt; }
+                    @media print {
+                        @page { size: A4 landscape; margin: 15mm; }
+                        body { padding: 0; }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="header-box">
+                    <h2>${cfg.schoolName || 'SMK NEGERI 1 MAGELANG'}</h2>
+                    <h3>REKAPITULASI RIWAYAT CATATAN PELANGGARAN & PRESTASI SISWA</h3>
+                    <p>Dicatat oleh Seluruh Dewan Guru, Wali Kelas, Guru Piket & Tim Kesiswaan Resmi • Dicetak: ${nowStr}</p>
+                </div>
+                <div class="meta-info">
+                    <div>Filter: <strong>${typeFilter ? (typeFilter === 'pelanggaran' ? 'Khusus Pelanggaran' : 'Khusus Prestasi') : 'Semua Catatan (Pelanggaran & Prestasi)'}</strong> ${classFilter ? '• Kelas: ' + classFilter : '• Semua Kelas'} ${pencatatFilter ? '• Guru: ' + pencatatFilter : ''}</div>
+                    <div>Total Riwayat: <strong>${filtered.length} Catatan</strong></div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 30px; text-align: center;">No</th>
+                            <th style="width: 75px;">Tanggal</th>
+                            <th style="width: 170px;">Guru / Karyawan Pencatat</th>
+                            <th style="width: 170px;">Nama Siswa & Kelas</th>
+                            <th style="width: 110px;">Jenis & Poin</th>
+                            <th>Uraian Kasus / Capaian Prestasi & Sanksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${filtered.length === 0 ? '<tr><td colspan="6" style="text-align: center; padding: 20px;">Tidak ada riwayat catatan yang cocok.</td></tr>' : filtered.map((x, i) => `
+                            <tr>
+                                <td style="text-align: center;">${i + 1}</td>
+                                <td>${x.tanggal}</td>
+                                <td><strong>${x.pencatat}</strong></td>
+                                <td>
+                                    <strong>${x.studentNama}</strong><br>
+                                    <span style="color: #64748b; font-size: 8pt;">${x.studentKelas} • NISN: ${x.studentNisn}</span>
+                                </td>
+                                <td>
+                                    <span class="${x.type === 'pelanggaran' ? 'badge-pl' : 'badge-pr'}">
+                                        ${x.type === 'pelanggaran' ? '⚠️ Pelanggaran' : '🏆 Prestasi'} (${x.poinText})
+                                    </span>
+                                </td>
+                                <td>
+                                    <strong>${x.judul}</strong><br>
+                                    <span style="font-size: 8pt; color: #475569;">${x.type === 'pelanggaran' ? 'Sanksi: ' : 'Ket: '}${x.sanksi}</span>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+                <div class="ttd-box">
+                    <div class="ttd-inner">
+                        <div>Magelang, ${nowStr}</div>
+                        <div style="margin-top: 4px; font-weight: bold;">Waka Kesiswaan</div>
+                        <div style="margin-top: 55px; font-weight: bold; text-decoration: underline;">${cfg.headOfStudentAffairs || 'Morlan Purba Sibarani, S.Pd., M.Si.'}</div>
+                        <div>${cfg.headOfStudentAffairsNip || 'NIP. 19740315 200501 1 004'}</div>
+                    </div>
+                </div>
+                <script>
+                    window.onload = function() { window.print(); };
+                </script>
+            </body>
+            </html>
+        `);
+        printWindow.document.close();
     },
 
     populateTableClassFilter(students) {
@@ -832,7 +1061,7 @@ const AdminPortal = {
         App.showToast(`✅ Berhasil memuat ${count} data rekapan siswa yang diinput oleh guru & tim kesiswaan!`);
     },
 
-    // 4. Render Tabel Siapa Saja Siswa Tercatat Pelanggaran maupun Prestasi
+    // 4. Render Tabel Siapa Saja Siswa Tercatat Pelanggaran maupun Prestasi & Riwayat Input Guru
     renderTeacherAllStudents() {
         const tbody = document.getElementById("teacherAllStudentsTableBody");
         if (!tbody) return;
@@ -846,18 +1075,10 @@ const AdminPortal = {
 
         this.populateTableClassFilter(students);
 
-        if (!students || students.length === 0) {
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="6" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
-                        <div style="font-size: 2rem; margin-bottom: 0.5rem;">📋</div>
-                        <strong style="color: var(--text-main);">Belum Ada Data Siswa Terdaftar</strong>
-                        <p style="font-size: 0.85rem; margin-top: 4px;">Tambahkan siswa baru atau impor data Excel melalui menu Super Admin.</p>
-                    </td>
-                </tr>
-            `;
-            return;
-        }
+        // Ambil data log seluruh inputan guru & karyawan
+        const allLogs = (StorageManager.getAllTeacherInputLogs && typeof StorageManager.getAllTeacherInputLogs === "function")
+            ? StorageManager.getAllTeacherInputLogs()
+            : [];
 
         // Hitung status untuk seluruh siswa
         const studentsWithStatus = students.map(s => {
@@ -883,9 +1104,186 @@ const AdminPortal = {
         const badgeViol = document.getElementById("countBadgePelanggaran");
         const badgeAch = document.getElementById("countBadgePrestasi");
         const badgeAll = document.getElementById("countBadgeAll");
+        const badgeLog = document.getElementById("countBadgeRiwayatLog");
         if (badgeViol) badgeViol.textContent = countViolGlobal;
         if (badgeAch) badgeAch.textContent = countAchGlobal;
         if (badgeAll) badgeAll.textContent = countAllGlobal;
+        if (badgeLog) badgeLog.textContent = allLogs.length;
+
+        // Kontrol elemen toolbar khusus mode log
+        const elLogPencatat = document.getElementById("teacherLogPencatatFilter");
+        const elLogType = document.getElementById("teacherLogTypeFilter");
+        const elBtnExportLog = document.getElementById("btnExportLogExcel");
+        const elBtnPrintLog = document.getElementById("btnPrintLog");
+        const elSearchInput = document.getElementById("teacherTableSearchInput");
+        const thead = document.getElementById("teacherTableHead");
+        const titleEl = document.getElementById("topStudentsTitle");
+        const iconEl = document.getElementById("topStudentsBadgeIcon");
+        const subtitleEl = document.getElementById("topStudentsSubtitle");
+        const footerNoteEl = document.getElementById("teacherTableFooterNote");
+
+        // =========================================================================
+        // MODE 1: RIWAYAT INPUTAN GURU & KARYAWAN (AUDIT LOG / TIMELINE KRONOLOGIS)
+        // =========================================================================
+        if (mode === 'log') {
+            if (elLogPencatat) {
+                elLogPencatat.style.display = "inline-block";
+                this.populateLogPencatatFilter(allLogs);
+            }
+            if (elLogType) elLogType.style.display = "inline-block";
+            if (elBtnExportLog) elBtnExportLog.style.display = "inline-flex";
+            if (elBtnPrintLog) elBtnPrintLog.style.display = "inline-flex";
+            if (elSearchInput) elSearchInput.placeholder = "🔍 Cari nama siswa / NISN / guru pencatat / kasus...";
+
+            if (thead) {
+                thead.innerHTML = `
+                    <tr style="background: #f8fafc;">
+                        <th width="5%" style="text-align: center;">No</th>
+                        <th width="11%">Waktu &amp; Tanggal</th>
+                        <th width="22%">Guru / Karyawan Pencatat</th>
+                        <th width="20%">Nama Siswa &amp; Kelas</th>
+                        <th width="13%">Tipe &amp; Poin</th>
+                        <th width="19%">Uraian &amp; Sanksi / Prestasi</th>
+                        <th width="10%" style="text-align: center;">Aksi</th>
+                    </tr>
+                `;
+            }
+
+            if (titleEl) titleEl.textContent = `📜 Riwayat Input Pelanggaran & Prestasi Guru/Karyawan (${allLogs.length} Catatan)`;
+            if (iconEl) iconEl.textContent = "📜";
+            if (subtitleEl) subtitleEl.innerHTML = "Rekam jejak kronologis setiap penambahan pelanggaran & torehan prestasi oleh dewan guru, wali kelas, guru piket, dan tim kesiswaan.";
+            if (footerNoteEl) footerNoteEl.textContent = "💡 Seluruh riwayat catatan yang diinput guru dan karyawan melalui presensi, blangko, atau kartu tindakan otomatis tersinkronisasi di sini.";
+
+            const pencatatFilter = (this.teacherLogPencatatFilter || '').toLowerCase().trim();
+            const typeFilter = this.teacherLogTypeFilter || '';
+
+            let filteredLogs = allLogs.filter(item => {
+                if (typeFilter && item.type !== typeFilter) return false;
+                if (classFilter && !StorageManager.isClassMatch(item.studentKelas, classFilter)) return false;
+                if (pencatatFilter && !(item.pencatat || '').toLowerCase().includes(pencatatFilter)) return false;
+                if (searchQuery) {
+                    const q = searchQuery;
+                    const nama = (item.studentNama || '').toLowerCase();
+                    const nisn = (item.studentNisn || '').toLowerCase();
+                    const nis = (item.studentNis || '').toLowerCase();
+                    const kelas = (item.studentKelas || '').toLowerCase();
+                    const pencatat = (item.pencatat || '').toLowerCase();
+                    const judul = (item.judul || '').toLowerCase();
+                    const sanksi = (item.sanksi || '').toLowerCase();
+                    if (!nama.includes(q) && !nisn.includes(q) && !nis.includes(q) && !kelas.includes(q) && !pencatat.includes(q) && !judul.includes(q) && !sanksi.includes(q)) {
+                        return false;
+                    }
+                }
+                return true;
+            });
+
+            const summaryEl = document.getElementById("teacherTableStatusSummary");
+            if (summaryEl) {
+                summaryEl.innerHTML = `Menampilkan <strong>${filteredLogs.length}</strong> riwayat inputan guru &amp; karyawan`;
+            }
+
+            if (filteredLogs.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 2.8rem 1.5rem; color: var(--text-muted); background: #fafafa;">
+                            <div style="font-size: 2.2rem; margin-bottom: 0.6rem;">🔍</div>
+                            <strong style="color: var(--text-main); font-size: 1.05rem; display: block; margin-bottom: 6px;">Tidak Ada Riwayat Catatan yang Sesuai</strong>
+                            <p style="font-size: 0.85rem; max-width: 500px; margin: 0 auto; line-height: 1.5;">Coba sesuaikan kata kunci pencarian, filter guru pencatat, atau filter jenis catatan di atas.</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = filteredLogs.map((item, idx) => {
+                const isSelected = this.selectedStudent && this.selectedStudent.id === item.studentId;
+                return `
+                    <tr style="${isSelected ? 'background: #eff6ff; font-weight: 600;' : ''}">
+                        <td style="text-align: center; font-weight: 700; color: var(--text-muted);">${idx + 1}</td>
+                        <td style="white-space: nowrap; font-family: monospace; font-size: 0.8rem;">
+                            <span style="font-weight: 600; color: #1e293b;">📅 ${Forms.escapeHtml(item.tanggal || '-')}</span>
+                        </td>
+                        <td>
+                            <div style="display: flex; align-items: flex-start; gap: 0.4rem;">
+                                <span style="font-size: 1.05rem;">👨‍🏫</span>
+                                <div>
+                                    <strong style="color: #0f172a; font-size: 0.84rem; display: block; line-height: 1.3;">${Forms.escapeHtml(item.pencatat)}</strong>
+                                    <span style="font-size: 0.68rem; color: #0284c7; background: #e0f2fe; padding: 1px 6px; border-radius: 4px; font-weight: 600; display: inline-block; margin-top: 2px;">Pencatat Resmi</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div style="font-weight: 700; color: var(--text-main); font-size: 0.88rem;">${Forms.escapeHtml(item.studentNama)}</div>
+                            <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 1px;">
+                                <span class="status-pill pill-gray" style="font-size: 0.68rem; font-weight: 700;">${Forms.escapeHtml(item.studentKelas)}</span>
+                                ${item.waliKelas && item.waliKelas !== '-' ? `<span style="margin-left: 3px;">• Wali: ${Forms.escapeHtml(item.waliKelas)}</span>` : ''}
+                            </div>
+                        </td>
+                        <td>
+                            <span class="status-pill ${item.type === 'pelanggaran' ? 'pill-red' : 'pill-green'}" style="font-weight: 700; font-size: 0.72rem; display: inline-flex; align-items: center; gap: 3px;">
+                                ${item.icon} ${item.typeLabel} (<strong>${item.poinText}</strong>)
+                            </span>
+                            <div style="font-size: 0.68rem; color: #64748b; margin-top: 3px;">
+                                Akumulasi: <strong style="color: ${item.totalPoinPelanggaran > 0 ? '#b91c1c' : '#15803d'};">${item.totalPoinPelanggaran} Poin</strong>
+                            </div>
+                        </td>
+                        <td>
+                            <strong style="color: ${item.type === 'pelanggaran' ? '#991b1b' : '#15803d'}; font-size: 0.82rem; display: block; line-height: 1.35;">${Forms.escapeHtml(item.judul)}</strong>
+                            <div style="font-size: 0.72rem; color: #475569; margin-top: 2px;">
+                                ${item.type === 'pelanggaran' ? '⚖️ Sanksi: ' : '📍 '}<span style="font-weight: 500;">${Forms.escapeHtml(item.sanksi)}</span>
+                            </div>
+                        </td>
+                        <td style="text-align: center; white-space: nowrap;">
+                            <div style="display: flex; gap: 4px; justify-content: center; flex-wrap: wrap;">
+                                <button class="btn btn-outline btn-sm" onclick="AdminPortal.selectTargetStudent('${item.studentId}')" style="padding: 2px 7px; font-size: 0.72rem; color: #0284c7; border-color: #7dd3fc; background: #f0f9ff;" title="Buka Profil Siswa untuk Ditindak">
+                                    👉 Buka
+                                </button>
+                                <button class="btn btn-outline btn-sm" onclick="App.openPublicStudentDetailModal('${item.studentId}')" style="padding: 2px 7px; font-size: 0.72rem; color: #4338ca; border-color: #a5b4fc; background: #eef2ff;" title="Lihat Seluruh Riwayat Siswa Ini">
+                                    📜 Riwayat
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+            return;
+        }
+
+        // =========================================================================
+        // MODE 2: TABEL SISWA TERCATAT (PELANGGARAN, PRESTASI, SEMUA TERCATAT, TOP 10)
+        // =========================================================================
+        if (elLogPencatat) elLogPencatat.style.display = "none";
+        if (elLogType) elLogType.style.display = "none";
+        if (elBtnExportLog) elBtnExportLog.style.display = "none";
+        if (elBtnPrintLog) elBtnPrintLog.style.display = "none";
+        if (elSearchInput) elSearchInput.placeholder = "🔍 Cari nama siswa / NISN tercatat...";
+
+        if (thead) {
+            thead.innerHTML = `
+                <tr>
+                    <th width="7%" style="text-align: center;">No</th>
+                    <th width="28%">Nama Siswa &amp; NISN</th>
+                    <th width="14%">Kelas &amp; Wali</th>
+                    <th width="20%">Catatan Pelanggaran &amp; Guru Pencatat</th>
+                    <th width="17%">Capaian Prestasi &amp; Pembina</th>
+                    <th width="14%">Aksi</th>
+                </tr>
+            `;
+        }
+        if (footerNoteEl) footerNoteEl.textContent = "💡 Data pelanggaran dan prestasi yang dicatat atau diubah oleh guru otomatis langsung tersinkronkan dan tertampil di daftar ini.";
+
+        if (!students || students.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
+                        <div style="font-size: 2rem; margin-bottom: 0.5rem;">📋</div>
+                        <strong style="color: var(--text-main);">Belum Ada Data Siswa Terdaftar</strong>
+                        <p style="font-size: 0.85rem; margin-top: 4px;">Tambahkan siswa baru atau impor data Excel melalui menu Super Admin.</p>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
 
         // Filter berdasarkan mode tampilan
         let filtered = [];
@@ -944,8 +1342,6 @@ const AdminPortal = {
             summaryEl.innerHTML = `Menampilkan <strong>${filtered.length}</strong> siswa tercatat`;
         }
 
-        const titleEl = document.getElementById("topStudentsTitle");
-        const iconEl = document.getElementById("topStudentsBadgeIcon");
         if (titleEl) {
             if (mode === 'pelanggaran') {
                 titleEl.textContent = `⚠️ Siswa Tercatat Pelanggaran (${filtered.length} Siswa)`;
@@ -1027,38 +1423,64 @@ const AdminPortal = {
                 rankBadge = `<span class="rank-badge rank-other">${idx + 1}</span>`;
             }
 
-            // Pelanggaran summary
+            // Pelanggaran summary dengan rincian guru penginput
             let violSummaryHtml = '';
             if (item.violPoints > 0) {
-                const latestViol = (s.pelanggaran || [])[0];
-                const recentViols = (s.pelanggaran || []).slice(0, 2).map(v => 
-                    `<span style="display: inline-block; background: #fee2e2; color: #991b1b; font-size: 0.68rem; font-weight: 600; padding: 1px 6px; border-radius: 4px; margin-top: 2px; margin-right: 3px; max-width: 155px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${Forms.escapeHtml(v.nama)} (+${v.poin} Poin) • Dicatat oleh: ${Forms.escapeHtml(v.pencatat || 'Guru')}">${Forms.escapeHtml(v.nama)} (+${v.poin})</span>`
-                ).join('');
+                const violsList = s.pelanggaran || [];
+                const recentViolsHtml = violsList.slice(0, 2).map(v => `
+                    <div style="margin-top: 3px; font-size: 0.72rem; line-height: 1.3; background: #fff5f5; border: 1px solid #fed7d7; border-radius: 5px; padding: 3px 6px;">
+                        <div style="font-weight: 700; color: #991b1b; display: flex; justify-content: space-between; align-items: center; gap: 4px;">
+                            <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 175px;" title="${Forms.escapeHtml(v.nama)}">${Forms.escapeHtml(v.nama)}</span>
+                            <span class="badge" style="background: #fee2e2; color: #991b1b; font-size: 0.65rem; padding: 1px 4px; flex-shrink: 0;">+${v.poin}</span>
+                        </div>
+                        <div style="font-size: 0.67rem; color: #64748b; margin-top: 1px;" title="Dicatat oleh ${Forms.escapeHtml(v.pencatat || 'Guru')}">
+                            📅 ${v.tanggal || '-'} • 👨‍🏫 <strong>${Forms.escapeHtml(v.pencatat || 'Guru')}</strong>
+                        </div>
+                    </div>
+                `).join('');
+
                 violSummaryHtml = `
                     <div>
                         <strong style="color: var(--danger); font-size: 0.95rem;">${item.violPoints} Poin</strong>
                         <span style="font-size: 0.72rem; color: var(--text-muted); margin-left: 4px;">(${item.violCount} Kasus)</span>
                     </div>
-                    <div style="line-height: 1.2;">${recentViols}${(s.pelanggaran || []).length > 2 ? `<span style="font-size: 0.65rem; color: var(--text-muted);">+${(s.pelanggaran || []).length - 2} lainnya</span>` : ''}</div>
-                    ${latestViol && latestViol.pencatat ? `<div style="font-size: 0.7rem; color: #64748b; margin-top: 2px; font-weight: 500;" title="Guru Pengisi: ${Forms.escapeHtml(latestViol.pencatat)}">👨‍🏫 Dicatat: <strong>${Forms.escapeHtml(latestViol.pencatat)}</strong></div>` : ''}
+                    ${recentViolsHtml}
+                    ${violsList.length > 2 ? `
+                        <button type="button" class="btn btn-outline btn-sm" onclick="App.openPublicStudentDetailModal('${s.id}')" style="margin-top: 3px; font-size: 0.67rem; padding: 1px 6px; color: #b91c1c; border-color: #fca5a5; background: #fff; width: 100%; text-align: center;" title="Lihat semua catatan pelanggaran dan guru pencatatnya">
+                            +${violsList.length - 2} pelanggaran lainnya (Lihat Semua)
+                        </button>
+                    ` : ''}
                 `;
             } else {
                 violSummaryHtml = `<span style="color: #16a34a; font-size: 0.8rem; font-weight: 600;">✨ 0 Poin</span>`;
             }
 
-            // Prestasi summary
+            // Prestasi summary dengan rincian guru pembina penginput
             let achSummaryHtml = '';
             if (item.achCount > 0) {
-                const latestAch = (s.prestasi || [])[0];
-                const recentAch = (s.prestasi || []).slice(0, 1).map(p => 
-                    `<div style="font-size: 0.72rem; color: #15803d; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 175px;" title="${Forms.escapeHtml(p.peringkat || '')} ${Forms.escapeHtml(p.nama || '')} • Dicatat oleh: ${Forms.escapeHtml(p.pencatat || 'Tim Kesiswaan')}">🏆 ${Forms.escapeHtml(p.peringkat || 'Juara')} - ${Forms.escapeHtml(p.nama || '')}</div>`
-                ).join('');
+                const achsList = s.prestasi || [];
+                const recentAchHtml = achsList.slice(0, 2).map(p => `
+                    <div style="margin-top: 3px; font-size: 0.72rem; line-height: 1.3; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 5px; padding: 3px 6px;">
+                        <div style="font-weight: 700; color: #15803d; display: flex; justify-content: space-between; align-items: center; gap: 4px;">
+                            <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 175px;" title="${Forms.escapeHtml(p.peringkat || '')} ${Forms.escapeHtml(p.nama || '')}">🏆 ${Forms.escapeHtml(p.peringkat || '')} - ${Forms.escapeHtml(p.nama || '')}</span>
+                            <span class="badge" style="background: #dcfce7; color: #166534; font-size: 0.65rem; padding: 1px 4px; flex-shrink: 0;">+${p.poin || 0}</span>
+                        </div>
+                        <div style="font-size: 0.67rem; color: #64748b; margin-top: 1px;" title="Dicatat oleh ${Forms.escapeHtml(p.pencatat || 'Tim Kesiswaan')}">
+                            📅 ${p.tanggal || '-'} • 👨‍🏫 <strong>${Forms.escapeHtml(p.pencatat || 'Tim Kesiswaan')}</strong>
+                        </div>
+                    </div>
+                `).join('');
+
                 achSummaryHtml = `
                     <div>
                         <strong style="color: var(--success); font-size: 0.95rem;">${item.achCount} Prestasi</strong>
                     </div>
-                    ${recentAch}
-                    ${latestAch && latestAch.pencatat ? `<div style="font-size: 0.7rem; color: #64748b; margin-top: 2px; font-weight: 500;" title="Guru Pengisi: ${Forms.escapeHtml(latestAch.pencatat)}">👨‍🏫 Dicatat: <strong>${Forms.escapeHtml(latestAch.pencatat)}</strong></div>` : ''}
+                    ${recentAchHtml}
+                    ${achsList.length > 2 ? `
+                        <button type="button" class="btn btn-outline btn-sm" onclick="App.openPublicStudentDetailModal('${s.id}')" style="margin-top: 3px; font-size: 0.67rem; padding: 1px 6px; color: #15803d; border-color: #86efac; background: #fff; width: 100%; text-align: center;" title="Lihat semua catatan prestasi dan pembina penginputnya">
+                            +${achsList.length - 2} prestasi lainnya (Lihat Semua)
+                        </button>
+                    ` : ''}
                 `;
             } else {
                 achSummaryHtml = `<span style="color: var(--text-muted); font-size: 0.8rem;">-</span>`;
@@ -1084,6 +1506,9 @@ const AdminPortal = {
                         <div style="display: flex; gap: 5px; flex-wrap: wrap;">
                             <button class="btn ${isSelected ? 'btn-primary' : 'btn-outline'} btn-sm" onclick="AdminPortal.selectTargetStudent('${s.id}')" style="padding: 3px 8px; font-size: 0.75rem;">
                                 ${isSelected ? '✓ Terpilih' : '👉 Pilih'}
+                            </button>
+                            <button class="btn btn-outline btn-sm" onclick="App.openPublicStudentDetailModal('${s.id}')" style="padding: 3px 8px; font-size: 0.75rem; color: #4338ca; border-color: #a5b4fc; background: #eef2ff;" title="Lihat riwayat lengkap seluruh catatan guru untuk siswa ini">
+                                📜 Riwayat
                             </button>
                             ${canManageRecords ? `
                             <button class="btn btn-danger btn-sm" onclick="Forms.openViolationModal('${s.id}')" style="padding: 3px 8px; font-size: 0.75rem;" title="Catat Pelanggaran Siswa Ini">
